@@ -50,6 +50,7 @@ jobs:
           RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.rstudio.com/all/latest
           GITHUB_PAT: ${{ secrets.GH_PAT}}
           GARGLE_KEY: ${{ secrets.GARGLE_KEY}}
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
       
       - name: check pipeline status
         run: |
