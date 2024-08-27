@@ -42,23 +42,23 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libgit2-dev libglpk40
 
-      - name: use devtools to install cfbfastR
-        run: |
-          install.packages('devtools')
-          devtools::install_github("sportsdataverse/cfbfastR")
-        shell: Rscript {0}
-        env:
-          GITHUB_PAT: ${{ secrets.GH_PAT}}
-          
-      # - name: Setup renv and install packages
-      #   uses: r-lib/actions/setup-renv@v2
-      #   with:
-      #     cache-version: 1
+      # - name: use devtools to install cfbfastR
+      #   run: |
+      #     install.packages('devtools')
+      #     devtools::install_github("sportsdataverse/cfbfastR")
+      #   shell: Rscript {0}
       #   env:
-      #     RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.rstudio.com/all/latest
       #     GITHUB_PAT: ${{ secrets.GH_PAT}}
-      #     GARGLE_KEY: ${{ secrets.GARGLE_KEY}}
-      #     CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
+          
+      - name: Setup renv and install packages
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 1
+        env:
+          RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.rstudio.com/all/latest
+          GITHUB_PAT: ${{ secrets.GH_PAT}}
+          GARGLE_KEY: ${{ secrets.GARGLE_KEY}}
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
       
       # - name: check pipeline status
       #   run: |
