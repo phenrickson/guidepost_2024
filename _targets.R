@@ -7,6 +7,7 @@
 library(targets)
 library(tarchetypes)
 library(crew)
+library(gitcreds)
 
 # authenticate
 #googleCloudStorageR::gcs_auth(json_file = Sys.getenv("GCS_AUTH_FILE"))

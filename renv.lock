@@ -286,9 +286,9 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "sportsdataverse",
       "RemoteRepo": "cfbfastR",
-      "RemoteRef": "main",
+      "RemoteUsername": "sportsdataverse",
+      "RemoteRef": "HEAD",
       "RemoteSha": "55b2bb912134d7b56ece5578378e98c0f6872806",
       "Requirements": [
         "R",
@@ -312,7 +312,7 @@
         "tibble",
         "tidyr"
       ],
-      "Hash": "61000b3ac1c5c6eba06f74d875d81822"
+      "Hash": "717f6d822949c19ad4980a450d0f66ee"
     },
     "cli": {
       "Package": "cli",
@@ -611,6 +611,16 @@
         "withr"
       ],
       "Hash": "44c6a2f8202d5b7e878ea274b1092426"
+    },
+    "gitcreds": {
+      "Package": "gitcreds",
+      "Version": "0.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "ab08ac61f3e1be454ae21911eb8bc2fe"
     },
     "glue": {
       "Package": "glue",
