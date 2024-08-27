@@ -57,9 +57,13 @@ jobs:
         env:
           RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.rstudio.com/all/latest
           GITHUB_PAT: ${{ secrets.GH_PAT}}
-          GARGLE_KEY: ${{ secrets.GARGLE_KEY}}
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
-      
+
+      - name: Authenticate to GCP
+        run: Rscript -e 'googleAuthR::gar_auth_service(json_file = Sys.getenv("GCS_AUTH_FILE"), scope = c("https://www.googleapis.com/auth/devstorage.full_control", "https://www.googleapis.com/auth/cloud-platform"))
+        env:
+          GCS_AUTH_FILE: ${{ secrets.GCS_AUTH_FILE}}
+          
       - name: check pipeline status
         run: |
             targets::tar_load_globals()
@@ -68,7 +72,7 @@ jobs:
         shell: Rscript {0}
         env:
           GITHUB_PAT: ${{ secrets.GH_PAT}}
-          GARGLE_KEY: ${{ secrets.GARGLE_KEY}}
+          GCS_AUTH_FILE: ${{ secrets.GCS_AUTH_FILE}}
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
 
       # - name: Render README
