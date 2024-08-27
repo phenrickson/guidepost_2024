@@ -60,7 +60,10 @@ jobs:
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
 
       - name: Authenticate to GCP
-        run: Rscript -e 'googleAuthR::gar_auth_service(json_file = Sys.getenv("GCS_AUTH_FILE"), scope = c("https://www.googleapis.com/auth/devstorage.full_control", "https://www.googleapis.com/auth/cloud-platform"))
+        run: |
+          scopes = c("https://www.googleapis.com/auth/devstorage.full_control", "https://www.googleapis.com/auth/cloud-platform")
+          googleAuthR::gar_auth_service(json_file = Sys.getenv("GCS_AUTH_FILE"), scope = scopes)
+        shell: Rscript {0}
         env:
           GCS_AUTH_FILE: ${{ secrets.GCS_AUTH_FILE}}
           
