@@ -62,7 +62,6 @@ jobs:
       
       - name: check pipeline status
         run: |
-            targets::tar_outdated()
             targets::tar_load(cfbd_game_info_tbl)
             head(cfbd_game_info_tbl)
         shell: Rscript {0}
