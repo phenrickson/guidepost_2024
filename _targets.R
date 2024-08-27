@@ -10,11 +10,9 @@ library(crew)
 library(gitcreds)
 
 # authenticate
-#googleCloudStorageR::gcs_auth(json_file = Sys.getenv("GCS_AUTH_FILE"))
-googleAuthR::gar_auth_service(
-    json_file = gargle::secret_decrypt_json(path = ".secrets", key = "GARGLE_KEY"),
-    scope =  c("https://www.googleapis.com/auth/devstorage.full_control",
-                "https://www.googleapis.com/auth/cloud-platform")
+googleAuthR::gar_auth_service(json_file = Sys.getenv("GCS_AUTH_FILE"),
+                              scope = c("https://www.googleapis.com/auth/devstorage.full_control",
+                                         "https://www.googleapis.com/auth/cloud-platform")
 )
 
 # set default bucket
