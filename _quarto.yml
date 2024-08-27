@@ -1,5 +1,6 @@
 project:
   output-dir: docs
+  type: website
 
 toc: true
 number-sections: true
