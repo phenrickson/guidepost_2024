@@ -9,6 +9,7 @@ author: "Phil Henrickson"
 library(targets)
 library(dplyr)
 library(ggplot2)
+library(quarto)
 library(gt)
 library(gtExtras)
 
