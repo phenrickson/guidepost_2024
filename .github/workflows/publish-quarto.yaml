@@ -45,7 +45,7 @@ jobs:
       - name: use devtools to install cfbfastR
         run: |
           install.packages('devtools')
-          # devtools::install_github("sportsdataverse/cfbfastR")
+          devtools::install_github("sportsdataverse/cfbfastR")
         shell: Rscript {0}
         env:
           GITHUB_PAT: ${{ secrets.GH_PAT}}
