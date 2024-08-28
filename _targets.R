@@ -468,16 +468,16 @@ list(
       fit(
         split_pbp$data
       )
-  )
+  ),
   # # pbp predict with final model
   # tar_target(
   #   pbp_all_preds,
   #   pbp_final_fit |>
   #     augment(split_pbp$data)
   # )
-  # # quarto
-  # tar_quarto(
-  #   reports,
-  #   quiet = F
-  # )
+  # quarto
+  tar_quarto(
+    reports,
+    quiet = F
+  )
 )

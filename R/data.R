@@ -96,3 +96,15 @@ make_time_features_func <-
       mutate(SECONDS_IN_HALF = MINUTES_IN_HALF * 60 + SECOND)
     #    mutate(SECONDS_IN_HALF = )
   }
+
+theme_cfb = function(base_size = 11) {
+
+  theme_light() %+replace%
+    theme(
+      plot.subtitle = element_text(size = 10, hjust = 0, vjust = 1, margin = margin(b = base_size/2)),
+      legend.title = element_blank(),
+      )+
+    theme(
+      legend.position = 'top'
+    )
+}

@@ -18,7 +18,7 @@ library(tidymodels)
 targets::tar_source("R")
 
 # set ggplot theme
-theme_set(theme_light() + theme(legend.position = 'top', legend.title = element_blank()))
+theme_set(theme_cfb())
 
 # load in targets
 # game info
@@ -317,12 +317,16 @@ We use all of this historical data to learn the expected points from a given sit
 
 How do these various features like down, distance, yards to goal, and time remaining affect the probability of the next scoring event? I use a model to learn this relationship from historical plays.
 
-First, I create a train/validation/test split based around seasons.
+First, I set up training, validation, and test sets based around the season. I rely on data from the 2007 season onwards, as the data quality of plays starts to get worse the further back we go, though I can later do some backtesting of the model on older seasons.
 
 ```{r}
 
-# load in split
+# load in pieces from model
 tar_load(split_pbp)
+tar_load(pbp_last_fit)
+
+# get wflow
+pbp_fit = pbp_last_fit |> extract_workflow()
 
 # show plan
 split_pbp |>
@@ -341,12 +345,177 @@ split_pbp |>
     mutate(next_score_event_offense = factor_class(next_score_event_offense)) |>
     group_by(season, next_score_event_offense) |>
     count() |>
-    ggplot(aes(x=n, 
+    ggplot(aes(x=n,
                y=reorder(next_score_event_offense,n),
                fill = next_score_event_offense))+
     geom_col()+
     facet_wrap(season ~.)+
     scale_fill_viridis_d()+
-    guides(fill = 'none')
+    guides(fill = 'none')+
+    scale_x_continuous(breaks = scales::pretty_breaks(n=3))+
+    ylab("Score Event")+
+    xlab("Plays")
+
+```
+
+I train a multinomial logistic regression on the next scoring event for each play (TD, FG, Opp. TD, Opp. FG, etc) as a function of the situation in the game (down, distance, yards to goal). I use the probabilities from this model to compute expected points at the play level, which I then aggregate to the team, game, and season level in order to measure each team’s raw offensive/defensive efficiency.
+
+I examine the model's performance on the validation set.
+
+```{r}
+
+pbp_last_fit |>
+    collect_metrics() |>
+    mutate_if(is.numeric, round, 3) |>
+    gt_tbl()
+```
+
+What I really care about is the calibration of the predictions - does the observed incidence rate of events match the predicted probabilities from the model? That is, when the model predicts that the next scoring event has a probability of 0.5 of being a TD, do we observe TDs occur about half of the time?
+
+```{r}
+pbp_last_fit |>
+  collect_predictions() |>
+  plot_pbp_calibration() +
+  labs(
+    title = "Model Calibration",
+    subtitle = stringr::str_wrap("Observed vs predicted incident rate of next scoring event from classification model", 90)
+  )
+```
+
+Understanding partial effects from a multinomial logit is difficult, and I’ve thrown a bunch of interactions in there to make this even more unwieldy. I'll extract the coefficients and take a look (excluding the intercept), but really in order to interpret this model I'll use predicted probabilities.
+
+```{r}
+
+pbp_fit |>
+    tidy() |>
+    mutate(class = factor_class(class)) |>
+    filter(term != "(Intercept)") |>
+    ggplot(aes(x=estimate, y = reorder(term, abs(estimate)))) +
+               #y=tidytext::reorder_within(term, estimate, class)))+
+    geom_point()+
+    facet_wrap(class~., ncol = 4) +
+    ylab("Feature")
+```
+
+I’ll look at predicted probabilities using an observed values approach for particular features (using a sample rather than the full dataset to save time). This amounts taking historical plays and setting features to specific values for every observation, predicting those observations with the model, then finding the average predicted probability as the feature changes.
+
+The following visualization the predicted probability of each scoring event based on field position.
+
+```{r}
+
+set.seed(1999)
+samp <-
+  split_pbp |>
+  training() |>
+  slice_sample(n = 20000)
+
+v <- expand.grid(
+  yards_to_goal = seq(0, 99, 3),
+  down = c(1, 2, 3, 4)
+)
+
+df <-
+  map(
+    seq(0, 99, 2),
+    ~ {
+      samp |>
+        mutate(yards_to_goal := .x) |>
+        nest(data = -yards_to_goal)
+    }
+  ) |>
+  list_rbind() |>
+  unnest(data)
+
+est =
+    df |>
+    estimate_pbp_effect(fit = pbp_fit) |>
+    summarize_pbp_effect(vars = "yards_to_goal")
+
+```
+
+```{r}
+
+est |>
+  pivot_pbp() |>
+  mutate(class = factor_class(class)) |>
+  ggplot(aes(
+    x = yards_to_goal, color = class,
+    y = prob
+  )) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(class ~ ., ncol = 4) +
+  coord_cartesian(ylim = c(0, 1)) +
+  ylab("Pr(Outcome)") +
+  xlab("Yards to Opponent End Zone") +
+  labs(
+    title = "Predicted Probability of Scoring Event by Offensive Field Position",
+    subtitle = stringr::str_wrap("Predicted probabilities from classification model trained on historical play by play data. Displaying probabilities using observed values approach from a random sample of plays", 90)
+  )+
+    guides(color = 'none')
+
+```
+
+How is this affected by the down?
+
+```{r}
+
+df2 <-
+  map(
+    c(1, 2, 3, 4),
+    ~ {
+      df |>
+        mutate(down := .x) |>
+        nest(data = -c(yards_to_goal, down))
+    }
+  ) |>
+  list_rbind()
+
+est2 <-
+  df2 |>
+  unnest(data) |>
+  estimate_pbp_effect(fit = pbp_fit) |>
+  summarize_pbp_effect(vars = c("yards_to_goal", "down"))
+
+# plot probabilities
+est2 |>
+  pivot_pbp() |>
+  mutate(
+    down = factor(down),
+    class = factor_class(class)
+  ) |>
+  ggplot(aes(
+    x = yards_to_goal,
+    color = down,
+    y = prob
+  )) +
+  geom_line() +
+  scale_color_viridis_d() +
+  facet_wrap(class ~ ., ncol = 4) +
+  coord_cartesian(ylim = c(0, 1)) +
+  ylab("Pr(Outcome)") +
+  xlab("Yards to Goal") +
+  labs(
+    title = "Predicted Probability of Scoring Event by Offensive Field Position and Down",
+    subtitle = stringr::str_wrap("Predicted probabilities from classification model trained on historical play by play data. Displaying probabilities using observed values approach from a random sample of plays", 90)
+  )
+
+```
+
+We can then translate these predicted probabilities into *expected points*, multiplying the predicted probabilities for each scoring event by their point value.
+
+```{r}
+est2 |>
+  mutate(down = factor(down)) |>
+  calculate_expected_points() |>
+  ggplot(aes(x = yards_to_goal, y = expected_points, color = down)) +
+  geom_line() +
+  scale_color_viridis_d() +
+  coord_cartesian(ylim = c(-3, 7)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Expected Points by Offensive Field Position and Down",
+    subtitle = stringr::str_wrap("Expected points using probabilities from classification model trained on historical play by play data. Displaying expected points using observed values approach from a random sample of plays", 90)
+  )
 
 ```

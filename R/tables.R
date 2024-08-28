@@ -1,4 +1,4 @@
-gt_tbl = function(data, 
+gt_tbl = function(data,
                   ...) {
 
   data |>

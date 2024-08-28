@@ -887,7 +887,8 @@ clean_play_type <- function(data) {
 #
 # }
 
-add_score_events <- function(data, td_text = "TD$", fg_text = "FG$|^(FG GOOD)", safety_text = "SF$") {
+add_score_events <- function(data, td_text = "TD$", fg_text = "^(FG|FG GOOD)$"
+, safety_text = "SF$") {
     data |>
         mutate(
             score_event = case_when(
@@ -982,7 +983,7 @@ calculate_expected_points = function(x) {
 
 #
 calculate_points_added = function(data) {
-  
+
   data |>
     group_by(game_id, drive_id, half) |>
     mutate(
