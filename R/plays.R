@@ -120,7 +120,7 @@ clean_yards <- function(data) {
             ) |>
             select(-yard_line_str)
     }
-    
+
     # recalculate yards_to_goal
     clean_yards_to_goal <- function(data) {
         data |>
@@ -129,7 +129,7 @@ clean_yards <- function(data) {
                 offense != home ~ yard_line
             ))
     }
-    
+
     data |>
         clean_yard_line() |>
         clean_yards_to_goal()
@@ -622,10 +622,10 @@ add_penalty_plays <- function(data) {
     pen_offset_text <- stringr::str_detect(data$play_text, regex("off-setting", ignore_case = TRUE))
     #-- '1st Down' in play text ----
     pen_1st_down_text <- stringr::str_detect(data$play_text, regex("1st down", ignore_case = TRUE))
-    
+
     #-- Penalty play_types
     pen_type <- data$play_type == "Penalty" | data$play_type == "penalty"
-    
+
     #-- T/F flag conditions penalty_flag
     data$penalty_flag <- FALSE
     data$penalty_flag[pen_type] <- TRUE
@@ -650,7 +650,7 @@ add_penalty_plays <- function(data) {
     data$penalty_text <- FALSE
     data$penalty_text[pen_text & !pen_type & !pen_declined_text &
                           !pen_offset_text & !pen_no_play_text] <- TRUE
-    
+
     data |>
         dplyr::mutate(
             penalty_detail = case_when(
@@ -887,7 +887,7 @@ clean_play_type <- function(data) {
 #
 # }
 
-add_score_events <- function(data, td_text = "TD$", fg_text = "FG$", safety_text = "SF$") {
+add_score_events <- function(data, td_text = "TD$", fg_text = "FG$|^(FG GOOD)", safety_text = "SF$") {
     data |>
         mutate(
             score_event = case_when(
@@ -963,18 +963,51 @@ add_score_events <- function(data, td_text = "TD$", fg_text = "FG$", safety_text
         )
 }
 
-add_expected_points = function(x) {
-    
+# function to compute expected points based on probabilities
+calculate_expected_points = function(x) {
+
     x |>
         mutate(
-            expected_points = 
-                0*.pred_No_Score + 
-                7*.pred_TD + 
-                3*.pred_FG + 
-                2*.pred_Safety + 
-                -2*.pred_Opp_Safety + 
-                -3*.pred_Opp_FG + 
+            expected_points =
+                0*.pred_No_Score +
+                7*.pred_TD +
+                3*.pred_FG +
+                2*.pred_Safety +
+                -2*.pred_Opp_Safety +
+                -3*.pred_Opp_FG +
                 -7*.pred_Opp_TD
         )
-    
+
+}
+
+#
+calculate_points_added = function(data) {
+  
+  data |>
+    group_by(game_id, drive_id, half) |>
+    mutate(
+      expected_points_pre = expected_points,
+      expected_points_post = case_when(scoring == F ~ dplyr::lead(expected_points, 1)),
+      points_post = case_when(scoring == T & drive_is_home_offense == 1 & score_event == 'HOME TD' ~ 7,
+                              scoring == T & drive_is_home_offense == 1 & score_event == 'HOME FG' ~ 3,
+                              scoring == T & drive_is_home_offense == 1 & score_event == 'AWAY Safety' ~ -2,
+                              scoring == T & drive_is_home_offense == 1 & score_event == 'AWAY TD' ~ -7,
+                              scoring == T & drive_is_home_offense == 0 & score_event == 'AWAY TD' ~ 7,
+                              scoring == T & drive_is_home_offense == 0 & score_event == 'AWAY FG' ~ 3,
+                              scoring == T & drive_is_home_offense == 0 & score_event == 'HOME Safety' ~ -2)
+    ) |>
+    # for turnovers; expected points post becomes the (negative) expected points of the ensuing offense
+    group_by(game_id, half) |>
+    mutate(expected_points_post = case_when(scoring == F & offense != dplyr::lead(offense, 1) ~ -1*dplyr::lead(expected_points, 1),
+                                            TRUE ~ expected_points_post)) |>
+    group_by(game_id, drive_id, half) |>
+    mutate(
+      expected_points_added = expected_points_post - expected_points_pre,
+      points_added = points_post - expected_points_pre,
+      predicted_points_added = case_when(
+        is.na(expected_points_added) & !is.na(points_added) ~ points_added,
+        !is.na(expected_points_added) & is.na(points_added) ~ expected_points_added
+      )
+    ) |>
+    ungroup()
 }
