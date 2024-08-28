@@ -12,6 +12,7 @@ library(ggplot2)
 library(quarto)
 library(gt)
 library(gtExtras)
+library(tidymodels)
 
 # get source code
 targets::tar_source("R")
@@ -93,12 +94,12 @@ For a given play $i$ for Team $A$ facing Team $B$, we can compute Team A's expec
 
 \begin{align*}
 {Expected Points}_A = \\
-Pr(TD_A)*7 \\ 
+Pr(TD_A)*7 \\
 + Pr(FG_A)*3 \\
 + Pr(Safety_A)*2 \\
-+ Pr(No Score)*0 \\ 
-+ Pr(Safety_B)*-2 \\ 
-+ Pr(FG_B) * -3\\ 
++ Pr(No Score)*0 \\
++ Pr(Safety_B)*-2 \\
++ Pr(FG_B) * -3\\
 + Pr(TD_B) * -7
 \end{align*}
 
@@ -142,7 +143,7 @@ prepared_pbp |>
 
 ```
 
-If we look at another sequence in the second half (drives 9 through), we can see there were multiple drives before a team was able to score in that sequence. 
+If we look at another sequence in the second half (drives 9 through), we can see there were multiple drives before a team was able to score in that sequence.
 
 Note that the next scoring event is always defined from the perspective of the offense.
 
@@ -315,3 +316,37 @@ We use all of this historical data to learn the expected points from a given sit
 # Modeling Expected Points
 
 How do these various features like down, distance, yards to goal, and time remaining affect the probability of the next scoring event? I use a model to learn this relationship from historical plays.
+
+First, I create a train/validation/test split based around seasons.
+
+```{r}
+
+# load in split
+tar_load(split_pbp)
+
+# show plan
+split_pbp |>
+    plot_split_plan()
+
+```
+
+The outcome of interest is `next_score_event`, which is always defined from the perspective of the offense.
+
+```{r}
+
+split_pbp |>
+    validation_set() |>
+    pluck("splits", 1) |>
+    pluck("data") |>
+    mutate(next_score_event_offense = factor_class(next_score_event_offense)) |>
+    group_by(season, next_score_event_offense) |>
+    count() |>
+    ggplot(aes(x=n, 
+               y=reorder(next_score_event_offense,n),
+               fill = next_score_event_offense))+
+    geom_col()+
+    facet_wrap(season ~.)+
+    scale_fill_viridis_d()+
+    guides(fill = 'none')
+
+```

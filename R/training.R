@@ -1,57 +1,57 @@
 # split data into training, validation, test sets based on seasons
 split_seasons = function(data, end_train_year, valid_years) {
-    
-    tmp = 
+
+    tmp =
         data |>
         mutate(.row_number = row_number())
-    
-    train_id = 
+
+    train_id =
         tmp |>
         filter(season <= end_train_year) |>
         pull(.row_number)
-    
-    val_id = 
+
+    val_id =
         tmp |>
         dplyr::filter(season > end_train_year,
                       season <= end_train_year + valid_years) |>
         pull(.row_number)
-    
-    test_id = 
+
+    test_id =
         tmp |>
         filter(season > end_train_year + valid_years) |>
         pull(.row_number)
-    
-    res = 
+
+    res =
         list(
             data = data,
             train_id = train_id,
             val_id = val_id,
             test_id = test_id
         )
-    
+
     class(res) <- c("initial_validation_split", "three_way_split")
-    
+
     res
 }
 
 # get split by type
 split_plan = function(split) {
-    
-    train = 
+
+    train =
         split |>
         training() |>
         mutate(type = 'training')
-    
-    valid = 
+
+    valid =
         split |>
         validation() |>
         mutate(type = 'validation')
-    
+
     testing =
         split |>
         testing() |>
         mutate(type = 'testing')
-    
+
     bind_rows(train,
               valid,
               testing) |>
@@ -60,11 +60,11 @@ split_plan = function(split) {
 
 # plot split plan
 plot_split_plan = function(split) {
-    
-    
-    dat = 
+
+
+    dat =
         split_plan(split)
-    
+
     dat |>
         group_by(type, season) |>
         count() |>
@@ -74,7 +74,7 @@ plot_split_plan = function(split) {
         geom_col()+
         scale_fill_viridis_d()+
         scale_y_continuous(labels = scales::label_comma())
-    
+
 }
 
 # function to build a recipe and set outcome
@@ -83,7 +83,7 @@ build_recipe = function(data,
                         ids = NULL,
                         predictors = NULL,
                         ...) {
-    
+
     recipe(x = data) |>
         # set ids
         update_role(
@@ -106,14 +106,14 @@ build_recipe = function(data,
             -has_role("outcome"),
             -has_role("id"),
             new_role = "extras"
-        ) |> 
+        ) |>
         # drop these
         step_rm(has_role("extras"))
 }
 
 # ids to be used in pbp
 pbp_ids = function() {
-    
+
     c(
         "season",
         "play_id",
@@ -141,12 +141,10 @@ pbp_ids = function() {
 
 # predictors in pbp
 pbp_predictors = function() {
-    
+
     c(
         "period",
         "seconds_in_half",
-        "offense_timeouts",
-        "defense_timeouts",
         "yards_to_goal",
         "down",
         "distance"
@@ -155,7 +153,7 @@ pbp_predictors = function() {
 
 # steps to be used in pbp recipe
 add_pbp_steps = function(recipe) {
-    
+
     recipe |>
         step_mutate(down_to_goal = case_when(yard_line == distance ~ 1, TRUE ~ 0),
                     down = factor(down),
@@ -178,9 +176,9 @@ build_pbp_recipe = function(data,
                             outcome = "next_score_event_offense",
                             predictors = pbp_predictors(),
                             ids = pbp_ids()) {
-    
+
     data |>
-        build_recipe( 
+        build_recipe(
             outcome = "next_score_event_offense",
             predictors = pbp_predictors(),
             ids = pbp_ids()
@@ -194,7 +192,7 @@ build_pbp_recipe = function(data,
 # summarize probabilities
 summarize_pbp_effect = function(estimates,
                                 vars) {
-    
+
     estimates |>
         group_by(across(any_of(c(vars)))) |>
         summarize(
@@ -215,7 +213,7 @@ summarize_pbp_effect = function(estimates,
 # helper function for predicting pbp
 estimate_pbp_effect = function(data,
                                fit) {
-    
+
     fit |>
         augment(
             data
@@ -224,7 +222,7 @@ estimate_pbp_effect = function(data,
 
 # helper function for pivoting play by play
 pivot_pbp = function(data) {
-    
+
     data |>
         pivot_longer(
             cols = starts_with(".pred"),
@@ -232,13 +230,13 @@ pivot_pbp = function(data) {
             names_prefix = c(".pred_"),
             values_to = c("prob")
         )
-    
+
 }
 
-# helper function to set levels 
+# helper function to set levels
 factor_class = function(var) {
-    
-    factor({{var}},  
+
+    factor({{var}},
            levels = c("TD",
                       "FG",
                       "Safety",
@@ -251,8 +249,8 @@ factor_class = function(var) {
 # function to plot calibration
 plot_pbp_calibration = function(preds,
                                 bin = 0.025) {
-    
-    preds |> 
+
+    preds |>
         pivot_pbp() |>
         group_by(class, prob_bin = round_any(prob, bin)) |>
         mutate(number_probs = n()) |>
@@ -271,5 +269,5 @@ plot_pbp_calibration = function(preds,
         ylab("Observed Probability of Score Event")+
         facet_wrap(next_score_event_offense ~.)+
         guides(size = 'none')
-    
+
 }

@@ -43,11 +43,9 @@ tar_option_set(
         prefix = "data"
       )
     ),
-  controller =
-    crew_controller_local(workers = 7),
-  repository = "gcp",
-  storage = "worker",
-  retrieval = "worker"
+  # controller =
+  #   crew_controller_local(workers = 7),
+  repository = "gcp"
 )
 
 # Run the R scripts in the R/ folder with your custom functions:
@@ -337,8 +335,7 @@ list(
     filtered_pbp |>
       filter_plays() |>
       prepare_pbp() |>
-      add_score_events(),
-    deployment = "main"
+      add_score_events()
   ),
   # prepare games for use in elo functions
   tar_target(
@@ -397,9 +394,9 @@ list(
   tar_target(
     split_pbp,
     prepared_pbp |>
-      filter(season >= 2013) |>
+      filter(season >= 2007 & season <= max(seasons)) |>
       split_seasons(
-        end_train_year = 2018,
+        end_train_year = 2017,
         valid_years = 2
       )
   ),
@@ -427,7 +424,7 @@ list(
       add_recipe(pbp_recipe) |>
       add_model(pbp_model_spec)
   ),
-  # fit to training est; estimate on valid set
+  # fit to training set; estimate on valid set
   tar_target(
     pbp_last_fit,
     pbp_wflow |>
@@ -439,9 +436,48 @@ list(
         metrics = class_metrics
       )
   ),
-  # quarto
-  tar_quarto(
-    reports,
-    quiet = F
+  # extract metrics
+  tar_target(
+    pbp_valid_metrics,
+    pbp_last_fit |>
+      collect_metrics()
+  ),
+  # extract predictions
+  tar_target(
+    pbp_valid_preds,
+    pbp_last_fit |>
+      collect_predictions() |>
+      left_join(
+        split_pbp |>
+          validation() |>
+          mutate(.row = row_number())
+      )
+  ),
+  # predict test set
+  tar_target(
+    pbp_test_preds,
+    pbp_last_fit |>
+      extract_workflow() |>
+      augment(split_pbp |> testing())
+  ),
+  # final fit
+  tar_target(
+    pbp_final_fit,
+    pbp_last_fit |>
+      extract_workflow() |>
+      fit(
+        split_pbp$data
+      )
   )
+  # # pbp predict with final model
+  # tar_target(
+  #   pbp_all_preds,
+  #   pbp_final_fit |>
+  #     augment(split_pbp$data)
+  # )
+  # # quarto
+  # tar_quarto(
+  #   reports,
+  #   quiet = F
+  # )
 )
