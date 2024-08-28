@@ -1,8 +1,10 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|969b6efcda590d27|||||||||||||||
+.Random.seed|object|d774240e4e3811d1|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
+add_expected_points|function|0bf3484101e66081|||||||||||||||
 add_kick_plays|function|ad99b06c35ea5ce4|||||||||||||||
 add_pass_plays|function|1baea77cea56c893|||||||||||||||
+add_pbp_steps|function|885a7227603a93af|||||||||||||||
 add_penalty_plays|function|e5c5b6c3a9735107|||||||||||||||
 add_play_time|function|a3e05dadad3a523d|||||||||||||||
 add_punt_plays|function|ad7b93ae55fc393c|||||||||||||||
@@ -14,6 +16,8 @@ add_season|function|53eacacae62d6689|||||||||||||||
 add_spread_features|function|228372fa985f4722|||||||||||||||
 add_turnover_plays|function|556050e33166c889|||||||||||||||
 assess_elo_ratings|function|18898af6c0daca58|||||||||||||||
+build_pbp_recipe|function|b3b9ec18c5323b05|||||||||||||||
+build_recipe|function|e1046f65ce2a8eb4|||||||||||||||
 calc_elo_ratings|function|fd49837d3752ec5f|||||||||||||||
 cfbd|object|bb3a894bab7c1369|||||||||||||||
 cfbd_betting_lines_tbl|stem|774f0d9a77ba865e|cdd707ef2e186103|9ae9610dd062cb8f|1032519845|bucket=cfb_models*key=data/objects/cfbd_betting_lines_tbl*version=1723218994769441|t19944.6642890533s||432384|qs|gcp|vector|||40.265||
@@ -2510,6 +2514,7 @@ cfbd_team_roster_by_season_2022|stem|4b4ecb7ece687cfe|55698f65b115dc7c|806e947bb
 cfbd_team_roster_by_season_2023|stem|50685fcb4c1a9ff7|44fb28f817532887|806e947bbb996f89|-1688660247||t19934.9029679421s|b4503057770588a6|672387|qs|local|vector|||2.687||
 cfbd_team_roster_tbl|stem|cace1cba432bf273|1437991197b063f9|8b6c7d67ad8ccbf7|-2039255155|bucket=cfb_models*key=data/objects/cfbd_team_roster_tbl*version=1724690864469021|t19961.6998148557s||5032969|qs|gcp|vector|||32.447||
 cfbd_team_talent_tbl|stem|69e3df25e29aeac7|4a2b829a7a795fe6|9ae9610dd062cb8f|-220804107|bucket=cfb_models*key=data/objects/cfbd_team_talent_tbl*version=1722618911352914|t19937.7188774838s||16875|qs|gcp|vector|||16.254||
+class_metrics|stem|f3d96501e07e0028|dcc9631b9582f822|2c530c1562a7fbd1|-1976892974|bucket=cfb_models*key=data/objects/class_metrics*version=1724795662347093|t19962.9127537706s||2627|qs|gcp|vector|||2.769||
 clean_distance|function|8c22ad83aadcc2a6|||||||||||||||
 clean_play_type|function|76da046ba13e0093|||||||||||||||
 clean_plays_func|function|4aabe602e28ec9dc|||||||||||||||
@@ -2560,7 +2565,9 @@ espn_cfb_game_ids|stem|318813f8ffe950ce|002311834b5b3f67|770cca86d52f3267|-13953
 espn_cfb_pbp|stem||3451864c923eb041|56e2df2b8f2990bf|1818930545||t19935.6942739343s||0|qs|local|vector|||722.252||ℹ In index 816.Caused by error in espn_cfb_pbp object plays_df not found
 espn_cfb_schedule_tbl|stem|cf4bd4e8ff9a992c|1a9d40a8a493cd1b|9ae9610dd062cb8f|1538359559|bucket=cfb_models*key=data/objects/espn_cfb_schedule_tbl*version=1722620598570852|t19937.7384065192s||1192025|qs|gcp|vector|||73.807||
 espn_ratings_fpi_tbl|stem|9028c94d3776c57d|e5383b1b50f9fca8|9ae9610dd062cb8f|-1074024033|bucket=cfb_models*key=data/objects/espn_ratings_fpi_tbl*version=1722618957429176|t19937.7194089927s||30466|qs|gcp|vector|||4.611||
+estimate_pbp_effect|function|8d8a6d45b51e26fe|||||||||||||||
 exploratory|stem|9cffe7748e56d8b0|854a5daf04036000|881cadeeeccea6e6|-1455750025|test-quarto.html*test-quarto.qmd|t19961.661481582s||760835|file|local|vector|||||_paths_ missing files testquarto.html
+factor_class|function|6c31d359bd3ef445|||||||||||||||
 filter_play_type|function|e1363a13cfafa77d|||||||||||||||
 filter_plays|function|ca50eac0c45804a7|||||||||||||||
 filtered_pbp|stem|f01bdaad01ae69a8|515edb0ada8ba717|79902a5df92bd535|-1114630478|bucket=cfb_models*key=data/objects/filtered_pbp*version=1724695040354477|t19961.7480999948s||88469143|qs|gcp|vector|||7.533||
@@ -2578,21 +2585,34 @@ mapped|object|932abaa8b3157d37|||||||||||||||
 model_spread|function|f4abe1371e0ad262|||||||||||||||
 normalplay_text|function|9af9e6d8ffaf7c12|||||||||||||||
 offense_score_text|function|1c19701ab59e9dfb|||||||||||||||
+pbp_ids|function|3848dd91513932ab|||||||||||||||
+pbp_last_fit|stem|3ecfc6a7906c6942|14496f13e2434016|4a2117d1f1de5182|-1864951580|bucket=cfb_models*key=data/objects/pbp_last_fit*version=1724795794575626|t19962.9142152298s||184044960|qs|gcp|vector|||85.931||
+pbp_model_spec|stem|fe9cd5d938c3c6bb|0b8c3a01f3762aa0|2c530c1562a7fbd1|1157590891|bucket=cfb_models*key=data/objects/pbp_model_spec*version=1724795662343562|t19962.9127539436s||249|qs|gcp|vector|||2.784||
+pbp_predictors|function|a4752c5a3e5e5cf9|||||||||||||||
+pbp_recipe|stem|7d12ea5137157c39|c3cf7a6ce73dc332|7a6a660be68aca15|-1756265345|bucket=cfb_models*key=data/objects/pbp_recipe*version=1724795682073163|t19962.9129503258s||79241327|qs|gcp|vector|||2.043||
+pbp_wflow|stem|c463b60233603fad|22bc2780949ed18a|adeef519effc9dfa|69768375|bucket=cfb_models*key=data/objects/pbp_wflow*version=1724795691402279|t19962.9130543224s||79233276|qs|gcp|vector|||0.004||
 penalty_details_text|function|c6269b06f2b46fd7|||||||||||||||
 penalty_text|function|93229a4eddcd7124|||||||||||||||
+pivot_pbp|function|12a0041efb9c7ee0|||||||||||||||
+plot_pbp_calibration|function|da626d3788c6fb69|||||||||||||||
+plot_split_plan|function|69c5a731895efa4e|||||||||||||||
 prepare_drives|function|0cd66ed59e1e3d78|||||||||||||||
 prepare_games|function|49779747191ba766|||||||||||||||
-prepare_pbp|function|72b3605063362750|||||||||||||||
+prepare_pbp|function|9a86526ac5a6e407|||||||||||||||
 prepare_plays|function|1e408c68a84dcc9e|||||||||||||||
 prepared_games|stem|02553aa4cc933f0d|e16993b0f41a42e8|3ae1601f37a33e87|1831875253|bucket=cfb_models*key=data/objects/prepared_games*version=1723218996206475|t19944.6643058467s||1238944|qs|gcp|vector|||0.055||
-prepared_pbp|stem|a3038b18cb8f45bb|8421a3bab4896710|23234cd176aec38a|1727894588|bucket=cfb_models*key=data/objects/prepared_pbp*version=1724699868508369|t19961.8040014775s||57076154|qs|gcp|vector|||79.244||
+prepared_pbp|stem|4035dd1fe917f27e|8421a3bab4896710|6e16d7aaeafbc7f3|1727894588|bucket=cfb_models*key=data/objects/prepared_pbp*version=1724787877365464|t19962.8226179036s||55355452|qs|gcp|vector|||75.041||
 punt_text|function|2eab2f1afb0e0a03|||||||||||||||
-reports|stem|63b3764ad23798ea|f2af068004b1d245|749682498d2a12fd|536393307|docs*expected_points.qmd*_quarto.yml*styles.css|t19962.7614271194s|9f344b11d815ba85|13989|file|local|vector|||34.525||
+reports|stem|6a8da28a2c103acc|f2af068004b1d245|0201ce9c6eb9c37b|536393307|docs*expected_points.qmd*_quarto.yml*styles.css|t19962.810259651s|9f344b11d815ba85|13989|file|local|vector|||37.855||
 round_any|function|1f9a74510238f8e9|||||||||||||||
 score_text|function|2beaea614d9d0fbe|||||||||||||||
 seasons|object|a3a5673ed49c208e|||||||||||||||
 select_elo_params|function|6903f9afe9c00a9f|||||||||||||||
 sim_elo_ratings|function|2782269d9970198e|||||||||||||||
+split_pbp|stem|e77037e77d7849f1|cead3eb7d6e3fd70|f3c4e900f34a898a|-1774338189|bucket=cfb_models*key=data/objects/split_pbp*version=1724795672091176|t19962.9128531279s||34758419|qs|gcp|vector|||4.07||
+split_plan|function|7bd6cf11641a9d69|||||||||||||||
+split_seasons|function|05fee3e32a098867|||||||||||||||
 static|object|65df15f73e6ae5a2|||||||||||||||
+summarize_pbp_effect|function|bf015ebd3b06898d|||||||||||||||
 tune_elo_ratings|function|c4dea64ad0e68bc1|||||||||||||||
 turnover_text|function|c62307697e4d0f30|||||||||||||||
