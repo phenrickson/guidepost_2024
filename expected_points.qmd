@@ -1,5 +1,6 @@
 ---
-title: "CFB Expected Points"
+title: "Expected Points and College Football"
+subtitle: "Modeling Score Events from Play by Play Data"
 author: "Phil Henrickson"
 ---
 
@@ -402,12 +403,11 @@ I’ll look at predicted probabilities using an observed values approach for par
 The following visualization the predicted probability of each scoring event based on field position.
 
 ```{r}
-
 set.seed(1999)
 samp <-
   split_pbp |>
   training() |>
-  slice_sample(n = 20000)
+  slice_sample(n = 10000)
 
 v <- expand.grid(
   yards_to_goal = seq(0, 99, 3),
@@ -426,14 +426,10 @@ df <-
   list_rbind() |>
   unnest(data)
 
-est =
-    df |>
-    estimate_pbp_effect(fit = pbp_fit) |>
-    summarize_pbp_effect(vars = "yards_to_goal")
-
-```
-
-```{r}
+est <-
+  df |>
+  estimate_pbp_effect(fit = pbp_fit) |>
+  summarize_pbp_effect(vars = "yards_to_goal")
 
 est |>
   pivot_pbp() |>
@@ -451,8 +447,8 @@ est |>
   labs(
     title = "Predicted Probability of Scoring Event by Offensive Field Position",
     subtitle = stringr::str_wrap("Predicted probabilities from classification model trained on historical play by play data. Displaying probabilities using observed values approach from a random sample of plays", 90)
-  )+
-    guides(color = 'none')
+  ) +
+  guides(color = "none")
 
 ```
 
@@ -517,5 +513,152 @@ est2 |>
     title = "Expected Points by Offensive Field Position and Down",
     subtitle = stringr::str_wrap("Expected points using probabilities from classification model trained on historical play by play data. Displaying expected points using observed values approach from a random sample of plays", 90)
   )
+
+```
+
+# Predicted Points Added
+
+With the model in hand, I can predict the probability of the next scoring event for every play in order to compute the expected points within each game situation. The difference in expected points from play to play is the currency by which we can evaluate players/teams/offenses/defenses.
+
+## Examining a Drive
+
+Going back to the game between Texas A&M and Florida in 2012 as an example (chosen entirely at random and not at all because it was the final home game of my last year at A&M), we can examine the first drive in terms of expected points.
+
+```{r}
+#| class: scroll
+
+sample_plays <-
+  pbp_fit |>
+  augment(
+    prepared_pbp |>
+      inner_join(sample_games) |>
+      filter(drive_number == 1)
+  ) |>
+  calculate_expected_points() |>
+  calculate_points_added()
+
+plays_points_tbl <- function(plays) {
+  plays |>
+    rename(
+      ep_pre = expected_points_pre,
+      ep_post = expected_points_post,
+      ep_added = predicted_points_added,
+    ) |>
+    select(season, game_id, offense, defense, period, yards_to_goal, down, distance, play_text, ep_pre, ep_post, ep_added) |>
+    mutate_if(is.numeric, round, 3) |>
+    gt_tbl() |>
+    gt::cols_align(
+      columns = c("period", "down", "distance", "yards_to_goal", "ep_pre", "ep_post", "ep_added"),
+      align = "center"
+    ) |>
+    gt::data_color(
+      columns = c(
+        "ep_pre",
+        "ep_post",
+        "ep_added"
+      ),
+      method = "numeric",
+      domain = c(-10, 10),
+      palette = c("orange", "white", "dodgerblue"),
+      na_color = "white"
+    ) |>
+    gt::tab_options(
+        data_row.padding = px(20),
+        table.font.size = 12
+    ) |>
+    gt::cols_label(
+        yards_to_goal = "ytg"
+    )
+}
+
+sample_plays |>
+    group_by(season, game_id, period) |>
+    plays_points_tbl()
+```
+
+In this case, we can see how the results of plays added or lost points *in expectation*.
+
+The play with the most points added was Manziel's rush for 16 yards on 3 and 17 combined with a personal foul on Florida for an additional 15 yards. A long third down inside your own territory is a negative points situation for an offense; teams in this situation usually have to punt, which leads to the other teams being more likely to score with favorable field position. Converting on a long third down and moving to midfield results in a big change in the expected points you would get from the drive.
+
+An example of a negative points play is the previous play, with Manziel's pass to Swope for 2 yards on 2nd and 15. Even though this play gained yardage, the end result left them with a 3rd and long in their own territory.
+
+::: {.callout-note}
+
+The result of this drive was a field goal, where the expected points added (~0.75) equals the actual points (3) minus the expected points from the situation (~2.25).
+
+However the metric *Expected Points Added* typically doesn't include scoring plays. In analyzing an offense, I’ve seen others working with these types of model make a theoretical distinction between plays that add points vs plays that only result in a shift in the expected points of situation.
+
+*Predicted Points Added* uses both scoring plays and non scoring plays, taking into account both expected points and actual points added as a result of the play.
+:::
+
+## Examining Games
+
+Once we've scored plays, we can examine individual games to examine which plays had the biggest impact in terms of expected points. Here I'll examine a few games, chosen completely at random and in no way influenced by my fandom.
+
+### Texas A&M - Alabama 2012
+
+Kind of interesting - this game is remembered for a lot of plays by Johnny Manziel, but the most impactful plays in the game in terms of expected points changes were actually turnovers forced by the A&M defense.
+
+```{r}
+#| class: scroll
+
+pbp_fit |>
+  augment(
+    prepared_pbp |>
+      filter(game_id == 323150333)
+  ) |>
+  calculate_expected_points() |>
+  calculate_points_added() |>
+  top_plays_by_game() |>
+  plays_points_tbl()
+
+```
+
+### Texas A&M - Alabama 2021
+
+Another game chosen completely at random.
+
+```{r}
+#| class: scroll
+pbp_fit |>
+  augment(
+    prepared_pbp |>
+      filter(game_id == 401282103)
+  ) |>
+  calculate_expected_points() |>
+  calculate_points_added() |>
+  top_plays_by_game(var = predicted_points_added, n =10) |>
+  plays_points_tbl()
+
+```
+
+### Auburn - Georgia 2013
+
+```{r}
+#| class: scroll
+pbp_fit |>
+  augment(
+    prepared_pbp |>
+      filter(game_id == 333200002)
+  ) |>
+  calculate_expected_points() |>
+  calculate_points_added() |>
+  top_plays_by_game(var = predicted_points_added, n = 10) |>
+  plays_points_tbl()
+
+```
+
+### Michigan State - Michigan, 2015 (WOAH)
+
+```{r}
+pbp_fit |>
+  augment(
+    prepared_pbp |>
+      filter(game_id == 400763542)
+  ) |>
+  calculate_expected_points() |>
+  calculate_points_added() |>
+  top_plays_by_game(var = predicted_points_added, n = 10) |>
+  plays_points_tbl()
 
 ```

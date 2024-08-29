@@ -469,12 +469,19 @@ list(
         split_pbp$data
       )
   ),
-  # # pbp predict with final model
-  # tar_target(
-  #   pbp_all_preds,
-  #   pbp_final_fit |>
-  #     augment(split_pbp$data)
-  # )
+  # predict all plays with final model
+  tar_target(
+    pbp_all_preds,
+    pbp_final_fit |>
+      augment(split_pbp$data)
+  ),
+  # calculate expected points
+  tar_target(
+    pbp_predicted,
+    pbp_all_preds |>
+      calculate_expected_points() |>
+      calculate_points_added()
+  ),
   # quarto
   tar_quarto(
     reports,
