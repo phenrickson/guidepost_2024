@@ -120,7 +120,7 @@ clean_yards <- function(data) {
       ) |>
       select(-yard_line_str)
   }
-
+  
   # recalculate yards_to_goal
   clean_yards_to_goal <- function(data) {
     data |>
@@ -129,7 +129,7 @@ clean_yards <- function(data) {
         offense != home ~ yard_line
       ))
   }
-
+  
   data |>
     clean_yard_line() |>
     clean_yards_to_goal()
@@ -176,6 +176,7 @@ filter_plays <- function(data) {
 # implement pbp functions
 prepare_pbp <- function(data) {
   data |>
+    filter_plays() |>
     add_play_time() |>
     filter_play_type() |>
     select(
@@ -418,32 +419,10 @@ add_scoring_plays <- function(data) {
     dplyr::mutate(
       #-- Touchdowns----
       scoring_play = ifelse(.data$play_type %in% score_text(), 1, 0),
-      td_play = ifelse(stringr::str_detect(.data$play_text, regex("touchdown|for a TD", ignore_case = TRUE)) &
-        !is.na(.data$play_text), 1, 0),
-      touchdown = ifelse(stringr::str_detect(.data$play_type, regex("touchdown", ignore_case = TRUE)), 1, 0),
-      safety = ifelse(stringr::str_detect(.data$play_text, regex("safety", ignore_case = TRUE)), 1, 0)
-    )
-}
-
-add_rush_plays <- function(data) {
-  data |>
-    mutate(
-      rush = ifelse(
-        (.data$play_type == "Rush" & !is.na(.data$play_text)) |
-          .data$play_type == "Rushing Touchdown" |
-          (.data$play_type == "Safety" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)) |
-          (.data$play_type == "Fumble Recovery (Opponent)" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)) |
-          (.data$play_type == "Fumble Recovery (Opponent) Touchdown" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)) |
-          (.data$play_type == "Fumble Recovery (Own)" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)) |
-          (.data$play_type == "Fumble Recovery (Own) Touchdown" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)) |
-          (.data$play_type == "Fumble Return Touchdown" &
-            stringr::str_detect(.data$play_text, regex("run for", ignore_case = TRUE)) & !is.na(.data$play_text)), 1, 0
-      )
+      td_play = ifelse(stringr::str_detect(.data$play_text, stringr::regex("touchdown|for a TD", ignore_case = TRUE)) &
+                         !is.na(.data$play_text), 1, 0),
+      touchdown = ifelse(stringr::str_detect(.data$play_type, stringr::regex("touchdown", ignore_case = TRUE)), 1, 0),
+      safety = ifelse(stringr::str_detect(.data$play_text, stringr::regex("safety", ignore_case = TRUE)), 1, 0)
     )
 }
 
@@ -457,61 +436,69 @@ add_pass_plays <- function(data) {
           .data$play_type == "Sack" |
           .data$play_type == "Pass" |
           .data$play_type == "Interception" |
+          .data$play_type == "Pass Interception" |
           .data$play_type == "Pass Interception Return" |
           .data$play_type == "Interception Return Touchdown" |
           (.data$play_type == "Pass Incompletion" & !is.na(.data$play_text)) |
           .data$play_type == "Sack Touchdown" |
           (.data$play_type == "Safety" &
-            stringr::str_detect(.data$play_text, regex("sacked",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("sacked",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Safety" &
-            stringr::str_detect(.data$play_text, regex("pass complete",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Own)" &
-            stringr::str_detect(.data$play_text, regex("pass complete|pass incomplete|pass intercepted",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete|pass incomplete|pass intercepted",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Own)" &
-            stringr::str_detect(.data$play_text, regex("sacked",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("sacked",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Own) Touchdown" &
-            stringr::str_detect(.data$play_text, regex("pass complete|pass incomplete|pass intercepted",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete|pass incomplete|pass intercepted",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Opponent)" &
-            stringr::str_detect(.data$play_text, regex("pass complete|pass incomplete|pass intercepted",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete|pass incomplete|pass intercepted",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Opponent)" &
-            stringr::str_detect(.data$play_text, regex("sacked",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("sacked",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Recovery (Opponent) Touchdown" &
-            stringr::str_detect(.data$play_text, regex("pass complete|pass incomplete",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete|pass incomplete",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Return Touchdown" &
-            stringr::str_detect(.data$play_text, regex("pass complete|pass incomplete",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)) |
+             stringr::str_detect(.data$play_text, stringr::regex("pass complete|pass incomplete",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)) |
           (.data$play_type == "Fumble Return Touchdown" &
-            stringr::str_detect(.data$play_text, regex("sacked",
-              ignore_case = TRUE
-            )) & !is.na(.data$play_text)), 1, 0
-      ),
+             stringr::str_detect(.data$play_text, stringr::regex("sacked",
+                                                                 ignore_case = TRUE
+             )) & !is.na(.data$play_text)), 1, 0
+      )
+    )
+}
+
+add_play_types <- function(data) {
+  data |>
+    add_pass_plays() |>
+    mutate(
       int = ifelse(.data$play_type %in% c("Interception Return", "Interception Return Touchdown"), 1, 0),
       int_td = ifelse(.data$play_type %in% c("Interception Return Touchdown"), 1, 0),
       pass_completion = ifelse(.data$play_type %in% c("Pass Reception", "Pass Completion", "Passing Touchdown") |
-        ((.data$play_type %in% c(
-          "Fumble Recovery (Own)",
-          "Fumble Recovery (Own) Touchdown",
-          "Fumble Recovery (Opponent)",
-          "Fumble Recovery (Opponent) Touchdown"
-        ) & .data$pass == 1 &
-          !stringr::str_detect(.data$play_text, "sacked"))), 1, 0),
+                                 ((.data$play_type %in% c(
+                                   "Fumble Recovery (Own)",
+                                   "Fumble Recovery (Own) Touchdown",
+                                   "Fumble Recovery (Opponent)",
+                                   "Fumble Recovery (Opponent) Touchdown"
+                                 ) & .data$pass == 1 &
+                                   !stringr::str_detect(.data$play_text, "sacked"))), 1, 0),
       pass_attempt = ifelse(.data$play_type %in% c(
         "Pass Reception",
         "Pass Completion",
@@ -543,22 +530,65 @@ add_pass_plays <- function(data) {
     )
 }
 
+add_rush_plays <- function(data) {
+  data |>
+    mutate(
+      rush = case_when(
+        stringr::str_detect(play_type, "Rush") ~ 1,
+        !stringr::str_detect(play_text, "(pass complete|pass incomplete|pass intercept)") & stringr::str_detect(play_type, "Fumble Recovery") & stringr::str_detect(play_text, "run for ") ~ 1,
+        TRUE ~ 0
+      )
+    )
+}
+
+add_play_category <- function(data, remove = T) {
+  tmp <-
+    data |>
+    add_pass_plays() |>
+    add_rush_plays() |>
+    mutate(
+      play_category =
+        case_when(
+          pass == 1 & rush == 0 ~ "pass",
+          pass == 0 & rush == 1 ~ "rush",
+          pass == 0 & rush == 0 ~ "special",
+          # default to pass
+          pass == 1 & rush == 1 ~ "pass"
+        ),
+      play_situation = 
+        case_when(
+          play_category == 'pass' | play_category == 'rush' ~ 'offense/defense',
+          play_category == 'special' & play_type == 'Penalty' ~ 'offense/defense',
+          play_category == 'special' & play_type != 'Penalty' ~ 'special',
+          TRUE ~ 'offense/defense'
+        )
+    )
+  
+  if (remove == T) {
+    tmp |>
+      select(-any_of(c("rush", "pass")))
+  } else if (remove == F) {
+    tmp
+  }
+}
+
+
 add_kick_plays <- function(data) {
   data |>
     mutate(
       kickoff = ifelse(.data$play_type %in% kickoff_text(), 1, 0),
-      kickoff_tb = ifelse(stringr::str_detect(.data$play_text, regex("touchback", ignore_case = TRUE)) &
-        (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
-      kickoff_onside = ifelse(stringr::str_detect(.data$play_text, regex("on-side|onside|on side", ignore_case = TRUE)) &
-        (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
-      kickoff_oob = ifelse(stringr::str_detect(.data$play_text, regex("out-of-bounds|out of bounds", ignore_case = TRUE)) &
-        (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
-      kickoff_fair_catch = ifelse(stringr::str_detect(.data$play_text, regex("fair catch|fair caught", ignore_case = TRUE)) &
-        (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
-      kickoff_downed = ifelse(stringr::str_detect(.data$play_text, regex("downed", ignore_case = TRUE)) &
-        (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
+      kickoff_tb = ifelse(stringr::str_detect(.data$play_text, stringr::regex("touchback", ignore_case = TRUE)) &
+                            (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
+      kickoff_onside = ifelse(stringr::str_detect(.data$play_text, stringr::regex("on-side|onside|on side", ignore_case = TRUE)) &
+                                (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
+      kickoff_oob = ifelse(stringr::str_detect(.data$play_text, stringr::regex("out-of-bounds|out of bounds", ignore_case = TRUE)) &
+                             (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
+      kickoff_fair_catch = ifelse(stringr::str_detect(.data$play_text, stringr::regex("fair catch|fair caught", ignore_case = TRUE)) &
+                                    (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
+      kickoff_downed = ifelse(stringr::str_detect(.data$play_text, stringr::regex("downed", ignore_case = TRUE)) &
+                                (.data$kickoff == 1) & !is.na(.data$play_text), 1, 0),
       kickoff_safety = ifelse(!(.data$play_type %in% c("Blocked Punt", "Penalty")) & .data$safety == 1 &
-        stringr::str_detect(.data$play_text, regex("kickoff", ignore_case = TRUE)), 1, 0)
+                                stringr::str_detect(.data$play_text, stringr::regex("kickoff", ignore_case = TRUE)), 1, 0)
     )
 }
 
@@ -566,19 +596,19 @@ add_punt_plays <- function(data) {
   data |>
     mutate(
       punt = ifelse(.data$play_type %in% punt_text(), 1, 0),
-      punt_play = ifelse(stringr::str_detect(.data$play_text, regex("punt", ignore_case = TRUE)) &
-        !is.na(.data$play_text), 1, 0),
-      punt_tb = ifelse(stringr::str_detect(.data$play_text, regex("touchback", ignore_case = TRUE)) &
-        (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
-      punt_oob = ifelse(stringr::str_detect(.data$play_text, regex("out-of-bounds|out of bounds", ignore_case = TRUE)) &
-        (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
-      punt_fair_catch = ifelse(stringr::str_detect(.data$play_text, regex("fair catch|fair caught", ignore_case = TRUE)) &
-        (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
-      punt_downed = ifelse(stringr::str_detect(.data$play_text, regex("downed", ignore_case = TRUE)) &
-        (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
+      punt_play = ifelse(stringr::str_detect(.data$play_text, stringr::regex("punt", ignore_case = TRUE)) &
+                           !is.na(.data$play_text), 1, 0),
+      punt_tb = ifelse(stringr::str_detect(.data$play_text, stringr::regex("touchback", ignore_case = TRUE)) &
+                         (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
+      punt_oob = ifelse(stringr::str_detect(.data$play_text, stringr::regex("out-of-bounds|out of bounds", ignore_case = TRUE)) &
+                          (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
+      punt_fair_catch = ifelse(stringr::str_detect(.data$play_text, stringr::regex("fair catch|fair caught", ignore_case = TRUE)) &
+                                 (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
+      punt_downed = ifelse(stringr::str_detect(.data$play_text, stringr::regex("downed", ignore_case = TRUE)) &
+                             (.data$punt == 1) & !is.na(.data$play_text), 1, 0),
       punt_safety = ifelse((.data$play_type %in% c("Blocked Punt", "Punt")) & .data$safety == 1 &
-        stringr::str_detect(.data$play_text, regex("punt", ignore_case = TRUE)), 1, 0),
-      punt_blocked = ifelse(.data$punt == 1 & stringr::str_detect(.data$play_text, regex("blocked", ignore_case = TRUE)), 1, 0)
+                             stringr::str_detect(.data$play_text, stringr::regex("punt", ignore_case = TRUE)), 1, 0),
+      punt_blocked = ifelse(.data$punt == 1 & stringr::str_detect(.data$play_text, stringr::regex("blocked", ignore_case = TRUE)), 1, 0)
     )
 }
 
@@ -586,15 +616,15 @@ add_sack_plays <- function(data) {
   data |>
     mutate(
       sack = ifelse((.data$play_type %in% c("Sack", "Sack Touchdown") |
-        (.data$play_type %in% c(
-          "Fumble Recovery (Own)",
-          "Fumble Recovery (Own) Touchdown",
-          "Fumble Recovery (Opponent)",
-          "Fumble Recovery (Opponent) Touchdown"
-        ) &
-          .data$pass == 1 & stringr::str_detect(.data$play_text, "sacked")) |
-        (.data$play_type == "Safety" & stringr::str_detect(.data$play_text, regex("sacked", ignore_case = TRUE)))) &
-        !is.na(.data$play_text), 1, 0),
+                       (.data$play_type %in% c(
+                         "Fumble Recovery (Own)",
+                         "Fumble Recovery (Own) Touchdown",
+                         "Fumble Recovery (Opponent)",
+                         "Fumble Recovery (Opponent) Touchdown"
+                       ) &
+                         .data$pass == 1 & stringr::str_detect(.data$play_text, "sacked")) |
+                       (.data$play_type == "Safety" & stringr::str_detect(.data$play_text, regex("sacked", ignore_case = TRUE)))) &
+                      !is.na(.data$play_text), 1, 0),
     )
 }
 
@@ -622,10 +652,10 @@ add_penalty_plays <- function(data) {
   pen_offset_text <- stringr::str_detect(data$play_text, regex("off-setting", ignore_case = TRUE))
   #-- '1st Down' in play text ----
   pen_1st_down_text <- stringr::str_detect(data$play_text, regex("1st down", ignore_case = TRUE))
-
+  
   #-- Penalty play_types
   pen_type <- data$play_type == "Penalty" | data$play_type == "penalty"
-
+  
   #-- T/F flag conditions penalty_flag
   data$penalty_flag <- FALSE
   data$penalty_flag[pen_type] <- TRUE
@@ -649,8 +679,8 @@ add_penalty_plays <- function(data) {
   #-- T/F flag for penalty text but not penalty play type --
   data$penalty_text <- FALSE
   data$penalty_text[pen_text & !pen_type & !pen_declined_text &
-    !pen_offset_text & !pen_no_play_text] <- TRUE
-
+                      !pen_offset_text & !pen_no_play_text] <- TRUE
+  
   data |>
     dplyr::mutate(
       penalty_detail = case_when(
@@ -713,11 +743,11 @@ add_penalty_plays <- function(data) {
       ),
       penalty_play_text = ifelse(.data$penalty_flag, stringr::str_extract(.data$play_text, regex("Penalty(.+)", ignore_case = TRUE)), NA_character_),
       yds_penalty = ifelse(.data$penalty_flag,
-        stringr::str_extract(.data$penalty_play_text, "(.{0,3})yards to the |(.{0,3})yds to the |(.{0,3})yd to the "), NA_real_
+                           stringr::str_extract(.data$penalty_play_text, "(.{0,3})yards to the |(.{0,3})yds to the |(.{0,3})yd to the "), NA_real_
       ),
       yds_penalty = stringr::str_remove(.data$yds_penalty, " yards to the | yds to the | yd to the "),
       yds_penalty = ifelse(.data$penalty_flag & stringr::str_detect(.data$play_text, "ards\\)") & is.na(.data$yds_penalty),
-        stringr::str_extract(.data$play_text, "(.{0,4})yards\\)|(.{0,4})Yards\\)|(.{0,4})yds\\)|(.{0,4})Yds\\)"), .data$yds_penalty
+                           stringr::str_extract(.data$play_text, "(.{0,4})yards\\)|(.{0,4})Yards\\)|(.{0,4})yds\\)|(.{0,4})Yds\\)"), .data$yds_penalty
       ),
       yds_penalty = stringr::str_remove(.data$yds_penalty, "yards\\)|Yards\\)|yds\\)|Yds\\)"),
       yds_penalty = stringr::str_remove(.data$yds_penalty, "\\("),
@@ -742,68 +772,68 @@ clean_play_type <- function(data) {
     # cleaning play types
     mutate(
       play_type = ifelse(stringr::str_detect(.data$play_text, regex(" coin toss ", ignore_case = TRUE)),
-        "Coin Toss", .data$play_type
+                         "Coin Toss", .data$play_type
       ),
       ## Fix Strip-Sacks to Fumbles----
       play_type = ifelse(.data$fumble == 1 & .data$pass == 1 &
-        .data$change_of_poss == 1 & .data$td_play == 0 & .data$down != 4 &
-        !(.data$play_type %in% defense_score_text()),
-      "Fumble Recovery (Opponent)", .data$play_type
+                           .data$change_of_poss == 1 & .data$td_play == 0 & .data$down != 4 &
+                           !(.data$play_type %in% defense_score_text()),
+                         "Fumble Recovery (Opponent)", .data$play_type
       ),
       play_type = ifelse(.data$fumble == 1 & .data$pass == 1 &
-        .data$change_of_poss == 1 & .data$td_play == 1,
-      "Fumble Recovery (Opponent) Touchdown", .data$play_type
+                           .data$change_of_poss == 1 & .data$td_play == 1,
+                         "Fumble Recovery (Opponent) Touchdown", .data$play_type
       ),
       ## Fix rushes with fumbles and a change of possession to fumbles----
       play_type = ifelse(.data$fumble == 1 & .data$rush == 1 &
-        .data$change_of_poss == 1 & .data$td_play == 0 &
-        !(.data$play_type %in% defense_score_text()),
-      "Fumble Recovery (Opponent)", .data$play_type
+                           .data$change_of_poss == 1 & .data$td_play == 0 &
+                           !(.data$play_type %in% defense_score_text()),
+                         "Fumble Recovery (Opponent)", .data$play_type
       ),
       play_type = ifelse(.data$fumble == 1 & .data$rush == 1 &
-        .data$change_of_poss == 1 & .data$td_play == 1,
-      "Fumble Recovery (Opponent) Touchdown", .data$play_type
+                           .data$change_of_poss == 1 & .data$td_play == 1,
+                         "Fumble Recovery (Opponent) Touchdown", .data$play_type
       ),
       ## Portion of touchdown check for plays where touchdown is not listed in the play_type--
       td_check = ifelse(!str_detect(.data$play_type, "Touchdown"), 1, 0),
       #-- Fix kickoff fumble return TDs ----
       play_type = ifelse(.data$kickoff == 1 & .data$fumble == 1 &
-        .data$td_play == 1 & .data$td_check == 1,
-      paste0(.data$play_type, " Touchdown"),
-      .data$play_type
+                           .data$td_play == 1 & .data$td_check == 1,
+                         paste0(.data$play_type, " Touchdown"),
+                         .data$play_type
       ),
       #-- Fix punt return TDs ----
       play_type = ifelse(.data$punt_play == 1 & .data$td_play == 1 & .data$td_check == 1,
-        paste0(.data$play_type, " Touchdown"),
-        .data$play_type
+                         paste0(.data$play_type, " Touchdown"),
+                         .data$play_type
       ),
       #-- Fix kick return TDs----
       play_type = ifelse(.data$kickoff == 1 & .data$fumble == 0 &
-        .data$td_play == 1 & .data$td_check == 1,
-      "Kickoff Return Touchdown",
-      .data$play_type
+                           .data$td_play == 1 & .data$td_check == 1,
+                         "Kickoff Return Touchdown",
+                         .data$play_type
       ),
       #-- Fix rush/pass tds that aren't explicit----
       play_type = ifelse(.data$td_play == 1 & .data$rush == 1 &
-        .data$fumble == 0 & .data$td_check == 1,
-      "Rushing Touchdown",
-      .data$play_type
+                           .data$fumble == 0 & .data$td_check == 1,
+                         "Rushing Touchdown",
+                         .data$play_type
       ),
       play_type = ifelse(.data$td_play == 1 & .data$pass == 1 & .data$td_check == 1 &
-        .data$fumble == 0 & !(.data$play_type %in% int_text()),
-      "Passing Touchdown",
-      .data$play_type
+                           .data$fumble == 0 & !(.data$play_type %in% int_text()),
+                         "Passing Touchdown",
+                         .data$play_type
       ),
       play_type = ifelse(.data$pass == 1 & .data$play_type == "Pass Reception" &
-        .data$yards_gained == .data$yards_to_goal &
-        .data$fumble == 0 & !(.data$play_type %in% int_text()),
-      "Passing Touchdown",
-      .data$play_type
+                           .data$yards_gained == .data$yards_to_goal &
+                           .data$fumble == 0 & !(.data$play_type %in% int_text()),
+                         "Passing Touchdown",
+                         .data$play_type
       ),
       play_type = ifelse(.data$play_type == "Blocked Field Goal" &
-        stringr::str_detect(.data$play_text, regex("for a TD", ignore_case = TRUE)),
-      "Blocked Field Goal Touchdown",
-      .data$play_type
+                           stringr::str_detect(.data$play_text, regex("for a TD", ignore_case = TRUE)),
+                         "Blocked Field Goal Touchdown",
+                         .data$play_type
       ),
       #-- Fix duplicated TD play_type labels----
       play_type = ifelse(.data$play_type == "Punt Touchdown Touchdown", "Punt Touchdown", .data$play_type),
@@ -812,33 +842,33 @@ clean_play_type <- function(data) {
       play_type = ifelse(.data$play_type == "Uncategorized Touchdown Touchdown", "Uncategorized Touchdown", .data$play_type),
       #-- Fix Pass Interception Return TD play_type labels----
       play_type = ifelse(stringr::str_detect(.data$play_text, "pass intercepted for a TD") & !is.na(.data$play_text),
-        "Interception Return Touchdown", .data$play_type
+                         "Interception Return Touchdown", .data$play_type
       ),
       #-- Fix Sack/Fumbles Touchdown play_type labels----
       play_type = ifelse(stringr::str_detect(.data$play_text, regex("sacked", ignore_case = TRUE)) &
-        stringr::str_detect(.data$play_text, regex("fumbled", ignore_case = TRUE)) &
-        stringr::str_detect(.data$play_text, regex("TD", ignore_case = TRUE)) &
-        !is.na(.data$play_text),
-      "Fumble Recovery (Opponent) Touchdown", .data$play_type
+                           stringr::str_detect(.data$play_text, regex("fumbled", ignore_case = TRUE)) &
+                           stringr::str_detect(.data$play_text, regex("TD", ignore_case = TRUE)) &
+                           !is.na(.data$play_text),
+                         "Fumble Recovery (Opponent) Touchdown", .data$play_type
       ),
       #-- Fix generic pass plays ----
       ## -- first one looks for complete pass
       play_type = ifelse(.data$play_type == "Pass" & str_detect(.data$play_text, "pass complete"),
-        "Pass Completion", .data$play_type
+                         "Pass Completion", .data$play_type
       ),
       ## -- second one looks for incomplete pass
       play_type = ifelse(.data$play_type == "Pass" & str_detect(.data$play_text, "pass incomplete"),
-        "Pass Incompletion", .data$play_type
+                         "Pass Incompletion", .data$play_type
       ),
       ## -- third one looks for interceptions
       play_type = ifelse(.data$play_type == "Pass" & str_detect(.data$play_text, "pass intercepted"),
-        "Pass Interception", .data$play_type
+                         "Pass Interception", .data$play_type
       ),
       ## -- fourth one looks for sacked
       play_type = ifelse(.data$play_type == "Pass" & str_detect(.data$play_text, "sacked"), "Sack", .data$play_type),
       ## -- fifth one play type is Passing Touchdown, but its intercepted
       play_type = ifelse(.data$play_type == "Passing Touchdown" & str_detect(.data$play_text, "pass intercepted for a TD"),
-        "Interception Return Touchdown", .data$play_type
+                         "Interception Return Touchdown", .data$play_type
       ),
       #--- Moving non-Touchdown pass interceptions to one play_type: "Interception Return" -----
       play_type = ifelse(.data$play_type == "Interception", "Interception Return", .data$play_type),
@@ -846,28 +876,28 @@ clean_play_type <- function(data) {
       play_type = ifelse(.data$play_type == "Pass Interception Return", "Interception Return", .data$play_type),
       #--- Moving Kickoff/Punt Touchdowns without fumbles to Kickoff/Punt Return Touchdown
       play_type = ifelse(.data$play_type == "Kickoff Touchdown" & .data$fumble == 0,
-        "Kickoff Return Touchdown", .data$play_type
+                         "Kickoff Return Touchdown", .data$play_type
       ),
       play_type = ifelse(.data$play_type %in% c("Kickoff", "Kickoff Return (Offense)") &
-        .data$fumble == 1 & .data$change_of_poss == 0,
-      "Kickoff Team Fumble Recovery", .data$play_type
+                           .data$fumble == 1 & .data$change_of_poss == 0,
+                         "Kickoff Team Fumble Recovery", .data$play_type
       ),
       play_type = ifelse(.data$play_type == "Punt Touchdown" &
-        (.data$fumble == 0 | (.data$fumble == 1 & .data$game_id == 401112100)),
-      "Punt Return Touchdown", .data$play_type
+                           (.data$fumble == 0 | (.data$fumble == 1 & .data$game_id == 401112100)),
+                         "Punt Return Touchdown", .data$play_type
       ),
       play_type = ifelse(.data$play_type == "Punt" & .data$fumble == 1 & .data$change_of_poss == 0,
-        "Punt Team Fumble Recovery", .data$play_type
+                         "Punt Team Fumble Recovery", .data$play_type
       ),
       play_type = ifelse(.data$play_type == "Punt Touchdown", "Punt Team Fumble Recovery Touchdown", .data$play_type),
       play_type = ifelse(.data$play_type == "Kickoff Touchdown", "Kickoff Team Fumble Recovery Touchdown", .data$play_type),
       play_type = ifelse(.data$play_type == "Fumble Return Touchdown" & (.data$pass == 1 | .data$rush == 1),
-        "Fumble Recovery (Opponent) Touchdown", .data$play_type
+                         "Fumble Recovery (Opponent) Touchdown", .data$play_type
       ),
       #--- Safeties (kickoff, punt, penalty) ----
       play_type = ifelse(.data$play_type %in% c("Pass Reception", "Rush", "Rushing Touchdown") &
-        (.data$pass == 1 | .data$rush == 1) & .data$safety == 1,
-      "Safety", .data$play_type
+                           (.data$pass == 1 | .data$rush == 1) & .data$safety == 1,
+                         "Safety", .data$play_type
       ),
       play_type = ifelse(.data$kickoff_safety == 1, "Kickoff (Safety)", .data$play_type),
       play_type = ifelse(.data$punt_safety == 1, paste0(.data$play_type, " (Safety)"), .data$play_type),
@@ -889,7 +919,7 @@ clean_play_type <- function(data) {
 
 add_score_events <- function(
     data, td_text = "TD$", fg_text = "^(FG|FG GOOD)$",
-    safety_text = "SF$", turnover_text = "(FG MISSED TD|FUMBLE TD|FUMBLE RETURN TD|MISSED_FG_TD|PUNT RETURN TD|PUNT TD|DOWNS TD)") {
+    safety_text = "SF$", turnover_text = "(INT TD|INT RETURN TOUCH|FG MISSED TD|FUMBLE TD|FUMBLE RETURN TD|MISSED_FG_TD|PUNT RETURN TD|PUNT TD|DOWNS TD)") {
   data |>
     mutate(
       score_event = case_when(
@@ -972,15 +1002,15 @@ add_score_events <- function(
     # convert to factor
     mutate(
       next_score_event_offense = factor(next_score_event_offense,
-        levels = c(
-          "TD",
-          "FG",
-          "Safety",
-          "No_Score",
-          "Opp_Safety",
-          "Opp_FG",
-          "Opp_TD"
-        )
+                                        levels = c(
+                                          "TD",
+                                          "FG",
+                                          "Safety",
+                                          "No_Score",
+                                          "Opp_Safety",
+                                          "Opp_FG",
+                                          "Opp_TD"
+                                        )
       )
     )
 }
@@ -991,12 +1021,12 @@ calculate_expected_points <- function(x) {
     mutate(
       expected_points =
         0 * .pred_No_Score +
-          7 * .pred_TD +
-          3 * .pred_FG +
-          2 * .pred_Safety +
-          -2 * .pred_Opp_Safety +
-          -3 * .pred_Opp_FG +
-          -7 * .pred_Opp_TD
+        7 * .pred_TD +
+        3 * .pred_FG +
+        2 * .pred_Safety +
+        -2 * .pred_Opp_Safety +
+        -3 * .pred_Opp_FG +
+        -7 * .pred_Opp_TD
     )
 }
 
@@ -1034,4 +1064,369 @@ calculate_points_added <- function(data) {
       )
     ) |>
     ungroup()
+}
+
+add_score_effects <- function(data) {
+  data |>
+    mutate(
+      home_score = case_when(
+        drive_is_home_offense == T ~ offense_score,
+        drive_is_home_offense == F ~ defense_score
+      ),
+      away_score = case_when(
+        drive_is_home_offense == T ~ defense_score,
+        drive_is_home_offense == F ~ offense_score
+      ),
+      home_margin = home_score - away_score,
+      garbage_time = case_when(
+        period == 2 & abs(home_margin) >= 38 ~ 1,
+        period == 3 & abs(home_margin) > 28 ~ 1,
+        period == 4 & abs(home_margin) > 22 ~ 1,
+        TRUE ~ 0
+      )
+    )
+}
+
+add_home_field <- function(data) {
+  data |>
+    mutate(
+      home_field_advantage = case_when(
+        drive_is_home_offense == 1 & neutral_site == 0 ~ 1,
+        TRUE ~ 0
+      )
+    )
+}
+
+join_team_divisions <- function(data, games = cfbd_game_info_tbl) {
+  data |>
+    left_join(
+      games |>
+        select(game_id, season_type, home = home_team, away = away_team, home_division, away_division)
+    )
+}
+
+join_game_info <- function(data, games = cfbd_game_info_tbl) {
+  data |>
+    inner_join(
+      games |>
+        select(
+          season,
+          season_type,
+          game_id,
+          neutral_site,
+          week,
+          home = home_team,
+          away = away_team,
+          home_division,
+          away_division
+        )
+    )
+}
+
+prepare_efficiency <- function(data, games, game_type = c("regular")) {
+  data |>
+    join_game_info(games = games) |>
+    filter(season_type %in% game_type) |>
+    add_play_category() |>
+    add_score_effects() |>
+    add_home_field() |>
+    factor_team_names() |>
+    select(
+      season_type,
+      season,
+      week,
+      game_id,
+      play_id,
+      play_type,
+      play_category,
+      play_situation,
+      play_text,
+      neutral_site,
+      home,
+      away,
+      home_division,
+      away_division,
+      offense, defense,
+      offense_id, defense_id,
+      garbage_time, home_field_advantage,
+      predicted_points_added,
+      expected_points_added,
+      points_added
+    )
+}
+
+efficiency_model = function() {
+  
+  linear_reg(
+    penalty = 0.001,
+    mixture = 0
+  )|>
+    set_engine("glmnet")
+  
+}
+
+build_efficiency_recipe = function(data, 
+                                   outcome = "expected_points_added",
+                                   predictors =  c("home_field_advantage", "offense_id", "defense_id"),
+                                   ids =  c("game_id", "home", "away")) {
+  
+  data |>
+    build_recipe(outcome = outcome,
+                 predictors = predictors,
+                 ids = ids) |>
+    step_dummy(
+      offense_id,
+      defense_id,
+      one_hot = T,
+      naming = dummy_teams
+    )
+  
+}
+
+dummy_teams = function(var, lvl, ordinal = FALSE, sep = "_")  {
+  args <- vctrs::vec_recycle_common(var, lvl)
+  var <- args[[1]]
+  lvl <- args[[2]]
+  
+  paste(var, as.character(lvl), sep = sep)
+}
+
+build_efficiency_wflow = function(data, metric = "expected_points_added", model  = efficiency_model(), ...) {
+  
+  rec = 
+    data |>
+    build_efficiency_recipe(
+      outcome = metric
+    )
+  
+  workflow() |>
+    add_recipe(
+      rec
+    ) |>
+    add_model(
+      model
+    )
+  
+}
+
+estimate_efficiency = function(data, metric = "expected_points_added", ...) {
+  
+  # remove missingness from outcome
+  prepared =
+    data |>
+    filter(if_any(all_of(metric), ~ !is.na(.)))
+  
+  wflow = 
+    prepared |>
+    # remove NAs
+    filter(if_any(all_of(metric), ~ !is.na(.))) |>
+    build_efficiency_wflow(metric = metric,
+                           ...)
+  
+  fit = 
+    wflow |>
+    fit(prepared)
+  
+  metric_label = case_when(metric == 'expected_points_added' ~ 'epa',
+                           metric == 'predicted_points_added' ~ 'ppa')
+  
+  coefs = 
+    fit |>
+    tidy() 
+  
+  intercept =
+    coefs |>
+    filter(term == "(Intercept)") |>
+    pull(estimate)
+  
+  out = 
+    coefs |>
+    filter(term != ("(Intercept)"),
+           term != "home_field_advantage") |>
+    mutate(
+      type = sub("_.*", "", term),
+      team = sub("^[^_]*_id_", "", term),
+      metric = metric_label,
+      intercept = intercept
+    )
+  
+  out |>
+    select(
+      metric,
+      type, 
+      team, 
+      estimate,
+      intercept
+    ) |>
+    mutate(
+      estimate = case_when(grepl("defense", type) ~ -estimate,
+                           TRUE ~ estimate)
+    )
+  
+}
+
+estimate_efficiency_overall = function(data, metric = 'expected_points_added') {
+  
+  data |>
+    nest(data = -c(season, play_situation)) |>
+    mutate(estimated = map(data, ~ estimate_efficiency(.x, metric = metric))) |>
+    select(-data) |>
+    unnest(estimated)
+}
+
+estimate_efficiency_category = function(data, metric = 'expected_points_added') {
+  
+  data |>
+    filter(play_category %in% c('pass', 'rush'), garbage_time == 0) |>
+    nest(data = -c(season, play_category)) |>
+    mutate(estimated = map(data, ~ estimate_efficiency(.x, metric = metric))) |>
+    select(-data) |>
+    unnest(estimated) 
+}
+
+calculate_efficiency <- function(data, groups = c("season", "type", "team")) {
+  data |>
+    pivot_longer(
+      cols = c(offense, defense),
+      names_to = c("type"),
+      values_to = c("team")
+    ) |>
+    group_by(across(any_of(groups))) |>
+    summarize(
+      ppa = mean(predicted_points_added, na.rm = T),
+      epa = mean(expected_points_added, na.rm = T),
+      .groups = "drop"
+    ) |>
+    pivot_longer(
+      cols = c(ppa, epa),
+      names_to = c("metric"),
+      values_to = c("estimate")
+    ) |>
+    mutate(
+      method = 'raw',
+      type = factor(type, levels = c("offense", "defense")),
+      estimate = case_when(
+        grepl("defense", type) ~ -1 * estimate,
+        TRUE ~ estimate
+      )
+    ) |>
+    select(season, method, metric, any_of(groups), estimate)
+}
+
+add_overall_efficiency <- function(data, metric = "ppa") {
+  data |>
+    filter(metric == metric) |>
+    pivot_wider(
+      names_from = c("type"),
+      values_from = c("estimate")
+    ) |>
+    mutate(
+      overall = offense + defense
+    ) |>
+    select(any_of(c("season", "team", "metric", "overall", "offense", "defense"))) |>
+    pivot_longer(
+      cols = c("overall", "offense", "defense"),
+      names_to = c("type"),
+      values_to = c("estimate")
+    ) |>
+    mutate(
+      type = factor(type, levels = c("overall", "offense", "defense"))
+    )
+}
+
+add_team_ranks = function(data, groups = c("season", "type", "metric")) {
+  
+  data |>
+    group_by(across(any_of(groups))) |>
+    mutate(rank = rank(-estimate))|>
+    ungroup()
+  
+}
+
+
+plot_efficiency_all_teams = function(data, seed = 1) {
+  
+  all_teams_data <-
+    data |>
+    mutate(season = factor(season)) |>
+    group_by(across(any_of(c("metric", "type")))) |>
+    mutate(min = min(estimate)) |>
+    ungroup()
+  
+  all_teams_data |>
+    ggplot(aes(
+      x = season,
+      y = estimate
+    )) +
+    geom_point(
+      alpha = 0.2,
+      shape = 19,
+      color = "grey80",
+      position = position_auto(scale = F, seed = seed)
+    ) +
+    facet_grid(type ~ ., scales = "free_y") +
+    guides(color = "none") +
+    geom_hline(yintercept = 0, linetype = "dotted") +
+    theme_cfb()
+  
+}
+
+plot_efficiency_by_team = function(data, teams, seed = 1) {
+  
+  all_teams_plot <- plot_efficiency_all_teams(data, seed = seed)
+  all_teams_data = all_teams_plot$data
+  
+  selected_teams <- tibble(team = teams)
+  team_data <- all_teams_data |>
+    inner_join(selected_teams, by = join_by(team))
+  
+  
+  all_teams_plot +
+    geom_point(
+      data = team_data,
+      aes(color = team)
+    ) +
+    geom_line(
+      data = team_data,
+      aes(group = team, color = team),
+      lwd = 1.2,
+      alpha = 0.8
+    ) +
+    cfbplotR::scale_colour_cfb(guide = guide_legend()) +
+    theme(
+      legend.position = 'top',
+      axis.text.x = element_text(size = 8),
+      plot.subtitle = element_text(size = 8),
+      plot.title = element_text(h = 0.5, size = 14),
+      panel.grid.major = element_blank()
+    ) +
+    ylab("Team Net Points per Play")+
+    xlab("Season")
+}
+
+plot_team_efficiency <- function(data, teams = "Texas A&M", seed = 1) {
+  
+  team_plot = 
+    plot_efficiency_by_team(data = data, teams = teams, seed = seed)
+  
+  team_data = 
+    team_plot$data |>
+    inner_join(
+      tibble(team = teams),
+      by = join_by(team)
+    )
+  
+  team_plot + 
+    guides(color = 'none') +
+    # add season ranks
+    geom_text(
+      data = team_data,
+      aes(y = min + 0.025,
+          label = rank,
+          color = team
+      ),
+      size = 3
+    ) +
+    labs(title = paste("Team Efficiency by Season", paste(teams, sep = ","), sep = " - "),
+         subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their season rank."), 120))
 }

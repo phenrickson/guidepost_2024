@@ -30,6 +30,7 @@ tar_option_set(
     "dplyr",
     "tidyr",
     "purrr",
+    "stringr",
     "tidymodels",
     "glmnet"
   ),
@@ -140,7 +141,7 @@ list(
         season = seasons,
         type = c("regular", "postseason")
       )
-
+      
       map2_df(
         .x = tmp$season,
         .y = tmp$type,
@@ -159,7 +160,7 @@ list(
         season = seasons,
         type = c("regular", "postseason")
       )
-
+      
       map2_df(
         .x = tmp$season,
         .y = tmp$type,
@@ -292,6 +293,26 @@ list(
         as_tibble()
     )
   ),
+  # get historical conferences and divisions
+  # divisions
+  tar_target(
+    team_divisions,
+    cfbd_game_info_tbl |>
+      select(season, home_team, away_team, home_division, away_division) |>
+      find_team_divisions()
+  ),
+  # conferences
+  tar_target(
+    team_conferences,
+    cfbd_team_info_tbl |>
+      select(
+        season,
+        school,
+        conference,
+        division
+      ) |>
+      distinct()
+  ),
   # dynamic branch over seasons, weeks, and season type to get play by play
   tar_target(
     cfbd_season_week_games,
@@ -333,7 +354,6 @@ list(
   tar_target(
     prepared_pbp,
     filtered_pbp |>
-      filter_plays() |>
       prepare_pbp() |>
       add_score_events()
   ),
@@ -431,8 +451,8 @@ list(
       last_fit(
         split =
           split_pbp |>
-            validation_set() |>
-            pluck("splits", 1),
+          validation_set() |>
+          pluck("splits", 1),
         metrics = class_metrics
       )
   ),
@@ -472,7 +492,8 @@ list(
   # predict all plays with final model
   tar_target(
     pbp_all_preds,
-    pbp_final_fit |>
+    pbp_last_fit |>
+      extract_workflow() |>
       augment(split_pbp$data)
   ),
   # calculate expected points
@@ -482,9 +503,43 @@ list(
       calculate_expected_points() |>
       calculate_points_added()
   ),
-  # quarto
-  tar_quarto(
-    reports,
-    quiet = F
+  # prepare for efficiency
+  tar_target(
+    pbp_efficiency,
+    pbp_predicted |>
+      prepare_efficiency(games = cfbd_game_info_tbl)
+  ),
+  # now add in efficiency estimates
+  # overall
+  tar_target(
+    raw_efficiency_overall,
+    pbp_efficiency |>
+      calculate_efficiency(groups = c("season", "type", "team"))
+  ),
+  tar_target(
+    adjusted_efficiency_overall_epa,
+    pbp_efficiency |>
+      estimate_efficiency_overall(metric = 'expected_points_added')
+  ),
+  tar_target(
+    adjusted_efficiency_overall_ppa,
+    pbp_efficiency |>
+      estimate_efficiency_overall(metric = 'predicted_points_added')
+  ),
+  # pass/rush
+  tar_target(
+    adjusted_efficiency_category_epa,
+    pbp_efficiency |>
+      estimate_efficiency_category(metric = 'expected_points_added')
+  ),
+  tar_target(
+    adjusted_efficiency_category_ppa,
+    pbp_efficiency |>
+      estimate_efficiency_category(metric = 'predicted_points_added')
   )
+  # # quarto
+  # tar_quarto(
+  #   reports,
+  #   quiet = F
+  # )
 )

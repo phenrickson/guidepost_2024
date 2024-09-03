@@ -46,65 +46,78 @@ get_game_player_stats <- function(data) {
   )
 }
 
-clean_plays_func <-
-  function(data) {
-    data |>
-      mutate(ID = as.numeric(ID)) %>%
-      group_by(GAME_ID) %>%
-      arrange(ID) %>%
-      # clean up PERIOD by game
-      mutate(STATUS_PERIOD = case_when(
-        PERIOD == 0 & nchar(PLAY_TEXT) <= 1 ~ "Drop",
-        PERIOD == 0 ~ "Take Previous Value",
-        TRUE ~ "No Change"
-      )) %>%
-      filter(STATUS_PERIOD != "Drop") %>%
-      mutate(PERIOD = case_when(
-        STATUS_PERIOD == "Take Previous Value" ~ lag(PERIOD, 1),
-        TRUE ~ PERIOD
-      )) %>%
-      ungroup() %>%
-      # then clean up the down
-      mutate(STATUS_DOWN = case_when(
-        DOWN %in% c(1, 2, 3, 4) ~ "Regular Down",
-        TRUE ~ "Change to Special Teams"
-      )) %>%
-      mutate(DOWN = case_when(
-        DOWN %in% c(1, 2, 3, 4) ~ DOWN,
-        TRUE ~ -1
-      )) %>%
-      # flag yard lines that are outside correct
-      mutate(STATUS_YARD_LINE = case_when(
-        YARD_LINE < 0 | YARD_LINE > 100 ~ "Invalid",
-        TRUE ~ "Valid"
-      ))
-  }
-
-make_time_features_func <-
-  function(x) {
-    x %>%
-      mutate(TIME = gsub('\\{|}|"', "", CLOCK)) %>%
-      separate(TIME, into = c("MINUTES", "SECOND"), sep = ",") %>%
-      mutate(MINUTES = as.numeric(gsub("minutes:", "", MINUTES))) %>%
-      mutate(SECOND = as.numeric(gsub("seconds:", "", SECOND))) %>%
-      mutate(MINUTES_IN_HALF = case_when(
-        PERIOD == 1 ~ MINUTES + 15,
-        PERIOD == 2 ~ MINUTES,
-        PERIOD == 3 ~ MINUTES + 15,
-        PERIOD == 4 ~ MINUTES
-      )) %>%
-      mutate(SECONDS_IN_HALF = MINUTES_IN_HALF * 60 + SECOND)
-    #    mutate(SECONDS_IN_HALF = )
-  }
-
 theme_cfb = function(base_size = 11) {
 
   theme_light() %+replace%
     theme(
       plot.subtitle = element_text(size = 10, hjust = 0, vjust = 1, margin = margin(b = base_size/2)),
       legend.title = element_blank(),
+      panel.grid.minor = element_blank()
       )+
     theme(
       legend.position = 'top'
     )
+}
+
+rename_home_away <- function(data, text = "home") {
+  data |>
+    rename_with(
+      .fn = ~ gsub(paste0("^", text, "_"), "", .x),
+      .cols = starts_with(text)
+    )
+}
+
+find_team_divisions <- function(data) {
+  tmp <-
+    data |>
+    mutate(
+      across(
+        c(home_division, away_division),
+        ~ replace_na(.x, "fcs")
+      )
+    )
+
+  home <-
+    tmp |>
+    select(season, starts_with("home")) |>
+    rename_home_away("home")
+
+  away <-
+    tmp |>
+    select(season, starts_with("away")) |>
+    rename_home_away("away")
+
+  bind_rows(
+    home, away
+  ) |>
+    distinct() |>
+    arrange(season)
+}
+
+filter_to_fbs <- function(data, divisions = team_divisions) {
+  data |>
+  inner_join(
+    divisions |>
+    filter(division == "fbs"),
+    by = join_by(season, team)
+  )
+}
+
+factor_team_names <- function(data, ref = "fcs") {
+  data |>
+  mutate(
+    offense_id = case_when(
+      offense == home & home_division == "fbs" ~ home,
+      offense != home & away_division == 'fbs' ~ away,
+      TRUE ~ ref
+    ),
+    defense_id = case_when(
+      defense == home & home_division == "fbs" ~ home,
+      defense != home & away_division == 'fbs' ~ away,
+      TRUE ~ ref
+    )
+  ) |>
+  mutate(
+    across(c("offense_id", "defense_id"), ~ relevel(factor(.x), ref = ref))
+  )
 }
