@@ -18,6 +18,7 @@ format:
     toc: true
     fig-align: center
     theme: cerulean
+    html-table-processing: none
     include-in-header:
     - text: |
           <style>
