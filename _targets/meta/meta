@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|8c5b7686944bad7c|||||||||||||||
+.Random.seed|object|563f50aa562d62ea|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
 add_expected_points|function|0bf3484101e66081|||||||||||||||
 add_home_field|function|e2cd9e3f007c215a|||||||||||||||
@@ -21,17 +21,17 @@ add_season|function|53eacacae62d6689|||||||||||||||
 add_spread_features|function|228372fa985f4722|||||||||||||||
 add_team_ranks|function|70f8c74cdfa37775|||||||||||||||
 add_turnover_plays|function|556050e33166c889|||||||||||||||
-adjusted_efficiency_category_epa|stem|894298c9ac624d84|300161a8ca3ae669|d5c9a9866d88486f|1757190048|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_epa*version=1725384314637594|t19969.7258620766s||68419|qs|gcp|vector|||101.276||
-adjusted_efficiency_category_ppa|stem|d3eaac06c7449314|680480bd46f97934|d5c9a9866d88486f|-1437316832|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_ppa*version=1725384208575420|t19969.7246255153s||68418|qs|gcp|vector|||110.828|There was 1 warning in mutate.ℹ In argument estimated  mapdata, estimate_efficiency.x, metric   metric.Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
-adjusted_efficiency_overall_epa|stem|4071838dd2382b3b|88a00b3d96e3efcd|999cf23b0ed4f9c9|1802248108|bucket=cfb_models*key=data/objects/adjusted_efficiency_overall_epa*version=1725380711611670|t19969.684160642s||69272|qs|gcp|vector|||105.121||
-adjusted_efficiency_overall_ppa|stem|b5a73482e3ca1e3a|d914ef1134aee4a1|999cf23b0ed4f9c9|-1546851752|bucket=cfb_models*key=data/objects/adjusted_efficiency_overall_ppa*version=1725380597574287|t19969.6828402304s||68509|qs|gcp|vector|||109.68|There was 1 warning in mutate.ℹ In argument estimated  mapdata, estimate_efficiency.x, metric   metric.Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
+adjusted_efficiency_category_epa|stem|894298c9ac624d84|300161a8ca3ae669|d5c9a9866d88486f|1757190048|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_epa*version=1725392067727663|t19969.8155965403s||68419|qs|gcp|vector|||87.487||
+adjusted_efficiency_category_ppa|stem|d3eaac06c7449314|680480bd46f97934|d5c9a9866d88486f|-1437316832|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_ppa*version=1725392288032928|t19969.8181452395s||68418|qs|gcp|vector|||84.344||
+adjusted_efficiency_overall_epa|stem|4071838dd2382b3b|88a00b3d96e3efcd|999cf23b0ed4f9c9|1802248108|bucket=cfb_models*key=data/objects/adjusted_efficiency_overall_epa*version=1725391974943442|t19969.8145226847s||69272|qs|gcp|vector|||104.54|There was 1 warning in mutate.ℹ In argument estimated  mapdata, estimate_efficiency.x, metric   metric.Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
+adjusted_efficiency_overall_ppa|stem|b5a73482e3ca1e3a|d914ef1134aee4a1|999cf23b0ed4f9c9|-1546851752|bucket=cfb_models*key=data/objects/adjusted_efficiency_overall_ppa*version=1725392199325550|t19969.8171195721s||68509|qs|gcp|vector|||113.21||
 assess_elo_ratings|function|18898af6c0daca58|||||||||||||||
 build_efficiency_recipe|function|8965b8a00bdffdb8|||||||||||||||
 build_efficiency_wflow|function|a2a79e03ebad62be|||||||||||||||
 build_pbp_recipe|function|756453d2fa8b6f48|||||||||||||||
 build_recipe|function|e1046f65ce2a8eb4|||||||||||||||
 calc_elo_ratings|function|fd49837d3752ec5f|||||||||||||||
-calculate_efficiency|function|47ce907bdb591a8c|||||||||||||||
+calculate_efficiency|function|316722e3f1394180|||||||||||||||
 calculate_expected_points|function|0bf3484101e66081|||||||||||||||
 calculate_points_added|function|060f5b1a4035d14a|||||||||||||||
 calculate_team_efficiency|function|47ce907bdb591a8c|||||||||||||||
@@ -905,7 +905,7 @@ model_spread|function|f4abe1371e0ad262|||||||||||||||
 normalplay_text|function|9af9e6d8ffaf7c12|||||||||||||||
 offense_score_text|function|1c19701ab59e9dfb|||||||||||||||
 pbp_all_preds|stem|d00b48e22ca786a1|5b9258e365de13d3|74d42251024165b4|1739302069|bucket=cfb_models*key=data/objects/pbp_all_preds*version=1725042232223544|t19965.7664323019s||158495269|qs|gcp|vector|||22.715||
-pbp_efficiency|stem|46bbe8c8d8162a15|7baa7811ac4a2370|bb1a966099fc3f73|-888373163|bucket=cfb_models*key=data/objects/pbp_efficiency*version=1725380484341405|t19969.6814948525s||69954264|qs|gcp|vector|||18.291||
+pbp_efficiency|stem|46bbe8c8d8162a15|7baa7811ac4a2370|bb1a966099fc3f73|-888373163|bucket=cfb_models*key=data/objects/pbp_efficiency*version=1725391865176119|t19969.8132191372s||69954264|qs|gcp|vector|||18.873||
 pbp_final_fit|stem|8f7f1f965e339b0a|38ae411e301d1e83|74d42251024165b4|-870871864|bucket=cfb_models*key=data/objects/pbp_final_fit*version=1725033898874381|t19965.6698800289s||319441066|qs|gcp|vector|||307.9||
 pbp_ids|function|3848dd91513932ab|||||||||||||||
 pbp_last_fit|stem|8fe0f34b40d28d5a|14496f13e2434016|a6f7a658471ba035|-1864951580|bucket=cfb_models*key=data/objects/pbp_last_fit*version=1725033541945047|t19965.6657797144s||312717075|qs|gcp|vector|||187.864||
@@ -934,7 +934,8 @@ prepare_plays|function|1e408c68a84dcc9e|||||||||||||||
 prepared_games|stem|02553aa4cc933f0d|e16993b0f41a42e8|3ae1601f37a33e87|1831875253|bucket=cfb_models*key=data/objects/prepared_games*version=1723218996206475|t19944.6643058467s||1238944|qs|gcp|vector|||0.055||
 prepared_pbp|stem|f3467d80e68f38be|1f9015ff257ebff9|288799bb9832bc99|1727894588|bucket=cfb_models*key=data/objects/prepared_pbp*version=1725033271305284|t19965.6628338445s||55470451|qs|gcp|vector|||109.898||
 punt_text|function|2eab2f1afb0e0a03|||||||||||||||
-raw_efficiency_overall|stem|56a8eddd63047c71|933458f198af2e77|6d19d2ec8dec12a0|1782813637|bucket=cfb_models*key=data/objects/raw_efficiency_overall*version=1725380718345380|t19969.6842383005s||104322|qs|gcp|vector|||2.486||
+raw_efficiency_category|stem|f44871ed7cf010a4|49bedb739c06862b|7e942703b2865195|788443334|bucket=cfb_models*key=data/objects/raw_efficiency_category*version=1725392075350499|t19969.8156831983s||302985|qs|gcp|vector|||2.925||
+raw_efficiency_overall|stem|6af967fc096ac402|933458f198af2e77|7e942703b2865195|1782813637|bucket=cfb_models*key=data/objects/raw_efficiency_overall*version=1725392081957418|t19969.8157612661s||104346|qs|gcp|vector|||2.82||
 rename_home_away|function|25a82f056e377a93|||||||||||||||
 round_any|function|1f9a74510238f8e9|||||||||||||||
 score_text|function|2beaea614d9d0fbe|||||||||||||||

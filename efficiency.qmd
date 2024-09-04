@@ -1,0 +1,539 @@
+---
+title: "CFB Team Efficiency"
+subtitle: "Measuring Team Performance via Opponent Adjusted Expected Points"
+author: "Phil Henrickson"
+format:
+  html:
+    fig-height: 6
+---
+
+```{r}
+#| include: false
+# packages
+library(targets)
+library(dplyr)
+library(ggplot2)
+library(quarto)
+library(gt)
+library(gtExtras)
+library(tidymodels)
+library(glmnet)
+
+# additional packages
+library(cfbplotR)
+library(ggforce)
+library(stringr)
+
+# functions
+targets::tar_source("R")
+
+# load data
+tar_load(cfbd_game_info_tbl)
+tar_load(cfbd_team_info_tbl)
+
+tar_load(team_conferences)
+tar_load(team_divisions)
+
+# load in efficiency data
+# raw
+tar_load(raw_efficiency_overall)
+tar_load(raw_efficiency_category)
+
+# adjusted
+tar_load(adjusted_efficiency_overall_epa)
+tar_load(adjusted_efficiency_overall_ppa)
+tar_load(adjusted_efficiency_category_epa)
+tar_load(adjusted_efficiency_category_ppa)
+
+# set plot theme
+theme_set(theme_cfb())
+
+```
+
+# Efficiency
+
+I use my model of expected points for college football plays to estimate and measure a team's overall performance on offense, defense, and special teams. I develop opponent-adjusted measures of team performance by fitting models to partial out the effect of individual teams on expected/predicted points. 
+
+## Net Points per Play
+
+Recall that an expected points model aims to measure the value of an *individual play* by asking how it affected a team's ability to score points. For an offense this amounts to getting first downs and moving the ball down the field; for a defense it means limiting the other team's ability to sustain drives and score.
+
+Efficiency refers to the idea that good teams, on average, are net positive on the outcomes of plays - they are typically able to drive on offense and stop their opponent on defense.
+
+Tangibly, we can measure a team's efficiency by summarizing their net predicted points across all of their plays. For example, the following table shows the the top 5 teams by season in terms of raw overall efficiency for all completed seasons from 2007 to present.
+
+```{r}
+#| class: scroll
+
+raw_efficiency_overall |>
+  filter_to_fbs() |>
+  filter(metric == 'ppa') |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  group_by(method, season, metric, type) |>
+  pivot_wider(names_from = c("type"),
+              values_from = c("estimate", "rank")) |>
+  group_by(season, method, metric)  |>
+  slice_max(estimate_overall, n =5)  |>
+  efficiency_tbl(with_estimates = T,
+                 with_ranks = T)
+
+```
+
+
+Based purely on their on field play, this measure highlights a lot of the teams we would expect (2008 Florida, Alabama, 2013 Florida State, 2019 Ohio State/LSU, 2021 Georgia), but it also rates certain teams very highly that we wouldn’t necessarily expect to see (2012 Northern Illinois, 2015/2018 Appalachian State Nevada, 2020 Buffalo,)
+
+Why is that happening? The issue is that these estimates are simply the average net points per play for each team over the course of a season. They don’t take into account the relative strength of the opposition faced - a 10 yard pass against UMass is considered the same as a 10 yard pass against Ohio State. An offense that plays a weaker schedule will generally perform better than one that plays against top teams, which will lead to a higher evaluation in terms of raw efficiency.
+
+As an example, this means that in 2018, from a raw efficiency perspective, Appalachian State finished the regular season rated higher than Oklahoma. This is mainly because Appalachian State's defense was rated so highly; Oklahoma had the highest rated (raw) offense but their defense was rated so poorly that it pulled their overall score down.
+
+```{r}
+
+example_raw = 
+  raw_efficiency_overall |>
+  filter(metric == 'ppa') |>
+  filter(season == 2018) |>
+  filter_to_fbs() |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  filter(team %in% c("Appalachian State", "Oklahoma")) |>
+  pivot_wider(names_from = c("type"),
+              values_from = c("estimate", "rank"))
+
+example_raw |>
+  group_by(metric) |>
+  efficiency_tbl(with_ranks = T, with_estimates = T)
+```
+
+Now, compare the schedules of each of these two teams based on their opponents during the regular season, using the raw overall efficiency as the metric of strength.
+
+```{r}
+#| echo: false
+#| class: scroll
+pivot_team = function(data, team) {
+  
+  data |>
+    filter(home == team | away == team) |>
+    mutate(opponent = case_when(home != team ~ home,
+                                away != team ~ away),
+           home = case_when(home == team ~ T,
+                            home != team ~ F)) |>
+    mutate(team = team)
+  
+}
+
+team_opponent_strength = function(data, team, strength) {
+  
+  
+  data |>
+    select(season, 
+           game_id,
+           home = home_team,
+           away = away_team) |>
+    pivot_team(team = team) |>
+    select(season, game_id, team, opponent) |>
+    inner_join(
+      strength |>
+        filter_to_fbs() |>
+        add_overall_efficiency() |>
+        filter(type == 'overall',
+               metric == 'ppa') |>
+        pivot_wider(names_from = c("type"),
+                    values_from = c("estimate")) |>
+        rename(opponent = team),
+      by = join_by(season, opponent)
+    ) |>
+    select(-game_id) |>
+    group_by(season, method, metric) |>
+    gt_tbl() |>
+    gt::fmt_number(decimals = 3) |>
+    gt::summary_rows(
+      columns = overall,
+      fns = list(
+        total = ~ round(sum(., na.rm = TRUE), 3)
+      )
+    ) |>
+    gt::data_color(columns = c("overall"),
+                   method = c("numeric"),
+                   domain = c(-.75, .75),
+                   palette = c("red", "white", "dodgerblue2"))
+  
+}
+
+team_1 = 
+cfbd_game_info_tbl |>
+  filter(season == 2015) |>
+  team_opponent_strength(team = 'Oklahoma',
+                         strength = raw_efficiency_overall)
+
+team_2 = 
+cfbd_game_info_tbl |>
+  filter(season == 2015) |>
+  team_opponent_strength(team = 'Appalachian State',
+                         strength = raw_efficiency_overall)
+
+gtExtras::gt_two_column_layout(
+  list(team_1,
+       team_2)
+)
+
+```
+
+Oklahoma didn't play the toughest schedule in college football, but it was considerably harder than Appalachian State.
+
+If we adjust for the strength of opponents, we can see that Appalachian State's defense is still pretty highly rated, but their offense is heavily penalized due to opponent quality and their overall rating falls. Oklahoma, meanwhile, gets a slight improvement to their defense (they were still very poor overall that season) which boosts their overall rating.
+
+```{r}
+
+example_adjusted = 
+  adjusted_efficiency_overall_ppa |>
+  filter(play_situation != 'special') |>
+  select(-play_situation) |>
+  filter(season == 2018) |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  filter(team %in% c("Oklahoma", "Appalachian State")) |>
+  pivot_wider(names_from = c("type"),
+              values_from = c("estimate", "rank"))
+
+example_adjusted |>
+  mutate(method = 'adjusted') |>
+  bind_rows(
+    example_raw
+  ) |>
+  arrange(team) |>
+  group_by(metric) |>
+  select(season, team, method, everything()) |>
+  efficiency_tbl(with_ranks = T, with_estimates = T)
+
+```
+
+## Opponent Adjusted
+
+How do we adjust a team's offensive/defensive efficiency rating based on their opponents?
+
+I use a ridge regression to partial out the effect of all offenses on all defenses on predicted points oer play. That is, I regress the net predicted points per play on a dummy variable for every offense, defense, as well as an indicator for home field advantage:
+
+$$PPA = Offense_{i} + Defense_{j} + Home$$
+
+The coefficient for each offense and defense represent that particular school's average effect on predicted points per play conditional on all other teams. Good offenses will have positive coefficients (how much more the team scored on a given play than average) while good defenses will have negative coefficients (because they prevented other teams from scoring). Flipping the sign for defense (so that positive is considered good) produces each team's offensive/defensive net points per play conditional on their opponents.
+
+I fit regressions at the *season* level for all teams to examine each team's offensive/defensive efficiency over the course of an entire season. The coefficients from these regressions can then used to examine how team's perform on offensive/defense in terms of net points per play.
+
+For example, the following visualization places all teams based on their offensive and defensive strengths in the 2023 season. The best teams are those in the upper right quadrant that have strong offenses and defenses. The worst teams are those in the bottom left quadrant with poor offenses and defenses.
+
+```{r}
+
+plot_teams_by_season = function(data, lim = 0.4) {
+  
+  data |>
+    pivot_wider(names_from = c("type"),
+                values_from = c("estimate")) |>
+    ggplot(aes(x=offense,
+               y=defense,
+               label = team,
+               color = team))+
+    geom_label(size = 2, alpha = 0.8) +
+    scale_color_cfb()+
+    facet_wrap(season ~.)+
+    geom_hline(yintercept = 0, linetype = 'dotted')+
+    geom_vline(xintercept = 0, linetype = 'dotted')+
+    coord_cartesian(xlim = c(-lim, lim),
+                    ylim = c(-lim, lim))+
+    labs(title = "Offensive and Defensive Efficiency by Season",
+         subtitle = stringr::str_wrap("Opponent adjusted team offensive and defensive efficiency ratings based on net predicted points per play.", 120))+
+    xlab("Offensive Net Points per Play")+
+    ylab("Defensive Net Points per Play")
+  
+}
+
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation != 'special' ) |>
+  filter(season == 2023) |>
+  plot_teams_by_season()
+
+```
+
+The same information, but in a table.
+
+```{r}
+#| class: scroll
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation != 'special' ) |>
+  select(-play_situation) |>
+  filter(season == 2023) |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  pivot_wider(names_from = c("type"),
+              values_from = c("estimate", "rank")) |>
+  arrange(desc(estimate_overall)) |>
+  select(-metric) |>
+  efficiency_tbl(with_ranks = T, with_estimates = T) |>
+  gt::opt_interactive(page_size_default = 25)
+
+```
+
+
+# Team Efficiency by Season
+
+## Individual Teams
+
+I can examine a team's performance year over year to see how program has fared since 2007.
+
+### Alabama
+
+Alabama, for example, was a highly efficient team for basically the entirety of Nick Saban's tenure. It shouldn't be a shock that Alabama would rate highly, but it is interesting to see the difference in compositions of Nick Saban's teams. The 2015/2016 Alabama teams were evidently defensive powerhouses while not being particularly noteworthy on offense. After 2017 Alabama became one of the best offensive teams in the country while their defenses were less highly rated.
+
+```{r}
+
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == 'offense/defense') |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = 'Alabama')
+
+```
+
+In addition to examining team's by their overall offensive/defensive performance, I further break down a team's offensive/defensive based on their net points per play when passing or rushing. As before, I regress each team's offense and defense on predicted points per play, fitting individual regressions by play type (pass or run). This allows me to estimate a team's performance in different aspects of the game on both sides of the ball.
+
+Alabama, for instance, had three down years of offensive passing efficiency from 2015-2017. That changed in 2018 when Alabama led the nation in passing efficiency for three straight years.
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(type == 'offense',
+         play_category %in% c('pass', 'rush')) |>
+  plot_team_efficiency(teams = 'Alabama') +
+  facet_grid(play_category ~ type)
+
+```
+
+
+### Iowa
+
+Iowa, meanwhile, looks exactly like what you would expect. They had fairly strong teams overall at the end of the 2010s, and their defensive has consistently been top tier since 2017, but their offensive efficiency has been, in highly sophisticated analytics terms, complete garbo.
+
+```{r}
+
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == 'offense/defense') |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = 'Iowa')
+
+```
+
+Also it's evidently not just because they don't believe in the forward pass; they seem to be getting worse at passing and running in recent years. 
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(type == 'offense',
+         play_category %in% c('pass', 'rush')) |>
+  plot_team_efficiency(teams = 'Iowa') +
+  facet_grid(play_category ~ type)
+
+```
+
+At least they're also equally decent at stopping the pass and run?
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(type == 'defense',
+         play_category %in% c('pass', 'rush')) |>
+  plot_team_efficiency(teams = 'Iowa') +
+  facet_grid(play_category ~ type)
+
+```
+
+Looking at Iowa's offensive/defensive breakdown historically in a table.
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  filter(play_category != 'special') |>
+  team_efficiency_category_tbl(team = 'Iowa') |>
+  gt::opt_interactive(
+    page_size_default = 25
+  )
+
+```
+
+### Florida State
+
+Florida State was pretty up and down during this time period, with gradual improvement at the start of the Jimbo era culminating in the 2013 national championship. They then fell off during the Taggart era before rebounding (seemingly) under Norell.
+
+```{r}
+
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == 'offense/defense') |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = 'Florida State')
+```
+What happened with their offensive efficiency in 2017? It looks like the 2017 team struggled to pass and run the ball. 
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(type == 'offense',
+         play_category %in% c('pass', 'rush')) |>
+  plot_team_efficiency(teams = 'Florida State') +
+  facet_grid(play_category ~ type)
+```
+
+## Top Teams
+
+Which teams are considered the best overall using this methodology? I examine the top teams based on regular season offensive/defensive efficiency since 2007. 
+
+```{r}
+#| class: scroll
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation != 'special') |>
+  select(-play_situation) |>
+  efficiency_top_teams_tbl(n = 5000) |>
+  gt::opt_interactive(page_size_default = 25,
+                      use_filters = T)
+
+```
+
+Ohio State 2019 and Alabama 2018 at the top will probably start some fights (remember, this is based only on regular season data), but this looks pretty reasonable overall.
+
+I can similarly break this out based on pass/rush offense and defense.
+
+```{r}
+#| class: scroll
+#| echo: false
+team_efficiency_categories = 
+  adjusted_efficiency_category_ppa |>
+  filter(play_category != 'special') |>
+  unite(type, c(play_category, type)) |>
+  select(-intercept) |>
+  pivot_wider(names_from = c("type"),
+              values_from = c("estimate")) |>
+  select(season, team, pass_offense, rush_offense, pass_defense, rush_defense)
+
+team_efficiency_categories |>
+  arrange(desc(pass_offense)) |>
+  efficiency_top_categories_tbl() |>
+  gt::opt_interactive(page_size_default = 25,
+                      use_filters = T)
+
+```
+
+## Categorizing Teams
+
+What is the relationship between offense and defense? Do teams with good rushing offense tend to also have good passing?
+
+On offense, there's generally a positive relationship between passing and rushing, as good offenses tend to be able to pass and run the ball. There are some interesting teams that stick out though, such as Georgia Southern in 2015 with a strong rushing game but essentially no passing game.
+
+```{r}
+
+team_efficiency_categories |>
+  ggplot(aes(x=pass_offense, y=rush_offense, color = team))+
+  geom_vline(xintercept = 0, linetype = 'dotted')+
+  geom_hline(yintercept = 0, linetype = 'dotted')+
+  geom_label(
+    aes(label = paste(team, season)),
+    size = 1.5,
+    alpha = 0.5
+  )+
+  scale_color_cfb()+
+  xlab("Pass Offense Efficiency")+
+  ylab("Rush Offense Efficiency")
+
+```
+Pass/rush defense also tends to be related in the same way, though there are some outliers such as Navy 2022 and Miami Ohio in 2020 that were evidently strong at defending the pass but bad at defending the run?
+
+```{r}
+
+team_efficiency_categories |>
+  ggplot(aes(x=pass_defense, y=rush_defense, color = team))+
+  geom_vline(xintercept = 0, linetype = 'dotted')+
+  geom_hline(yintercept = 0, linetype = 'dotted')+
+  geom_label(
+    aes(label = paste(team, season)),
+    size = 1.5,
+    alpha = 0.5
+  )+
+  scale_color_cfb()+
+  xlab("Pass Defense Efficiency")+
+  ylab("Rush Defense Efficiency")
+```
+I'm interested to see what it looks if we map every team-season based on each of these offensive/defensive categories. Basically, I want to take the information of the previous two plots and collapse it into one chart where we can see teams that are strong on both sides of the ball vs teams that are strong at only area.
+
+To do this, I'll fit a PCA to offensive/defensive categories to reduce the dimensionality of the data and plot every team on the first two resulting principal components. 
+
+```{r}
+
+team_pca = 
+  team_efficiency_categories |>
+  select(contains("offense"), contains("defense")) |>
+  scale() |>
+  prcomp()
+
+team_pca |> 
+  tidy(matrix = "rotation") |>
+  mutate(PC = paste0("PC",PC)) |> pivot_wider(names_from = "PC", values_from = "value") |>
+  gt_tbl() |>
+  gt::fmt_number(decimals = 3)
+```
+
+This should provide us a (somewhat messy) mapping that characterizes different types of teams based on their team efficiences in offense/defense situations. I'll place all teams in 2023.
+
+```{r}
+
+plot_teams_pca = function(data) {
+  
+  data |>
+    rename_with(.fn = ~ gsub(".fitted", "", .x)) |>
+    ggplot(aes(x=PC2, y=PC1, color = team))+
+    geom_label(
+      aes(label = paste(team, season)),
+      size = 1.5,
+      alpha = 0.5
+    )+
+    scale_color_cfb()+
+    coord_cartesian(ylim = c(-6, 6),
+                    xlim = c(-4.2, 4.2))
+}
+
+team_pca |>
+  augment(team_efficiency_categories) |>
+  filter(season == 2023) |>
+  plot_teams_pca()
+```
+
+The first principal component maps to overall strength, meaning the best teams are those that are highest on y axis (Michigan, Oregon, Ohio State) while the second principal component maps to a team's balance between offense/defense.
+
+Teams that are stronger at offense than defense (Oregon, Liberty, New Mexico) are on the left side of the charter while teams that are stronger at defense than offense are on the right (Penn State, Iowa).
+
+```{r}
+#| class: scroll
+
+team_efficiency_categories |>
+  filter(season == 2023) |>
+  arrange(desc(pass_offense)) |>
+  efficiency_top_categories_tbl() |>
+  gt::opt_interactive(page_size_default = 25)
+
+```
+
+I'll plot all teams over this time period using the same approach via principal components. 
+
+```{r}
+
+team_pca |>
+  augment(team_efficiency_categories) |>
+  plot_teams_pca()
+
+```

@@ -1323,7 +1323,7 @@ add_overall_efficiency <- function(data, metric = "ppa") {
     mutate(
       overall = offense + defense
     ) |>
-    select(any_of(c("season", "team", "metric", "overall", "offense", "defense"))) |>
+    select(any_of(c("season", "team", "method", "play_situation", "play_category", "metric", "overall", "offense", "defense"))) |>
     pivot_longer(
       cols = c("overall", "offense", "defense"),
       names_to = c("type"),
@@ -1430,3 +1430,227 @@ plot_team_efficiency <- function(data, teams = "Texas A&M", seed = 1) {
     labs(title = paste("Team Efficiency by Season", paste(teams, sep = ","), sep = " - "),
          subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their season rank."), 120))
 }
+
+
+gt_est_color = function(tab,
+                        columns = contains("estimate"),
+                        domain = c(-.75, .75)) {
+  
+  tab |>
+    gt::data_color(
+      columns = columns,
+      method = "numeric",
+      palette = rev(my_gt_palette()),
+      domain = domain
+    )
+  
+}
+
+efficiency_tbl = function(data, with_estimates = F, with_ranks = T) {
+  
+  tab = 
+    data |>
+    # relocate(starts_with("estimate_"), .after = last_col()) |>
+    gt_tbl() |>
+    gt_est_color() |>
+    gt::tab_spanner(
+      label = "efficiency",
+      columns = starts_with("estimate_")
+    ) |>
+    gt::cols_align(
+      align = c("center"),
+      columns = -c(team)
+    ) |>
+    gt::fmt_number(
+      columns = starts_with("rank_"),
+      decimals = 0
+    ) |>
+    gt::fmt_number(
+      columns = c(starts_with("estimate")),
+      decimals = 3
+    )
+  
+  if (with_estimates == T) {
+    
+    tab = 
+      tab |>
+      gt::cols_label(
+        estimate_overall = "overall",
+        estimate_offense = "offense",
+        estimate_defense = "defense"
+      )
+  }
+  
+  if (with_ranks == T) {
+    
+    tab = 
+      tab |>
+      gt_rank_color() |>
+      gt::tab_spanner(
+        label = "rank",
+        columns = starts_with("rank_")
+      ) |>
+      gt::cols_label(
+        rank_overall = "overall",
+        rank_offense = "offense",
+        rank_defense = "defense"
+      )
+  } 
+  
+  tab
+  
+}
+
+my_gt_palette = function() {
+  
+  c("dodgerblue", "white", "red")
+  
+}
+
+gt_rank_color = function(tab) {
+  
+  tab |>
+    gt::data_color(
+      columns = contains("rank"),
+      method = "numeric",
+      palette = my_gt_palette(),
+      domain = c(1, 140)
+    )
+}
+
+efficiency_overall_tbl = function(data) {
+  
+  data |>
+    select(season, 
+           team,
+           estimate_overall,
+           estimate_offense,
+           estimatedefense,
+           rank_overall,
+           rank_offense,
+           rank_defense
+    ) |>
+    gt_tbl()
+  
+}
+
+efficiency_category_tbl = function(data) {
+  
+  data |>
+    select(season, 
+           team, 
+           estimate_pass_offense, 
+           estimate_rush_offense, 
+           estimate_pass_defense, 
+           estimate_rush_defense, 
+           contains("rank")) |>
+    gt_tbl() |>
+    gt_est_color() |>
+    # gt::tab_spanner(
+    #   label = "efficiency",
+    #   columns = contains("estimate")
+    # ) |>
+    gt::tab_spanner(
+      label = "offense efficiency",
+      columns = contains("offense")
+    ) |>
+    gt::tab_spanner(
+      label = "defense efficiency",
+      columns = contains("defense")
+    ) |>
+    gt::fmt_number(
+      columns = contains("estimate"),
+      decimals = 3
+    ) |>
+    gt::cols_merge(
+      contains("pass_offense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("pass_defense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("rush_offense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("rush_defense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_label(
+      estimate_rush_offense = "rush",
+      estimate_pass_offense = "pass",
+      estimate_rush_defense = "rush",
+      estimate_pass_defense = "pass"
+      # rank_rush_offense = "Rush Offense",
+      # rank_pass_offense = "Pass Offense",
+      # rank_rush_defense = "Rush Defense",
+      # rank_pass_defense = "Pass Defense",
+    ) |>
+    gt::cols_align(
+      columns = c(contains("estimate"), contains("rank")),
+      align = "center"
+    )
+}
+
+team_efficiency_category_tbl = function(data, teams) {
+  
+  data |>
+    filter(play_category != 'special') |>
+    add_team_ranks(groups = c("season", "play_category", "metric", "type")) |>
+    unite(type, c(play_category, type)) |>
+    select(-intercept) |>
+    pivot_wider(names_from = c("type"),
+                values_from = c("estimate", "rank")) |>
+    filter(team == teams) |>
+    efficiency_category_tbl()
+}
+
+team_efficiency_overall_tbl = function(data, teams) {
+  
+  
+  
+}
+
+efficiency_top_categories_tbl = function(data) {
+  
+  data |>
+    gt_tbl() |>
+    gt_est_color(columns = c(contains("offense"), contains("defense"))) |>
+    gt::fmt_number(columns = c(contains("offense"), contains("defense")),
+                   decimals = 3) |>
+    gt::cols_align(align = "center") |>
+    gt::tab_spanner(
+      columns =contains("offense"),
+      label = "offensive efficiency"
+    ) |>
+    gt::tab_spanner(
+      columns = contains("defense"),
+      label = "defensive efficiency"
+    ) |>
+    gt::cols_label(
+      rush_offense = "rush",
+      rush_defense = "rush",
+      pass_offense = "pass",
+      pass_defense = "pass"
+    )
+  }
+
+efficiency_top_teams_tbl = function(data, n = 100) {
+  
+  data |>
+    add_overall_efficiency() |>
+    add_team_ranks() |>
+    pivot_wider(names_from = c("type"),
+                values_from = c("estimate", "rank")) |>
+    select(-starts_with("rank_")) |>
+    ungroup() |>
+    slice_max(estimate_overall, n =n) |>
+    arrange(desc(estimate_overall)) |>
+    mutate(rank = row_number()) |>
+    select(rank, season, team, starts_with("estimate_")) |>
+    efficiency_tbl(with_ranks = F, with_estimates = T) 
+  
+}
+

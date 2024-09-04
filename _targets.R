@@ -517,6 +517,11 @@ list(
       calculate_efficiency(groups = c("season", "type", "team"))
   ),
   tar_target(
+    raw_efficiency_category,
+    pbp_efficiency |>
+       calculate_efficiency(groups = c("season", "type", "play_category", "team"))
+  ),
+  tar_target(
     adjusted_efficiency_overall_epa,
     pbp_efficiency |>
       estimate_efficiency_overall(metric = 'expected_points_added')
