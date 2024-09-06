@@ -520,7 +520,7 @@ list(
   tar_target(
     raw_efficiency_category,
     pbp_efficiency |>
-       calculate_efficiency(groups = c("season", "type", "play_category", "team"))
+      calculate_efficiency(groups = c("season", "type", "play_category", "team"))
   ),
   tar_target(
     adjusted_efficiency_overall_epa,
@@ -542,12 +542,18 @@ list(
     adjusted_efficiency_category_ppa,
     pbp_efficiency |>
       estimate_efficiency_category(metric = 'predicted_points_added')
+  ),
+  # in season efficiency estimates
+  tar_target(
+    estimated_efficiency_ppa,
+    map(
+      c(2021, 2022, 2023),
+      ~ pbp_efficiency |>
+        estimate_efficiency_by_week(season = .x,
+                                    metric = 'predicted_points_added')
+    ) |>
+      list_rbind()
   )
-  # # in season efficiency estimates
-  # tar_target(
-  #   estimated_efficiency_ppa
-  #   
-  # )
   # # quarto
   # tar_quarto(
   #   reports,

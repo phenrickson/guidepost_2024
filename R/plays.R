@@ -1357,7 +1357,7 @@ add_team_ranks = function(data, groups = c("season", "type", "metric")) {
 
 
 plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
-           
+  
   all_teams_data <-
     data |>
     group_by(across(any_of(c("metric", "type")))) |>
@@ -1370,7 +1370,7 @@ plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
       y = "estimate"
     )) +
     geom_point(
-      alpha = 0.2,
+      alpha = 0.15,
       shape = 19,
       color = "grey80",
       position = ggforce::position_auto(jitter.width = 0.25, scale = F, seed = seed)
@@ -1404,8 +1404,7 @@ plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1) {
       lwd = 1.2,
       alpha = 0.8
     ) +
-    cfbplotR::scale_colour_cfb(alt_colors = c("Colorado", "LSU"), 
-                                              guide = guide_legend()) +
+    scale_color_cfb_muted(guide = guide_legend()) +
     theme(
       legend.position = 'top',
       axis.text.x = element_text(size = 8),
@@ -1431,19 +1430,20 @@ plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed =
   team_plot +
     guides(color = 'none') +
     # add season ranks
-    geom_text(
+    geom_label(
       data = team_data,
       aes(y = estimate,
           label = rank,
           color = team
       ),
-      size = 2.5,
-      vjust = -1
+      alpha = 0.8,
+      size = 2,
+      vjust = -0.75
     ) +
     labs(title = paste("Team Efficiency", paste(teams, sep = ","), sep = " - "),
          subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their ranking among all FBS teams."), 120))
   
-  }
+}
 
 
 gt_est_color = function(tab,
@@ -1668,3 +1668,143 @@ efficiency_top_teams_tbl = function(data, n = 100) {
   
 }
 
+weights_from_dates <- function(x, ref, base, max = 365 * 2) {
+  case_when(
+    # if game date greater than or equal to max then 1
+    x >= ref ~ 1,
+    # if its more than a set number of days away, set to 0
+    as.numeric(difftime(ref, x, units = "days")) > max ~ 0,
+    TRUE ~ base ^ as.numeric(difftime(ref, x, units = "days"))
+  )
+}
+
+add_game_weights = function(data, ref = NULL, base = 0.995, importance = T, filter = T) {
+  
+  if (is.null(ref)) {
+    ref = max(data$start_date)
+  }
+  
+  tmp =
+    data |>
+    mutate(weight = weights_from_dates(start_date, ref = ref, base = base))
+  
+  if (filter == T) {
+    
+    tmp = 
+      tmp |>
+      filter(weight > 0)
+  }
+  
+  if (importance == T) {
+    
+    tmp = 
+      tmp |>
+      mutate(weight = recipes::importance_weights(weight))
+  }
+  
+  tmp
+  
+}
+estimate_efficiency_cumulative = function(data, metric) {
+  
+  dates = 
+    data |>
+    mutate(season, 
+           week, 
+           .keep = 'none'
+    ) |>
+    distinct()
+  
+  map2(
+    .x = dates$season,
+    .y = dates$week,
+    ~ data |>
+      filter(season == .x,
+             week <= .y) |>
+      estimate_efficiency(metric = metric) |>
+      add_overall_efficiency() |>
+      mutate(season_week = paste(.x, .y, sep = "_")) |>
+      select(season_week, everything())
+  ) |>
+    list_rbind()
+  
+}
+estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
+  
+  map(
+    dates,
+    ~ {
+      message(paste0("estimating week ", .x, "..."))
+      
+      data |>
+        filter(start_date <= .x) |>
+        add_game_weights(base =base) |>
+        estimate_efficiency(metric = metric, weights = T) |>
+        add_overall_efficiency() |>
+        mutate(start_date = .x)
+    }
+  ) |>
+    list_rbind()
+}
+estimate_efficiency_by_week = function(data, metric, season, base = .995, season_type = c('regular', 'postseason'), ...) {
+  
+  calendar = 
+    data |>
+    find_season_dates(seasons = season, 
+                      season_types = season_type)
+  
+  dates = 
+    calendar |>
+    pull(start_date)
+  
+  estimates = 
+    data |>
+    estimate_efficiency_weighted(dates = dates,
+                                 metric = metric,
+                                 base = base,
+                                 ...)
+  
+  estimates |>
+    left_join(calendar) |>
+    select(-start_date) |>
+    select(season, season_type, week, season_week, everything())
+  
+}
+plot_team_efficiency_by_week = function(data, team) {
+  
+  data|>
+    mutate(week = as.numeric(stringr::str_sub(season_week, 6, 7))) |>
+    add_team_ranks(groups = c("season", "week", "type", "metric")) |> 
+    plot_team_efficiency(x = 'week', teams = team)+
+    facet_grid(type ~ season,
+               scales = "free_y")
+  
+}
+
+find_season_dates = function(data, seasons, season_types = c("regular", "postseason"), week_start = "Wednesday") {
+  
+  # create a data frame for the cfb season at the weekly level; 
+  # adds a week zero and creates individual weeks for the postseason
+  tmp = 
+    data |>
+    filter(season %in% seasons,
+           season_type %in% season_types) |>
+    mutate(week_date = lubridate::ceiling_date(start_date, unit = "week", week_start = week_start)) |>
+    group_by(season, season_type, week, week_date) |>
+    summarize(
+      start_date = max(week_date),
+      .groups = 'drop'
+    ) |>
+    arrange(start_date)
+  
+  
+  # fix issues where games overlap between weeks
+  tmp |>
+    mutate(flag = case_when(week_date == dplyr::lag(week_date, 1) ~ T,
+                            TRUE ~ F)) |>
+    filter(flag == F) |>
+    select(-flag, -week_date) |>
+    mutate(season_week = paste(season, row_number()-1, sep = "_")) |>
+    select(season_week, everything()) 
+  
+}

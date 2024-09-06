@@ -1,7 +1,8 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|01f6d64b4b1472ba|||||||||||||||
+.Random.seed|object|7172cb20992197e7|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
 add_expected_points|function|0bf3484101e66081|||||||||||||||
+add_game_weights|function|dec8a4b3f3fbb815|||||||||||||||
 add_home_field|function|e2cd9e3f007c215a|||||||||||||||
 add_kick_plays|function|ca23414173f7ee02|||||||||||||||
 add_overall_efficiency|function|5855224faf2b2fbb|||||||||||||||
@@ -883,15 +884,20 @@ espn_cfb_game_ids|stem|318813f8ffe950ce|002311834b5b3f67|770cca86d52f3267|-13953
 espn_cfb_schedule_tbl|stem|cf4bd4e8ff9a992c|1a9d40a8a493cd1b|9ae9610dd062cb8f|1538359559|bucket=cfb_models*key=data/objects/espn_cfb_schedule_tbl*version=1722620598570852|t19937.7384065192s||1192025|qs|gcp|vector|||73.807||
 espn_ratings_fpi_tbl|stem|9028c94d3776c57d|e5383b1b50f9fca8|9ae9610dd062cb8f|-1074024033|bucket=cfb_models*key=data/objects/espn_ratings_fpi_tbl*version=1722618957429176|t19937.7194089927s||30466|qs|gcp|vector|||4.611||
 estimate_efficiency|function|4267fbc13ab4e90e|||||||||||||||
+estimate_efficiency_by_week|function|1f6eb2af932d0bd3|||||||||||||||
 estimate_efficiency_category|function|4cb6cd07592d473e|||||||||||||||
+estimate_efficiency_cumulative|function|74e7c63325500a4e|||||||||||||||
 estimate_efficiency_overall|function|7634a6dfe4ad3ddd|||||||||||||||
+estimate_efficiency_weighted|function|2e0726dc6b44b178|||||||||||||||
 estimate_pbp_effect|function|8d8a6d45b51e26fe|||||||||||||||
+estimated_efficiency_ppa|stem|f42afd123e3674ba|8b72e5fd148a655b|0000d29bedaa1a05|-1986038301|bucket=cfb_models*key=data/objects/estimated_efficiency_ppa*version=1725651051618674|t19972.8130944786s||174516|qs|gcp|vector|||2183.434|Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
 factor_class|function|6c31d359bd3ef445|||||||||||||||
 factor_team_names|function|841932ba7be35d68|||||||||||||||
 filter_play_type|function|e1363a13cfafa77d|||||||||||||||
 filter_plays|function|ca50eac0c45804a7|||||||||||||||
 filter_to_fbs|function|7082f2d784f26465|||||||||||||||
 filtered_pbp|stem|f01bdaad01ae69a8|515edb0ada8ba717|79902a5df92bd535|-1114630478|bucket=cfb_models*key=data/objects/filtered_pbp*version=1724695040354477|t19961.7480999948s||88469143|qs|gcp|vector|||7.533||
+find_season_dates|function|8012095e99c69b0a|||||||||||||||
 find_team_divisions|function|3441c337af540103|||||||||||||||
 get_cfbd_pbp_data|function|720c479d7ba7fed7|||||||||||||||
 get_cfbd_plays|function|07f083550c5408ab|||||||||||||||
@@ -930,11 +936,12 @@ penalty_text|function|93229a4eddcd7124|||||||||||||||
 pivot_games_to_teams|function|a10cf1da1d27c7f2|||||||||||||||
 pivot_pbp|function|12a0041efb9c7ee0|||||||||||||||
 plays_points_tbl|function|40e35081dab2603c|||||||||||||||
-plot_efficiency_all_teams|function|3e745604b2ac13e4|||||||||||||||
-plot_efficiency_by_team|function|b233212584eb26f0|||||||||||||||
+plot_efficiency_all_teams|function|583c6f41b5f23446|||||||||||||||
+plot_efficiency_by_team|function|d805d0f463452def|||||||||||||||
 plot_pbp_calibration|function|da626d3788c6fb69|||||||||||||||
 plot_split_plan|function|69c5a731895efa4e|||||||||||||||
-plot_team_efficiency|function|e75fb15f70c64bec|||||||||||||||
+plot_team_efficiency|function|a90c3666eab9bb76|||||||||||||||
+plot_team_efficiency_by_week|function|2edf9f109784092b|||||||||||||||
 prepare_drives|function|0cd66ed59e1e3d78|||||||||||||||
 prepare_efficiency|function|2621b3baaa00e971|||||||||||||||
 prepare_games|function|49779747191ba766|||||||||||||||
@@ -964,3 +971,4 @@ theme_cfb|function|626133eb8283821d|||||||||||||||
 top_plays_by_game|function|71be01327e7123bb|||||||||||||||
 tune_elo_ratings|function|c4dea64ad0e68bc1|||||||||||||||
 turnover_text|function|c62307697e4d0f30|||||||||||||||
+weights_from_dates|function|cbb8975853ecea34|||||||||||||||
