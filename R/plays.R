@@ -1109,10 +1109,12 @@ join_game_info <- function(data, games = cfbd_game_info_tbl) {
   data |>
     inner_join(
       games |>
+        mutate(start_date = as.Date(start_date)) |>
         select(
           season,
           season_type,
           game_id,
+          start_date,
           neutral_site,
           week,
           home = home_team,
@@ -1136,6 +1138,7 @@ prepare_efficiency <- function(data, games, game_type = c("regular")) {
       season,
       week,
       game_id,
+      start_date,
       play_id,
       play_type,
       play_category,
@@ -1191,7 +1194,7 @@ dummy_teams = function(var, lvl, ordinal = FALSE, sep = "_")  {
   paste(var, as.character(lvl), sep = sep)
 }
 
-build_efficiency_wflow = function(data, metric = "expected_points_added", model  = efficiency_model(), ...) {
+build_efficiency_wflow = function(data, metric = "expected_points_added", model  = efficiency_model(), weights = F) {
   
   rec = 
     data |>
@@ -1199,13 +1202,22 @@ build_efficiency_wflow = function(data, metric = "expected_points_added", model 
       outcome = metric
     )
   
-  workflow() |>
+  wflow = 
+    workflow() |>
     add_recipe(
       rec
     ) |>
     add_model(
       model
     )
+  
+  if (weights == T) {
+    wflow = 
+      wflow |> 
+      add_case_weights(weight)
+  }
+  
+  wflow
   
 }
 
@@ -1344,36 +1356,36 @@ add_team_ranks = function(data, groups = c("season", "type", "metric")) {
 }
 
 
-plot_efficiency_all_teams = function(data, seed = 1) {
-  
+plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
+           
   all_teams_data <-
     data |>
-    mutate(season = factor(season)) |>
     group_by(across(any_of(c("metric", "type")))) |>
     mutate(min = min(estimate)) |>
     ungroup()
   
   all_teams_data |>
-    ggplot(aes(
-      x = season,
-      y = estimate
+    ggplot(aes_string(
+      x = glue::glue("as.factor({x})"),
+      y = "estimate"
     )) +
     geom_point(
       alpha = 0.2,
       shape = 19,
       color = "grey80",
-      position = position_auto(scale = F, seed = seed)
+      position = ggforce::position_auto(jitter.width = 0.25, scale = F, seed = seed)
     ) +
     facet_grid(type ~ ., scales = "free_y") +
     guides(color = "none") +
     geom_hline(yintercept = 0, linetype = "dotted") +
-    theme_cfb()
+    theme_cfb()+
+    xlab({{x}})
   
 }
 
-plot_efficiency_by_team = function(data, teams, seed = 1) {
+plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1) {
   
-  all_teams_plot <- plot_efficiency_all_teams(data, seed = seed)
+  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed)
   all_teams_data = all_teams_plot$data
   
   selected_teams <- tibble(team = teams)
@@ -1392,7 +1404,8 @@ plot_efficiency_by_team = function(data, teams, seed = 1) {
       lwd = 1.2,
       alpha = 0.8
     ) +
-    cfbplotR::scale_colour_cfb(guide = guide_legend()) +
+    cfbplotR::scale_colour_cfb(alt_colors = c("Colorado", "LSU"), 
+                                              guide = guide_legend()) +
     theme(
       legend.position = 'top',
       axis.text.x = element_text(size = 8),
@@ -1400,14 +1413,13 @@ plot_efficiency_by_team = function(data, teams, seed = 1) {
       plot.title = element_text(h = 0.5, size = 14),
       panel.grid.major = element_blank()
     ) +
-    ylab("Team Net Points per Play")+
-    xlab("Season")
+    ylab("Team Net Points per Play")
 }
 
-plot_team_efficiency <- function(data, teams = "Texas A&M", seed = 1) {
+plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1) {
   
   team_plot = 
-    plot_efficiency_by_team(data = data, teams = teams, seed = seed)
+    plot_efficiency_by_team(data = data, x=x, teams = teams, seed = seed)
   
   team_data = 
     team_plot$data |>
@@ -1416,20 +1428,22 @@ plot_team_efficiency <- function(data, teams = "Texas A&M", seed = 1) {
       by = join_by(team)
     )
   
-  team_plot + 
+  team_plot +
     guides(color = 'none') +
     # add season ranks
     geom_text(
       data = team_data,
-      aes(y = min + 0.025,
+      aes(y = estimate,
           label = rank,
           color = team
       ),
-      size = 3
+      size = 2.5,
+      vjust = -1
     ) +
-    labs(title = paste("Team Efficiency by Season", paste(teams, sep = ","), sep = " - "),
-         subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their season rank."), 120))
-}
+    labs(title = paste("Team Efficiency", paste(teams, sep = ","), sep = " - "),
+         subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their ranking among all FBS teams."), 120))
+  
+  }
 
 
 gt_est_color = function(tab,
@@ -1635,7 +1649,7 @@ efficiency_top_categories_tbl = function(data) {
       pass_offense = "pass",
       pass_defense = "pass"
     )
-  }
+}
 
 efficiency_top_teams_tbl = function(data, n = 100) {
   

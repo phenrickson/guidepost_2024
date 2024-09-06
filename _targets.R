@@ -507,7 +507,8 @@ list(
   tar_target(
     pbp_efficiency,
     pbp_predicted |>
-      prepare_efficiency(games = cfbd_game_info_tbl)
+      prepare_efficiency(games = cfbd_game_info_tbl,
+                         game_type = c("regular", "postseason"))
   ),
   # now add in efficiency estimates
   # overall
@@ -542,6 +543,11 @@ list(
     pbp_efficiency |>
       estimate_efficiency_category(metric = 'predicted_points_added')
   )
+  # # in season efficiency estimates
+  # tar_target(
+  #   estimated_efficiency_ppa
+  #   
+  # )
   # # quarto
   # tar_quarto(
   #   reports,

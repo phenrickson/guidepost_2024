@@ -1,390 +1,625 @@
+# efficiency in season
 targets::tar_load_globals()
-
-# additional packages
-library(cfbplotR)
-library(ggforce)
-library(stringr)
 
 # source code
 targets::tar_source("R")
 
-# load data
-tar_load(cfbd_conferences_tbl)
+# objects
+tar_load(team_divisions)
 tar_load(cfbd_game_info_tbl)
-tar_load(cfbd_team_info_tbl)
-tar_load(pbp_predicted)
+tar_load(cfbd_calendar_tbl)
+tar_load(pbp_efficiency)
 
-# functions
-calculate_efficiency_by_type <- function(data, groups = c("season", "type", "team")) {
-  data |>
-  pivot_longer(
-    cols = c(offense, defense),
-    names_to = c("type"),
-    values_to = c("team")
-  ) |>
-  group_by(across(any_of(groups))) |>
-  summarize(
-    ppa = mean(predicted_points_added, na.rm = T),
-    epa = mean(expected_points_added, na.rm = T),
-    .groups = "drop"
-  ) |>
-  pivot_longer(
-    cols = c(ppa, epa),
-    names_to = c("metric"),
-    values_to = c("estimate")
-  ) |>
-  mutate(
-    type = factor(type, levels = c("offense", "defense")),
-    estimate = case_when(
-      grepl("defense", type) ~ -1 * estimate,
-      TRUE ~ estimate
-    )
+df = tibble(x = 1:1000)
+
+map(c(.9, .99, .995, .999),
+    ~ df |>
+      mutate(weight = .x ^ x,
+             base = factor(.x))) |>
+  list_rbind() |>
+  ggplot(aes(x=x, y=weight, color = base))+
+  geom_line()+
+  theme_cfb()
+
+weights_from_dates <- function(x, ref, base, max = 365 * 2) {
+  case_when(
+    # if game date greater than or equal to max then 1
+    x >= ref ~ 1,
+    # if its more than a set number of days away, set to 0
+    as.numeric(difftime(ref, x, units = "days")) > max ~ 0,
+    TRUE ~ base ^ as.numeric(difftime(ref, x, units = "days"))
   )
 }
 
-add_overall_efficiency <- function(data, metric = "ppa") {
-  data |>
-  filter(metric == metric) |>
-  pivot_wider(
-    names_from = c("type"),
-    values_from = c("estimate")
+add_game_weights = function(data, ref = NULL, base = 0.995, importance = T, filter = T) {
+  
+  if (is.null(ref)) {
+    ref = max(data$start_date)
+  }
+  
+  tmp =
+    data |>
+    mutate(weight = weights_from_dates(start_date, ref = ref, base = base))
+  
+  if (filter == T) {
+    
+    tmp = 
+      tmp |>
+      filter(weight > 0)
+  }
+  
+  if (importance == T) {
+    
+    tmp = 
+      tmp |>
+      mutate(weight = recipes::importance_weights(weight))
+  }
+  
+  tmp
+  
+}
+estimate_efficiency_cumulative = function(data, metric) {
+  
+  dates = 
+    data |>
+    mutate(season, 
+           week, 
+           .keep = 'none'
+    ) |>
+    distinct()
+  
+  map2(
+    .x = dates$season,
+    .y = dates$week,
+    ~ data |>
+      filter(season == .x,
+             week <= .y) |>
+      estimate_efficiency(metric = metric) |>
+      add_overall_efficiency() |>
+      mutate(season_week = paste(.x, .y, sep = "_")) |>
+      select(season_week, everything())
   ) |>
-  mutate(
-    overall = offense + defense
+    list_rbind()
+  
+}
+
+estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
+  
+  map(
+    dates,
+    ~ {
+      message(paste("estimating efficiency for week", .x))
+      
+      data |>
+        filter(start_date <= .x) |>
+        add_game_weights(base =base) |>
+        estimate_efficiency(metric = metric, weights = T) |>
+        add_overall_efficiency() |>
+        mutate(start_date = .x)
+    }
   ) |>
-  select(season, team, metric, overall, offense, defense) |>
-  pivot_longer(
-    cols = c("overall", "offense", "defense"),
-    names_to = c("type"),
-    values_to = c("estimate")
+    list_rbind()
+}
+
+find_season_dates = function(data, seasons, season_types = c("regular", "postseason")) {
+  
+  data |>
+    filter(season %in% seasons,
+           season_type %in% season_types) |>
+    group_by(season, season_type, week) |>
+    summarize(
+      start_date = max(start_date),
+      .groups = 'drop'
+    ) |>
+    arrange(start_date) |>
+    mutate(season_week = paste(season, row_number(), sep = "_")) |>
+    select(season_week, everything())
+  
+}
+
+estimate_efficiency_by_week = function(data, metric, season, base = .995, season_type = 'regular', ...) {
+  
+  calendar = 
+    data |>
+    find_season_dates(seasons = season, 
+                      season_types = season_type)
+  
+  dates = 
+    calendar |>
+    pull(start_date)
+  
+  estimates = 
+    data |>
+    estimate_efficiency_weighted(dates = dates,
+                                 metric = metric,
+                                 base = base,
+                                 ...)
+  
+  estimates |>
+    left_join(calendar, by = join_by(start_date)) |>
+    select(-start_date) |>
+    select(season, season_type, week, season_week, everything())
+  
+}
+
+plot_team_efficiency_by_week = function(data, team, breaks = 15) {
+  
+  data|>
+    add_team_ranks(groups = c("season", "week", "type", "metric")) |> 
+    plot_team_efficiency(x = 'week', teams = team)+
+    facet_grid(type ~ season,
+               scales = "free_y")
+    #scale_x_continuous(breaks = scales::pretty_breaks(n = breaks))
+  
+}
+
+pbp_efficiency |>
+  find_season_dates(seasons = 2022)
+
+estimates = 
+  map(
+    c(2021, 2022, 2023),
+    ~ pbp_efficiency |>
+      estimate_efficiency_by_week(season = .x,
+                                  season_type = c('regular', 'postseason'),
+                                  metric = 'predicted_points_added')
   ) |>
-  mutate(
-    type = factor(type, levels = c("overall", "offense", "defense"))
-  )
-}
+  list_rbind()
 
-plot_team_efficiency <- function(data, teams = "Texas A&M", seed = 1) {
-  selected_teams <- tibble(team = teams)
-
-  all_teams_data <-
-  data |>
-  mutate(season = factor(season))
-
-  all_teams_plot <-
-  all_teams_data |>
-  ggplot(aes(
-    x = season,
-    y = estimate
-  )) +
-  geom_point(
-    alpha = 0.25,
-    shape = 19,
-    color = "grey60",
-    position = position_auto(scale = F, seed = seed)
-  ) +
-  facet_grid(type ~ ., scales = "free_y") +
-  guides(color = "none") +
-  geom_hline(yintercept = 0, linetype = "dotted") +
-  theme_cfb() +
-  theme(axis.text.x = element_text(size = 8))
-
-  team_data <- all_teams_data |>
-  inner_join(selected_teams, by = join_by(team))
-
-  all_teams_plot +
-  geom_point(
-    data = team_data,
-    aes(color = team)
-  ) +
-  geom_line(
-    data = team_data,
-    aes(group = team, color = team),
-    lwd = 1.2,
-    alpha = 0.8
-  ) +
-  cfbplotR::scale_colour_cfb() +
-  theme(
-    axis.text.x = element_text(size = 8),
-    plot.title = element_text(h = 0.5, size = 16)
-  ) +
-  labs(title = paste(teams, sep = ","))
-}
+estimates |>
+  mutate(week = as.numeric(stringr::str_sub(season_week, 6, 7))) |>
+  plot_team_efficiency_by_week(team = 'Colorado')
 
 
-theme_set(theme_cfb())
+estimate_effiency_by_week(season = 2023,
+                          season_type = c('regular', 'postseason'),
+                          metric = 'predicted_points_added')
 
-team_divisions <-
-cfbd_game_info_tbl |>
-select(season, home_team, away_team, home_division, away_division) |>
-find_team_divisions()
+estimated |> 
+  plot_team_efficiency_by_week(team = 'Alabama')
 
-team_conferences <-
-cfbd_team_info_tbl |>
-select(
-  season,
-  school,
-  conference,
-  division
-) |>
-distinct()
+add_team_ranks(groups = c("season", "week", "type", "metric")) |> 
+  plot_team_efficiency(x = 'week', teams = 'TCU')+
+  facet_grid(type ~ season,
+             scales = "free_y")+
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 15))
 
-add_score_effects = function(data) {
 
-  data |>
-  mutate(
-    home_score = case_when(
-      drive_is_home_offense == T ~ offense_score,
-      drive_is_home_offense == F ~ defense_score
-    ),
-    away_score = case_when(
-      drive_is_home_offense == T ~ defense_score,
-      drive_is_home_offense == F ~ offense_score
-    ),
-    home_margin = home_score - away_score,
-    garbage_time = case_when(
-      period == 2 & abs(home_margin) >= 38 ~ 1,
-      period == 3 & abs(home_margin) > 28 ~ 1,
-      period == 4 & abs(home_margin) > 22 ~ 1,
-      TRUE ~ 0
-    )
-  )
-}
 
-expected_points <-
-pbp_predicted |>
-inner_join(
-  cfbd_game_info_tbl |>
-  select(season, game_id, neutral_site, week)
-) |>
-select(
-  season,
-  week,
-  game_id,
-  half,
-  period,
-  drive_id,
-  play_id,
-  play_type,
-  neutral_site,
-  drive_is_home_offense,
-  home,
-  away,
-  offense,
-  defense,
-  offense_score,
-  defense_score,
-  play_text,
-  contains("expected_points"),
-  predicted_points_added
-)
 
-add_home_field = function(data) {
 
-  data |>
-  mutate(
-    home_field_advantage = case_when(
-      drive_is_home_offense == 1 & neutral_site == 0 ~ 1,
-      TRUE ~ 0
-    )
-  )
 
-}
 
-join_team_divisions = function(data, games = cfbd_game_info_tbl) {
+no_weights = 
+  pbp_efficiency |>
+  filter(play_situation != 'special',
+         season == 2022,
+         season_type == 'regular') |>
+  estimate_efficiency_cumulative(metric = 'predicted_points_added')
 
-  data |>
+season_weeks = 
+  cfbd_calendar_tbl |> 
+  filter(season == 2022,
+         season_type == 'regular') |>
+  mutate(start_date = as.Date(last_game_start)) |>
+  select(season, 
+         season_type,
+         week,
+         start_date)
+
+pbp_efficiency |>
   left_join(
-    games |>
-    select(game_id, season_type, home = home_team, away = away_team, home_division, away_division)
+    cfbd_game_info_tbl |>
+      mutate(start_date = as.Date(start_date)) |>
+      select(game_id,
+             start_date)
   )
+
+
+
+calendar = 
+  
+  pbp_efficiency |>
+  left_join(
+    cfbd_game_info_tbl |>
+      mutate(start_date = as.Date(start_date)) |>
+      select(game_id,
+             start_date)
+  ) |>
+  find_season_dates(seasons = 2023, 
+                    season_types = 'regular')
+
+weights = 
+  pbp_efficiency |>
+  filter(season <= 2022,
+         play_situation != 'special',
+         season_type == 'regular') |>
+  left_join(
+    cfbd_game_info_tbl |>
+      mutate(start_date = as.Date(start_date)) |>
+      select(game_id,
+             start_date)
+  ) |>
+  estimate_efficiency_weighted(dates = season_weeks$start_date,
+                               metric = 'predicted_points_added') |>
+  left_join(
+    season_weeks |>
+      mutate(season_week = paste(season, week, sep = "_"))
+  ) |>
+  select(season_week, team, metric, type, estimate)
+
+
+plot_season_estimates = function(data, span = 0.15) {
+  
+  df = 
+    data |>
+    #separate_wider_delim(season_week, names = c("season", "week"), delim= "_") |>
+    mutate(across(c(season, week), as.numeric)) |>
+    mutate(team_label = case_when(week == max(week) ~ team,
+                                  week == min(week) ~ team))
+  
+  df |>
+    ggplot(aes(x=week,
+               color = team,
+               linetype = method,
+               label = team_label,
+               group = paste(team, method),
+               y=estimate))+
+    # geom_text(aes(label = rank),
+    #           size = 2,
+    #           vjust = -.5)+
+    geom_hline(yintercept = 0,
+               alpha = 0.25)+
+    geom_line(stat = 'smooth',
+              span = span)+
+    # geom_label(vjust = 0.5,
+    #            size = 2)+
+    scale_color_cfb()+
+    scale_linetype_manual(values = c("dotted", "solid"))+
+    xlab("Week")+
+    ylab("Estimated Team Strength")+
+    facet_wrap(season ~.)+
+    facet_wrap(paste(team, season)~.)+
+    theme_cfb()
 }
 
-dat =
-expected_points |>
-add_play_category() |>
-add_score_effects() |>
-add_home_field() |>
-join_team_divisions() |>
-filter(!is.na(predicted_points_added), season_type == "regular") |>
-factor_team_names() |>
-select(
-  season,
-  week,
-  game_id,
-  play_id,
-  play_type,
-  play_category,
-  play_text,
-  neutral_site,
-  home,
-  away,
-  home_division,
-  away_division,
-  offense,
-  defense,
-  garbage_time,
-  home_field_advantage,
-  predicted_points_added,
-  expected_points_added
-)
-
-effects_recipe =
-dat |>
-build_recipe(
-  outcome = predicted_points_added,
-  predictors = c("offense", "defense", "home_field_advantage"),
-  ids = c("season", "game_id")
+bind_rows(
+  no_weights |>
+    mutate(method = 'no_weights'),
+  weights |>
+    mutate(method = 'weights')
 ) |>
-step_dummy(
-  offense,
-  defense
-)
+  add_team_ranks(
+    groups = c("season_week", "metric", "type", "method")
+  )  |>
+  filter(type == 'overall') |>
+  # filter(team == 'Florida International') |>
+  inner_join(
+    tibble(team = c("Michigan", "Oregon", "Georgia", "Tennessee", "Ohio State", "LSU", "USC", "TCU", "Alabama"))
+  ) |>
+  plot_season_estimates()
 
-glmnet_spec =
-linear_reg(
-  penalty = 0.001,
-  mixture = 0
-)|>
-set_engine("glmnet")
+estimates = 
+  weights |>
+  pivot_wider(names_from = c('type'),
+              values_from = c('estimate')) |>
+  separate_wider_delim(season_week, names = c("season", "week"), delim= "_") |>
+  mutate(across(c(season, week), as.numeric)) |>
+  select(-metric)
 
-lm_spec =
-linear_reg()
-
-effects_wflow =
-workflow() |>
-add_model(
-  lm_spec
-) |>
-add_recipe(
-  effects_recipe
-)
-
-effects_fit =
-workflow() |>
-add_recipe(
-
-)
-add_model(
-  lm_spec,
-  formula =
-  predicted_points_added ~ 0 + home_field_advantage + offense + defense
-) |>
-fit(
-  dat |> filter(season == 2023)
-)
-
-foo =
-glmnet_spec |>
-fit(
-  predicted_points_added ~ home_field_advantage + offense_ + defense_,
-  data =
-  dat |>
-  filter(season == 2021) |>
-  filter(garbage_time == 0) |>
-  rename(
-    offense_ = offense,
-    defense_ = defense
+estimates |>
+  pivot_longer(
+    cols = c("overall", "offense", "defense")
   )
-)
 
-intercept =
-foo |>
-tidy() |>
-filter(term == "(Intercept)") |>
-  pull(estimate)
 
-effects =
-foo |>
-tidy() |>
-filter(term != "home_field_advantage" & term != "(Intercept)") |>
-  mutate(
-    type = sub("_.*", "", term),
-    team = sub("^[^_]*_", "", term)
+df = 
+  cfbd_game_info_tbl |>
+  filter(season == 2022,
+         season_type == 'regular') |>
+  select(season, game_id, week, start_date, neutral_site, home = home_team, away = away_team, home_points, away_points) |>
+  mutate(home_win = case_when(home_points > away_points ~ 'yes',
+                              TRUE ~ 'no'),
+         home_win = factor(home_win, levels = c("no", "yes"))) |>
+  left_join(
+    estimates |>
+      mutate(week = week - 1) |>
+      select(season, 
+             week,
+             home = team,
+             home_overall = overall
+      )
   ) |>
-  select(type, team, everything()) |>
-  mutate(adjusted = estimate + intercept)
-
-effects |>
-  select(type, team, adjusted) |>
-  pivot_wider(
-    names_from = c("type"),
-    values_from = c("adjusted")
+  left_join(
+    estimates |>
+      mutate(week = week - 1) |>
+      select(season, week,
+             away = team,
+             away_overall = overall)
   ) |>
-  mutate(
-    defense = defense,
-    overall = offense + defense
-  ) |>
-  arrange(desc(overall))
+  na.omit() |>
+  # mutate(across(ends_with("overall"), ~ .x * 100)) |>
+  mutate(home_diff_overall = home_overall - away_overall,
+         home_margin = home_points - away_points,
+         neutral_site = case_when(neutral_site == T ~ 1,
+                                  TRUE ~ 0)) 
 
-effects |>
-filter(term == 'offense_fcs' | term == 'defense_fcs')
-
-separate(
-  col = term, into = c("type", "team")
-)
-filter(grepl("Texas", term))
-
-$$PPA  = Offense_i + Defense_j + HomeFieldAdvantage
-
-dat |>
-nest(-c(season, week))
+logistic_reg() |>
+  fit(home_win ~ home_overall + away_overall + neutral_site,
+      data = df)
 
 
-effects_fit |>
-tidy()
-
-# using functions
-expected_points_by_type <-
-expected_points |>
-calculate_efficiency_by_type() |>
-add_overall_efficiency() |>
-filter_to_fbs()
-
-foo =
-expected_points |>
-add_play_category(remove = F)
-
-team_efficiency_by_category =
-foo |>
-calculate_efficiency_by_type(groups = c("season", "type", "team", "play_category")) |>
-filter_to_fbs()
-
-team_efficiency_overall =
-foo |>
-calculate_efficiency_by_type(groups = c("season", "type", "team")) |>
-add_overall_efficiency() |>
-filter_to_fbs()
-
-team_efficiency_overall |>
-filter(metric == 'ppa') |>
-plot_team_efficiency(team = 'Wisconsin') +
-facet_grid(type ~ ., scales = "free_y")
+df |>
+  ggplot(aes(x=home_diff_overall,
+             color = home_win,
+             label = paste(paste(home, away, sep = ' vs '),
+                           paste(home_points, away_points, sep = " - ")),
+             y=home_margin))+
+  geom_point()+
+  geom_text(size = 2,
+            vjust = -.5)
+# nest(data = -team) |>
+# sample_n(25) |>
+# unnest(data) |>
+# filter(team %in% c('Georgia', 'TCU', 'Michigan', 'Texas', 'Notre Dame', 'Florida State')) |>
+#inner_join(tibble(team = c("Florida State", "Texas A&M", "Marshall", "Notre Dame", "Auburn","TCU", "Texas", "LSU", "Georgia", "Tennessee"))) |>
 
 
-team_efficiency_by_category |>
-filter(metric == "epa") |>
-filter(type == 'offense', play_category != 'special') |>
-plot_team_efficiency(team = "Colorado") +
-facet_grid(play_category~ type, scales = "free_y")
-
-# ## Examining Seasons
-# ### 2023
-# top_plays_by_season <- function(plays, var = predicted_points_added, n = 10) {
-#     plays |>
-#       group_by(season) |>
-#       slice_max(abs({{ var }}), n = n) |>
-#       group_by(season)
-# }
-
-# top_plays_2023 <-
-#   pbp_fit |>
-#   augment(
-#     prepared_pbp |>
-#       filter(season == 2023)
+# 
+# no_weights = 
+#   pbp_efficiency |>
+#   left_join(
+#     cfbd_game_info_tbl |>
+#       mutate(start_date = as.Date(start_date)) |>
+#       select(game_id,
+#              start_date)
 #   ) |>
-#   calculate_expected_points() |>
-#   calculate_points_added()
-
-# top_plays_2023 |>
-#     top_plays_by_season() |>
-#     plays_p
+#   filter(play_situation != 'special',
+#          season == 2023,
+#          season_type == 'regular') |>
+#   cumulative_data() |>
+#   nest(data = -c(season_week)) |>
+#   mutate(estimated = map(data, ~ estimate_efficiency(.x, metric = 'predicted_points_added')))
+# 
+# 
+# with_weights = 
+#   pbp_efficiency |>
+#   add_weights() 
+# filter(play_situation != 'special') |>
+#   filter(season == 2023,
+#          season_type == 'regular') |>
+#   nest(data = -c(week))
+# filter(play_situation != 'special') |>
+#   estimate_efficiency(metric = "predicted_points_added",
+#                       weights = T)
+# 
+# plot_weights_vs_none = function(data) {
+#   
+#   data |>
+#     add_overall_efficiency() |>
+#     pivot_wider(
+#       names_from = c("type"),
+#       values_from = c("estimate")
+#     ) |>
+#     pivot_wider(
+#       names_from = c("method"),
+#       values_from = c("overall", "offense", "defense")
+#     ) |>
+#     ggplot() +
+#     geom_point(aes(x=offense_no_weights,
+#                    y=defense_no_weights,
+#                    color = 'no_weights'),
+#                size = 0)+
+#     # geom_point(aes(x=offense_weights,
+#     #                y=defense_weights,
+#     #                color = 'weights'))+
+#     # ggrepel::geom_text_repel(
+#     #   aes(x=offense_no_weights,
+#     #       y=defense_no_weights,
+#     #       label = team,
+#     #       vjust = -1,
+#     #       color = 'no_weights'),
+#     #   size = 2,
+#     #   color = 'navy')+
+#     geom_text(aes(x=offense_weights,
+#                   y=defense_weights,
+#                   label = team,
+#                   vjust = -1,
+#                   color = 'weights'),
+#               size = 1.5)+
+#     geom_segment(aes(x = offense_no_weights, 
+#                      y = defense_no_weights,
+#                      xend = offense_weights, 
+#                      yend = defense_weights),
+#                  arrow = arrow(length = unit(0.1, "cm")),
+#                  color = "dodgerblue4")+
+#     coord_cartesian(xlim = c(-.4, .4),
+#                     ylim = c(-.4, .4))+
+#     geom_vline(xintercept = 0, linetype = 'dotted')+
+#     geom_hline(yintercept = 0, linetype = 'dotted')+
+#     xlab("Offensive Efficiency")+
+#     ylab("Defensive Efficiency")+
+#     scale_color_manual(values = c("grey", "navy"))+
+#     guides(color = 'none')
+# }
+# 
+# 
+# # estimate team strength for each individual week of 2023
+# no_weights = 
+#   pbp_weights |>
+#   filter(play_situation != 'special') |>
+#   filter(season == 2023,
+#          season_type == 'regular',
+#          week <=3) |>
+#   estimate_efficiency(metric = "predicted_points_added")
+# 
+# no_weights |>
+#   add_overall_efficiency() |>
+#   pivot_wider(names_from = c("type"), values_from = c("estimate")) |> 
+#   arrange(desc(overall))
+# 
+# no_weights = 
+#   pbp_weights |>
+#   inner_join(
+#     cfbd_game_info_tbl |>
+#       filter(season )
+#   )
+# filter(season ) |>
+#   filter(play_situation != 'special') |>
+#   estimate_efficiency(metric = "predicted_points_added")
+# 
+# no_weights |>
+#   mutate(method = 'no_weights') |>
+#   bind_rows(
+#     with_weights |>
+#       mutate(method = 'weights')
+#   ) |>
+#   plot_weights_vs_none() 
+# # add_team_ranks(groups = c("season", "type", "metric", "method")) |>
+# pivot_wider(
+#   names_from = c("type"),
+#   values_from = c("estimate")
+# ) |>
+#   pivot_wider(
+#     names_from = c("method"),
+#     values_from = c("overall", "offense", "defense")
+#   ) |>
+#   ggplot() +
+#   geom_point(aes(x=offense_no_weights,
+#                  y=defense_no_weights,
+#                  color = 'no_weights'),
+#              size = 0)+
+#   # geom_point(aes(x=offense_weights,
+#   #                y=defense_weights,
+#   #                color = 'weights'))+
+#   # ggrepel::geom_text_repel(
+#   #   aes(x=offense_no_weights,
+#   #       y=defense_no_weights,
+#   #       label = team,
+#   #       vjust = -1,
+#   #       color = 'no_weights'),
+#   #   size = 2,
+#   #   color = 'navy')+
+#   geom_text(aes(x=offense_weights,
+#                 y=defense_weights,
+#                 label = team,
+#                 vjust = -1,
+#                 color = 'weights'),
+#             size = 1.5)+
+#   geom_segment(aes(x = offense_no_weights, 
+#                    y = defense_no_weights,
+#                    xend = offense_weights, 
+#                    yend = defense_weights),
+#                arrow = arrow(length = unit(0.1, "cm")),
+#                color = "dodgerblue4")+
+#   coord_cartesian(xlim = c(-.4, .4),
+#                   ylim = c(-.4, .4))+
+#   geom_vline(xintercept = 0, linetype = 'dotted')+
+#   geom_hline(yintercept = 0, linetype = 'dotted')+
+#   xlab("Offensive Efficiency")+
+#   ylab("Defensive Efficiency")+
+#   scale_color_manual(values = c("grey", "navy"))+
+#   guides(color = 'none')
+# 
+# 
+# 
+# 
+# geom_text()
+# geom_point()+
+#   pivot_wide r(
+#     names_from = c("method"),
+#     values_from = c("estimate")
+#   ) |>
+#   ggplot(aes(x=no_weights,
+#              y=weights,
+#              label = team))+
+#   geom_point()+
+#   geom_label(alpha = 0.5)+
+#   facet_wrap(type ~.,
+#              ncol = 1)_
+# 
+# with_weights
+# estimate_efficiency_weights = 
+#   
+#   build_efficiency_wflow_weights = function(data, metric = "expected_points_added", model = efficiency_model(), ...) {
+#     
+#     rec = data |>
+#       build_efficiency_recipe()
+#     
+#     wflow |>
+#       workflow() |>
+#       add_case_weights(
+#         weight
+#       ) |>
+#       add_recipe(
+#         rec
+#       ) |>
+#       add_model(
+#         model
+#       )
+#   }
+# 
+# pbp_weights |>
+#   build_efficiency_wflow(metric = "predicted_points_added")
+# 
+# foo = 
+#   pbp_weights |>
+#   filter(weight > 0) |>
+#   
+#   
+#   foo$teams |>
+#   filter(team == 'Texas A&M') |>
+#   select(game_id, season, team)
+# 
+# foo$teams |>
+#   filter(team == 'Texas A&M') |>
+#   left_join(
+#     foo$opponents
+#   )
+# 
+# 
+# pluck("opponents")
+# filter(game_id == 63070) |>
+#   select(opponent)
+# filter(opponent == 'Texas A&M')
+# select(game_id, season, week, starts_with("team"))
+# pivot_home_away(var = 'away', replace = 'team')
+# 
+# 
+# pivot_games_to_teams()  |>
+#   filter(game_id == 63070)
+# filter(team == 'Texas A&M') |>
+#   filter(is_home_team == T) |>
+#   filter(game_id == 63177) |>
+#   select(game_id, team)
+# 
+# cfbd_game_info_tbl |>
+#   filter(game_id == 63177) |>
+#   select(home_team, away_team)
+# select(game_id, season, week, team, opponent)
+# select(season, game_id, team, is_home_team)
+# select(game_id, season, team, opponent)
+# 
+# 
+# filter(is_home_team ==)
+# pivot_home_away() |>
+#   group_by(team, opponent) |> 
+#   count()
+# filter(team == 'Texas A&M')
+# 
+# 
+# cfbd_game_info_tbl |>
+#   select(game_id, starts_with("home")) |>
+#   rename_with(cols = starts_with("home_"), ~ gsub("home_", "", .x)) |>
+#   mutate(is_home_team = T)
+# 
+# cfbd_game_info_tbl |>
+#   select(game_id, starts_with("away")) |>
+#   rename_with(cols = starts_with("home_"), ~ gsub("away_", "", .x)) |>
+#   mutate(is_home_team = F)
+# 
+# 
+# 
+# 
+# pivot_team()
+# filter(team == 'Texas A&M', season > 2007)

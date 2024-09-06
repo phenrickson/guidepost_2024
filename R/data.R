@@ -121,3 +121,37 @@ factor_team_names <- function(data, ref = "fcs") {
     across(c("offense_id", "defense_id"), ~ relevel(factor(.x), ref = ref))
   )
 }
+
+pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season_type", "week", "start_date", "neutral_site")) {
+  
+  tmp = 
+    data |>
+    select(game_id, home_team, away_team)
+  
+  longer = 
+    data |>
+    select(-contains("_elo"), -contains("_prob")) |>
+    longer_games(game_vars = game_vars) |>
+    rename_with(
+      .cols = c("id", "division", "points"),
+      .fn = ~  paste("team", .x, sep = "_")
+    )
+  
+  joined =
+    longer |>
+    left_join(tmp,
+              by = join_by(game_id))  |>
+    mutate(
+      team_outcome = case_when(team_points > opponent_points ~ 'win',
+                               opponent_points > team_points ~ 'loss',
+                               team_points == opponent_points ~ 'tie'),
+      team_is_home = case_when(home_team == team & neutral_site == F ~ T,
+                               TRUE ~ F)
+    )
+  
+  joined |>
+    arrange(season, start_date) |>
+    select(any_of(game_vars), team_is_home, starts_with("team"), starts_with("opponent"))
+  
+}
+
