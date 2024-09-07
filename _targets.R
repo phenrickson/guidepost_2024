@@ -402,6 +402,11 @@ list(
     prepared_games |>
       tune_elo_ratings(params = elo_best_params)
   ),
+  tar_target(
+    elo_teams,
+    elo_games |>
+      pluck('team_outcomes', 1)
+  ),
   # expected points modeling
   tar_target(
     class_metrics,

@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|7172cb20992197e7|||||||||||||||
+.Random.seed|object|0a125e4f5eb9d4f6|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
 add_expected_points|function|0bf3484101e66081|||||||||||||||
 add_game_weights|function|dec8a4b3f3fbb815|||||||||||||||
@@ -850,6 +850,7 @@ elo_best_params|stem|969981d999faaaaa|4fa5d33e3847b275|f4161b6df136eed4|16999256
 elo_games|stem|072cafd856bf5071|af055306eb609d68|326b09c4311f7ba5|287351732|bucket=cfb_models*key=data/objects/elo_games*version=1723425417761525|t19947.0534386944s||9838488|qs|gcp|vector|||536.582||
 elo_metrics|stem|85081ffa4ec90c0c|e6fdd4348f499338|0f72634f85fb8cba|-1457972120|bucket=cfb_models*key=data/objects/elo_metrics*version=1723317783165175|t19945.8076733905s||21476|qs|gcp|vector|||5.187||
 elo_params|stem|8cfb2fca376d6ce2|4c134a0226d3022e|2c530c1562a7fbd1|299248135|bucket=cfb_models*key=data/objects/elo_params*version=1723221826224177|t19944.6970610511s||280|qs|gcp|vector||elo_params_cea81865393503b9*elo_params_9d5542561916fb9e*elo_params_65d400eb338c1095*elo_params_0ddc7ced0d3e0da6*elo_params_eb6583d005fe0a28*elo_params_139fbd24fbf50476*elo_params_aa998368f74257ba*elo_params_2042191cefca37df*elo_params_f8ec29c0e3922fae*elo_params_6778cee1c4f4d8f4*elo_params_9e364755039371bd*elo_params_0d0370e8532ffd15*elo_params_2db962f5ce30955d*elo_params_6d76e2906a527383*elo_params_839162ec2f7cd274*elo_params_f9badc3fe44239c3*elo_params_4f00a754a01518bb*elo_params_7d5f9195f8417f1e*elo_params_8c20494a78c8466e*elo_params_69783503235bdd81*elo_params_d2ace2d18e98f0a6*elo_params_751d1474c493a7e3*elo_params_efc38cc2cab9b91a*elo_params_68022d517b5762f2*elo_params_ad193a4c41426d05*elo_params_cb8adfa7c101043b*elo_params_4efa0217ab7d9c03|2.187||
+elo_teams|stem|cd613c34acb576fe|2b309108d6e9e741|ec02f8f56db3bef5|379872597|bucket=cfb_models*key=data/objects/elo_teams*version=1725653895165358|t19972.8460043509s||5037764|qs|gcp|vector|||0||
 elo_tuning_results|pattern|8627386fe75bf682|78fa13109850d37a||-1254575609||||266195131|qs|gcp|vector||elo_tuning_results_6fd365bf7d3bbef9*elo_tuning_results_da95b4b46fbaf4f7*elo_tuning_results_5d25c28d2652fd69*elo_tuning_results_9f4ae210750eda24*elo_tuning_results_b1dc0901a42ea510*elo_tuning_results_49e0fd2fc53209d5*elo_tuning_results_1d2ef8d5e90bc097*elo_tuning_results_2c4706dd49402633*elo_tuning_results_30b61c3c5f50589f*elo_tuning_results_c626659d2aa7a896*elo_tuning_results_dc6f1245235cb5bc*elo_tuning_results_7ecf10ac18e14448*elo_tuning_results_cf8c02a6b704c18a*elo_tuning_results_96385cf6c5e8bfdb*elo_tuning_results_12813799753e67e4*elo_tuning_results_86d647a0218d420c*elo_tuning_results_fe5cd8131d03eee1*elo_tuning_results_3b43911b1b09b330*elo_tuning_results_ac42ea3cbd09c6aa*elo_tuning_results_cc0a845834d09be6*elo_tuning_results_b222c5a0627968bd*elo_tuning_results_2180c08de0144207*elo_tuning_results_a74cd9031659352f*elo_tuning_results_a9e8318671088140*elo_tuning_results_edeef1a4058cb5f2*elo_tuning_results_033570a51eded90f*elo_tuning_results_07c5a065aafa94d8|25315.003||
 elo_tuning_results_033570a51eded90f|branch|52bd8b444c0079ff|78fa13109850d37a|93eea8667d083587|1271672469|bucket=cfb_models*key=data/objects/elo_tuning_results_033570a51eded90f*version=1723317750340610|t19945.8072891382s||9866373|qs|gcp|vector|elo_tuning_results||850.437||
 elo_tuning_results_07c5a065aafa94d8|branch|8ee0e46870703a72|78fa13109850d37a|93eea8667d083587|2013268770|bucket=cfb_models*key=data/objects/elo_tuning_results_07c5a065aafa94d8*version=1723317749182013|t19945.8072757314s||9850954|qs|gcp|vector|elo_tuning_results||843.927||
@@ -936,12 +937,12 @@ penalty_text|function|93229a4eddcd7124|||||||||||||||
 pivot_games_to_teams|function|a10cf1da1d27c7f2|||||||||||||||
 pivot_pbp|function|12a0041efb9c7ee0|||||||||||||||
 plays_points_tbl|function|40e35081dab2603c|||||||||||||||
-plot_efficiency_all_teams|function|583c6f41b5f23446|||||||||||||||
-plot_efficiency_by_team|function|d805d0f463452def|||||||||||||||
+plot_efficiency_all_teams|function|15cef652cd92314b|||||||||||||||
+plot_efficiency_by_team|function|7c2d58364794431f|||||||||||||||
 plot_pbp_calibration|function|da626d3788c6fb69|||||||||||||||
 plot_split_plan|function|69c5a731895efa4e|||||||||||||||
-plot_team_efficiency|function|a90c3666eab9bb76|||||||||||||||
-plot_team_efficiency_by_week|function|2edf9f109784092b|||||||||||||||
+plot_team_efficiency|function|3d66a4b688e9e982|||||||||||||||
+plot_team_efficiency_by_week|function|3bca3f1628dcb783|||||||||||||||
 prepare_drives|function|0cd66ed59e1e3d78|||||||||||||||
 prepare_efficiency|function|2621b3baaa00e971|||||||||||||||
 prepare_games|function|49779747191ba766|||||||||||||||
@@ -954,6 +955,7 @@ raw_efficiency_category|stem|567536d9a7078bd8|49bedb739c06862b|3fa0314855a53877|
 raw_efficiency_overall|stem|150592426e5ab9d4|933458f198af2e77|3fa0314855a53877|1782813637|bucket=cfb_models*key=data/objects/raw_efficiency_overall*version=1725637409314968|t19972.6551982904s||104338|qs|gcp|vector|||2.812||
 rename_home_away|function|25a82f056e377a93|||||||||||||||
 round_any|function|1f9a74510238f8e9|||||||||||||||
+scale_color_cfb_muted|function|4fa53d5f78e5c83d|||||||||||||||
 score_text|function|2beaea614d9d0fbe|||||||||||||||
 seasons|object|a3a5673ed49c208e|||||||||||||||
 select_elo_params|function|6903f9afe9c00a9f|||||||||||||||
