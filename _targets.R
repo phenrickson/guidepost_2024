@@ -548,17 +548,35 @@ list(
     pbp_efficiency |>
       estimate_efficiency_category(metric = 'predicted_points_added')
   ),
-  # in season efficiency estimates
+  tar_target(
+    season_weeks,
+    pbp_efficiency |>
+      nest(-season) |>
+      mutate(data = map(data, find_season_dates(.x, season = season)))
+  ),
   tar_target(
     estimated_efficiency_ppa,
     map(
-      c(2021, 2022, 2023),
+      c(2018, 2019, 2020, 2021, 2022, 2023),
       ~ pbp_efficiency |>
-        estimate_efficiency_by_week(season = .x,
-                                    metric = 'predicted_points_added')
+        estimate_efficiency_in_season(season = .x,
+                                      metric = 'predicted_points_added')
     ) |>
       list_rbind()
   )
+  # in season efficiency estimates
+  # # # estimate within each
+  # tar_target(
+  #   estimated_efficiency_ppa,
+  #   map(
+  #     c(2018, 2019, 2020, 2021, 2022, 2023),
+  #     ~ pbp_efficiency |>
+  #       filter(play_situation != 'special') |>
+  #       estimate_efficiency_by_week(season = .x,
+  #                                   metric = 'predicted_points_added')
+  #   ) |>
+  #     list_rbind()
+  # )
   # # quarto
   # tar_quarto(
   #   reports,

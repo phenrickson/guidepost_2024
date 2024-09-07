@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|0a125e4f5eb9d4f6|||||||||||||||
+.Random.seed|object|7bcf968069c70d5e|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
 add_expected_points|function|0bf3484101e66081|||||||||||||||
 add_game_weights|function|dec8a4b3f3fbb815|||||||||||||||
@@ -888,10 +888,11 @@ estimate_efficiency|function|4267fbc13ab4e90e|||||||||||||||
 estimate_efficiency_by_week|function|1f6eb2af932d0bd3|||||||||||||||
 estimate_efficiency_category|function|4cb6cd07592d473e|||||||||||||||
 estimate_efficiency_cumulative|function|74e7c63325500a4e|||||||||||||||
+estimate_efficiency_in_season|function|f43e8419e7b86e7d|||||||||||||||
 estimate_efficiency_overall|function|7634a6dfe4ad3ddd|||||||||||||||
 estimate_efficiency_weighted|function|2e0726dc6b44b178|||||||||||||||
 estimate_pbp_effect|function|8d8a6d45b51e26fe|||||||||||||||
-estimated_efficiency_ppa|stem|f42afd123e3674ba|8b72e5fd148a655b|0000d29bedaa1a05|-1986038301|bucket=cfb_models*key=data/objects/estimated_efficiency_ppa*version=1725651051618674|t19972.8130944786s||174516|qs|gcp|vector|||2183.434|Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
+estimated_efficiency_ppa|stem|ec084a4dc029ef78|d6548815fbea47e4|58394667aea30b5b|-1986038301|bucket=cfb_models*key=data/objects/estimated_efficiency_ppa*version=1725727768221979|t19973.7010178521s||348465|qs|gcp|vector|||1859.619|Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
 factor_class|function|6c31d359bd3ef445|||||||||||||||
 factor_team_names|function|841932ba7be35d68|||||||||||||||
 filter_play_type|function|e1363a13cfafa77d|||||||||||||||

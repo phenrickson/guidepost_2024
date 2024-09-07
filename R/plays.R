@@ -1808,3 +1808,15 @@ find_season_dates = function(data, seasons, season_types = c("regular", "postsea
     select(season_week, everything()) 
   
 }
+
+# estimate efficiency in season
+estimate_efficiency_in_season = function(data, 
+                                         season,
+                                         metric = 'predicted_points_added', 
+                                         situation = c('offense/defense')) {
+  
+  data |>
+    filter(play_situation %in% situation) |>
+    estimate_efficiency_by_week(season = season,
+                                metric = metric)
+}
