@@ -1346,7 +1346,7 @@ add_overall_efficiency <- function(data, metric = "ppa") {
     )
 }
 
-add_team_ranks = function(data, groups = c("season", "type", "metric")) {
+add_team_ranks = function(data, groups = c("season", "season_week", "type", "metric")) {
   
   data |>
     group_by(across(any_of(groups))) |>
@@ -1356,7 +1356,7 @@ add_team_ranks = function(data, groups = c("season", "type", "metric")) {
 }
 
 
-plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
+plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, seed = 1) {
   
   all_teams_data <-
     data |>
@@ -1364,17 +1364,39 @@ plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
     mutate(min = min(estimate)) |>
     ungroup()
   
-  all_teams_data |>
+  p = 
+    all_teams_data |>
     ggplot(aes_string(
       x = glue::glue("as.factor({x})"),
       y = "estimate"
-    )) +
-    geom_point(
-      alpha = 0.15,
-      shape = 19,
-      color = "grey80",
-      position = ggforce::position_auto(jitter.width = 0.25, scale = F, seed = seed)
-    ) +
+    ))
+  
+  if (line == T) {
+    
+    p = 
+      p +
+      geom_line(
+        aes(group = team),
+        lwd = 1,
+        color = 'grey80',
+        alpha = 0.1
+      )
+  } 
+  
+  if (point == T) {
+    
+    p = 
+      p +
+      geom_point(
+        alpha = 0.15,
+        shape = 19,
+        color = "grey80",
+        position = ggforce::position_auto(jitter.width = 0.25, scale = F, seed = seed)
+      )
+    
+  }
+  
+  p +
     facet_grid(type ~ ., scales = "free_y") +
     guides(color = "none") +
     geom_hline(yintercept = 0, linetype = "dotted") +
@@ -1383,27 +1405,37 @@ plot_efficiency_all_teams = function(data, x = 'season', seed = 1) {
   
 }
 
-plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1) {
+plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = T, line = T) {
   
-  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed)
+  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, point = point, line = line)
   all_teams_data = all_teams_plot$data
   
   selected_teams <- tibble(team = teams)
   team_data <- all_teams_data |>
     inner_join(selected_teams, by = join_by(team))
   
+  p = all_teams_plot
   
-  all_teams_plot +
-    geom_point(
-      data = team_data,
-      aes(color = team)
-    ) +
-    geom_line(
-      data = team_data,
-      aes(group = team, color = team),
-      lwd = 1.2,
-      alpha = 0.8
-    ) +
+  if (point ==T) {
+    
+    p = 
+      p +
+      geom_point(
+        data = team_data,
+        aes(color = team)
+      )
+  } 
+  
+  if (line == T) {
+    p = p +
+      geom_line(
+        data = team_data,
+        aes(group = team, color = team),
+        lwd = 1.2,
+        alpha = 0.8
+      ) 
+  }
+  p +
     scale_color_cfb_muted(guide = guide_legend()) +
     theme(
       legend.position = 'top',
@@ -1415,10 +1447,10 @@ plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1) {
     ylab("Team Net Points per Play")
 }
 
-plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1) {
+plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1, label = T, ...) {
   
   team_plot = 
-    plot_efficiency_by_team(data = data, x=x, teams = teams, seed = seed)
+    plot_efficiency_by_team(data = data, x=x, teams = teams, seed = seed, ...)
   
   team_data = 
     team_plot$data |>
@@ -1427,19 +1459,25 @@ plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed =
       by = join_by(team)
     )
   
+  if (label ==T ) {
+    
+    team_plot = 
+      team_plot +
+      geom_label(
+        data = team_data,
+        aes(y = estimate,
+            label = rank,
+            color = team
+        ),
+        alpha = 0.8,
+        size = 2,
+        vjust = -0.75
+      )
+  }
+  
   team_plot +
     guides(color = 'none') +
     # add season ranks
-    geom_label(
-      data = team_data,
-      aes(y = estimate,
-          label = rank,
-          color = team
-      ),
-      alpha = 0.8,
-      size = 2,
-      vjust = -0.75
-    ) +
     labs(title = paste("Team Efficiency", paste(teams, sep = ","), sep = " - "),
          subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their ranking among all FBS teams."), 120))
   
@@ -1746,12 +1784,13 @@ estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
   ) |>
     list_rbind()
 }
+
 estimate_efficiency_by_week = function(data, metric, season, base = .995, season_type = c('regular', 'postseason'), ...) {
   
   calendar = 
     data |>
-    find_season_dates(seasons = season, 
-                      season_types = season_type)
+    find_season_dates(season = season, 
+                      season_type = season_type)
   
   dates = 
     calendar |>
@@ -1770,25 +1809,32 @@ estimate_efficiency_by_week = function(data, metric, season, base = .995, season
     select(season, season_type, week, season_week, everything())
   
 }
-plot_team_efficiency_by_week = function(data, team) {
+
+plot_team_efficiency_by_week = function(data, team, label =T, line = T, point = F) {
   
   data|>
     mutate(week = as.numeric(stringr::str_sub(season_week, 6, 7))) |>
     add_team_ranks(groups = c("season", "week", "type", "metric")) |> 
-    plot_team_efficiency(x = 'week', teams = team)+
+    plot_team_efficiency(x = 'week', teams = team, label = label, line = line, point = point)+
     facet_grid(type ~ season,
-               scales = "free_y")
+               scales = "free_y")+
+    xlab("Season Week")+
+    scale_x_discrete(breaks = function(x){x[c(TRUE, FALSE, FALSE, FALSE, FALSE, T, FALSE, FALSE, FALSE)]})
+  
   
 }
 
-find_season_dates = function(data, seasons, season_types = c("regular", "postseason"), week_start = "Wednesday") {
+find_season_dates = function(data, season, season_type = c("regular", "postseason"), week_start = "Wednesday") {
   
   # create a data frame for the cfb season at the weekly level; 
   # adds a week zero and creates individual weeks for the postseason
   tmp = 
     data |>
-    filter(season %in% seasons,
-           season_type %in% season_types) |>
+    inner_join(
+      tibble(season = season,
+             season_type = season_type),
+      by = join_by(season_type, season)
+    ) |>
     mutate(week_date = lubridate::ceiling_date(start_date, unit = "week", week_start = week_start)) |>
     group_by(season, season_type, week, week_date) |>
     summarize(
@@ -1819,4 +1865,47 @@ estimate_efficiency_in_season = function(data,
     filter(play_situation %in% situation) |>
     estimate_efficiency_by_week(season = season,
                                 metric = metric)
+}
+
+get_season_weeks = function(games) {
+  
+  games |>
+    mutate(start_date = as.Date(start_date)) |>
+    mutate(year = season) |> 
+    nest(data =-year) |>
+    mutate(calendar = map2(data, year, ~ find_season_dates(data = .x,  season = .y))) |>
+    select(calendar) |>
+    unnest(calendar)
+}
+
+plot_ranking = function(plot, ranking) {
+  
+  rank_data = 
+    plot$data |>
+    add_team_ranks() |>
+    filter(rank %in% c(ranking)) |>
+    mutate(team = case_when(rank <= 75 ~ paste('top', rank),
+                            rank > 75 ~ paste('bottom', 135 - rank)))
+  
+  plot +
+    geom_line(
+      data =   
+        rank_data,
+      aes(group = team),
+      linetype = 'dashed',
+      alpha = 0.7
+    ) +
+    geom_text(
+      data = 
+        rank_data |>
+        filter(season == min(season),
+               week == min(week)),
+      aes(y = estimate, 
+          label = team
+      ),
+      hjust = 1.4,
+      size = 2
+    )+
+    coord_cartesian(clip = "off")
+  
 }

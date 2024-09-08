@@ -173,4 +173,3 @@ scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthet
   ggplot2::scale_color_manual(..., values = values, aesthetics = aesthetics, 
                               breaks = breaks, na.value = na.value, guide = guide)
 }
-

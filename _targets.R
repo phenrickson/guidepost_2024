@@ -563,6 +563,16 @@ list(
                                       metric = 'predicted_points_added')
     ) |>
       list_rbind()
+  ),
+  tar_target(
+    estimated_efficiency_ppa,
+    map(
+      c(2018, 2019, 2020, 2021, 2022, 2023),
+      ~ pbp_efficiency |>
+        estimate_efficiency_in_season(season = .x,
+                                      metric = 'predicted_points_added')
+    ) |>
+      list_rbind()
   )
   # in season efficiency estimates
   # # # estimate within each
