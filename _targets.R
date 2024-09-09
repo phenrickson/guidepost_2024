@@ -549,31 +549,43 @@ list(
       estimate_efficiency_category(metric = 'predicted_points_added')
   ),
   tar_target(
-    season_weeks,
+    cfb_season_weeks,
+    cfbd_game_info_tbl |>
+      find_season_weeks()
+  ),
+  tar_target(
+    efficiency_weeks,
+    cfb_season_weeks |>
+      filter(season >= 2017) |>
+      pull(week_date)
+  ),
+  # branch over weeks and estimate efficiency in season
+  tar_target(
+    efficiency_ppa_by_week,
     pbp_efficiency |>
-      nest(-season) |>
-      mutate(data = map(data, find_season_dates(.x, season = season)))
+      estimate_efficiency_by_week(metric = 'predicted_points_added',
+                                  date = efficiency_weeks),
+    pattern = map(efficiency_weeks)
   ),
+  # join with season weeks
   tar_target(
-    estimated_efficiency_ppa,
-    map(
-      c(2018, 2019, 2020, 2021, 2022, 2023),
-      ~ pbp_efficiency |>
-        estimate_efficiency_in_season(season = .x,
-                                      metric = 'predicted_points_added')
-    ) |>
-      list_rbind()
-  ),
-  tar_target(
-    estimated_efficiency_ppa,
-    map(
-      c(2018, 2019, 2020, 2021, 2022, 2023),
-      ~ pbp_efficiency |>
-        estimate_efficiency_in_season(season = .x,
-                                      metric = 'predicted_points_added')
-    ) |>
-      list_rbind()
+    efficiency_by_week,
+    efficiency_ppa_by_week |>
+      rename(week_date = start_date) |>
+      inner_join(cfb_season_weeks)  |>
+      mutate(type = case_when(play_situation == 'special' & type == 'overall' ~ 'special',
+                              TRUE ~ type))
   )
+  # tar_target(
+  #   estimated_efficiency_ppa,
+  #   map(
+  #     c(2018, 2019, 2020, 2021, 2022, 2023),
+  #     ~ pbp_efficiency |>
+  #       estimate_efficiency_in_season(season = .x,
+  #                                     metric = 'predicted_points_added')
+  #   ) |>
+  #     list_rbind()
+  # )
   # in season efficiency estimates
   # # # estimate within each
   # tar_target(

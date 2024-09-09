@@ -951,6 +951,18 @@ add_score_events <- function(
         TRUE ~ score_event
       )
     ) |>
+    # fix for blocked field goal edge cases
+    mutate(
+      score_event = case_when(
+        stringr::str_detect(play_type, pattern = "Blocked Field Goal") &
+          stringr::str_detect(drive_result, pattern = td_text) &
+          drive_is_home_offense == T ~ "AWAY TD",
+        stringr::str_detect(play_type, pattern = "Blocked Field Goal") &
+          stringr::str_detect(drive_result, pattern = td_text) &
+          drive_is_home_offense == F ~ "HOME TD",
+        TRUE ~ score_event
+      )
+    ) |>
     # add next score event
     group_by(game_id) |>
     arrange(game_id, period, half, drive_number, play_number) |>
@@ -1785,30 +1797,27 @@ estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
     list_rbind()
 }
 
-estimate_efficiency_by_week = function(data, metric, season, base = .995, season_type = c('regular', 'postseason'), ...) {
+estimate_efficiency_by_week = function(data, metric, date, base = .995) {
   
-  calendar = 
+  
+  est = 
     data |>
-    find_season_dates(season = season, 
-                      season_type = season_type)
+    filter(start_date <= date) |>
+    # offense/defense vs special teams
+    nest(.by = play_situation) |>
+    mutate(estimates = map(data,  ~ estimate_efficiency_weighted(data = .x,
+                                                                 dates = date,
+                                                                 base = base,
+                                                                 metric = metric))
+    )
   
-  dates = 
-    calendar |>
-    pull(start_date)
-  
-  estimates = 
-    data |>
-    estimate_efficiency_weighted(dates = dates,
-                                 metric = metric,
-                                 base = base,
-                                 ...)
-  
-  estimates |>
-    left_join(calendar) |>
-    select(-start_date) |>
-    select(season, season_type, week, season_week, everything())
+  # extract results
+  est |>
+    select(play_situation, estimates) |>
+    unnest(estimates)
   
 }
+
 
 plot_team_efficiency_by_week = function(data, team, label =T, line = T, point = F) {
   

@@ -173,3 +173,24 @@ scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthet
   ggplot2::scale_color_manual(..., values = values, aesthetics = aesthetics, 
                               breaks = breaks, na.value = na.value, guide = guide)
 }
+
+find_season_weeks = function(games) {
+  games |>
+    filter(season_type %in% c('regular', 'postseason')) |>
+    select(season, season_type, week, start_date) |>
+    mutate(start_date = as.Date(start_date)) |>
+    mutate(week_date = lubridate::ceiling_date(start_date, unit = "week", week_start = "Wednesday")) |>
+    group_by(season, season_type, week, week_date) |>
+    summarize(
+      start_date = max(week_date),
+      .groups = 'drop'
+    ) |>
+    arrange(start_date) |>
+    mutate(flag = case_when(week_date == dplyr::lag(week_date, 1) ~ T,
+                            TRUE ~ F)) |>
+    filter(flag == F) |>
+    group_by(season) |>
+    mutate(season_week = paste(season, row_number()-1, sep = "_")) |>
+    ungroup() |>
+    select(season_week, season, season_type, week, week_date)
+}
