@@ -556,7 +556,7 @@ list(
   tar_target(
     efficiency_weeks,
     cfb_season_weeks |>
-      filter(season >= 2017) |>
+      filter(season >= 2011) |>
       pull(week_date)
   ),
   # branch over weeks and estimate efficiency in season
