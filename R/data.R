@@ -3,9 +3,9 @@ add_season <- function(data, year) {
   tbl <-
     data |>
     as_tibble()
-  
+
   tbl$season <- year
-  
+
   tbl |>
     select(season, everything())
 }
@@ -14,7 +14,7 @@ get_cfbd_plays <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-  
+
   cfbd_plays(
     year = season,
     week = week,
@@ -26,7 +26,7 @@ get_cfbd_pbp_data <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-  
+
   cfbd_pbp_data(
     year = as.numeric(season),
     week = week,
@@ -38,7 +38,7 @@ get_game_player_stats <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-  
+
   cfbd_game_player_stats(
     year = season,
     week = week,
@@ -47,7 +47,7 @@ get_game_player_stats <- function(data) {
 }
 
 theme_cfb = function(base_size = 11) {
-  
+
   theme_light() %+replace%
     theme(
       plot.subtitle = element_text(size = 10, hjust = 0, vjust = 1, margin = margin(b = base_size/2)),
@@ -76,17 +76,17 @@ find_team_divisions <- function(data) {
         ~ replace_na(.x, "fcs")
       )
     )
-  
+
   home <-
     tmp |>
     select(season, starts_with("home")) |>
     rename_home_away("home")
-  
+
   away <-
     tmp |>
     select(season, starts_with("away")) |>
     rename_home_away("away")
-  
+
   bind_rows(
     home, away
   ) |>
@@ -123,12 +123,12 @@ factor_team_names <- function(data, ref = "fcs") {
 }
 
 pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season_type", "week", "start_date", "neutral_site")) {
-  
-  tmp = 
+
+  tmp =
     data |>
     select(game_id, home_team, away_team)
-  
-  longer = 
+
+  longer =
     data |>
     select(-contains("_elo"), -contains("_prob")) |>
     longer_games(game_vars = game_vars) |>
@@ -136,7 +136,7 @@ pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season
       .cols = c("id", "division", "points"),
       .fn = ~  paste("team", .x, sep = "_")
     )
-  
+
   joined =
     longer |>
     left_join(tmp,
@@ -148,29 +148,29 @@ pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season
       team_is_home = case_when(home_team == team & neutral_site == F ~ T,
                                TRUE ~ F)
     )
-  
+
   joined |>
     arrange(season, start_date) |>
     select(any_of(game_vars), team_is_home, starts_with("team"), starts_with("opponent"))
-  
+
 }
 
-scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthetics = "colour", 
-                                  breaks = ggplot2::waiver(), na.value = "grey50", guide = NULL, 
-                                  alpha = NA) 
+scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthetics = "colour",
+                                  breaks = ggplot2::waiver(), na.value = "grey50", guide = NULL,
+                                  alpha = NA)
 {
   if (is.null(values)) {
-    values <- cfbplotR::logo_ref %>% 
+    values <- cfbplotR::logo_ref %>%
       dplyr::mutate(value = ifelse(.data$school %in% alt_colors, .data$alt_color, .data$color),
                     value = scales::muted(value))
-    
-    values <- values %>% 
+
+    values <- values %>%
       dplyr::pull("value")
     names(values) <- cfbplotR::logo_ref$school
   }
-  if (!is.na(alpha)) 
+  if (!is.na(alpha))
     values <- scales::alpha(values, alpha = alpha)
-  ggplot2::scale_color_manual(..., values = values, aesthetics = aesthetics, 
+  ggplot2::scale_color_manual(..., values = values, aesthetics = aesthetics,
                               breaks = breaks, na.value = na.value, guide = guide)
 }
 
@@ -186,11 +186,59 @@ find_season_weeks = function(games) {
       .groups = 'drop'
     ) |>
     arrange(start_date) |>
+    group_by(season, season_type) |>
     mutate(flag = case_when(week_date == dplyr::lag(week_date, 1) ~ T,
                             TRUE ~ F)) |>
     filter(flag == F) |>
+    arrange(week_date, desc(season_type)) |>
     group_by(season) |>
     mutate(season_week = paste(season, row_number()-1, sep = "_")) |>
     ungroup() |>
     select(season_week, season, season_type, week, week_date)
+}
+
+add_game_weeks <- function(data) {
+  find_nearest_week <- function(data) {
+    data |>
+      mutate(diff = as.numeric(week_date - start_date)) |>
+      filter(diff > 0) |>
+      group_by(game_id) |>
+      slice_min(diff, n = 1) |>
+      ungroup() |>
+      select(-diff)
+  }
+
+  season_weeks <-
+    data |>
+    find_season_weeks()
+
+  joined <-
+    data |>
+    mutate(start_date = as.Date(start_date)) |>
+    left_join(
+      season_weeks,
+      by = c("season", "season_type", "week"),
+      relationship = "many-to-many"
+    )
+
+  out <-
+    joined |>
+    find_nearest_week() |>
+    select(season, season_type, season_week, week, week_date, week, start_date, game_id, everything())
+
+  if (nrow(data) > nrow(out)) {
+    dropped <- data$game_id[!(data$game_id %in% out$game_id)]
+
+    warning(paste(paste(dropped, collapse = ","), "game ids dropped from data"))
+  } else if (nrow(data) < nrow(out)) {
+    warning("too many games returned; check")
+  }
+
+  out |>
+    select(
+      -ends_with("_elo"),
+      -ends_with("excitement_index"),
+      -ends_with("post_win_prob"),
+      -any_of(c("highlights"))
+    )
 }

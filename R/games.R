@@ -635,3 +635,492 @@ sim_elo_ratings <-
       settings = list(settings)
     )
   }
+
+# prepare_game_weeks <- function(data, season_weeks) {
+#   data |>
+#     select(season, season_type, week, home_team, away_team, game_id, start_date) |>
+#     mutate(start_date = as.Date(start_date)) |>
+#     left_join(
+#       season_weeks |>
+#         distinct(),
+#       by = join_by(season, season_type, week),
+#       relationship = "many-to-many"
+#     ) |>
+#     mutate(diff = as.numeric(week_date - start_date)) |>
+#     filter(diff > 0) |>
+#     group_by(game_id) |>
+#     slice_min(diff, n = 1) |>
+#     ungroup() |>
+#     select(-diff) |>
+#     select(season, season_week, week, week_date, season_type, home_team, away_team, game_id, start_date) |>
+#     arrange(start_date, week_date)
+# }
+
+add_season_week <- function(data) {
+  data |>
+    mutate(week = as.numeric(stringr::str_sub(season_week, 6, 7)))
+}
+
+prepare_team_estimates <- function(data) {
+  data |>
+    arrange(week_date) |>
+    # remove offense and defense special teams estimates; only using overall
+    anti_join(
+      tibble(
+        type = c("offense", "defense"),
+        play_situation = "special"
+      ),
+      by = join_by(play_situation, type)
+    ) |>
+    # get week from season week
+    add_season_week() |>
+    select(season, season_week, season_type, week_date, team, metric, type, estimate) |>
+    pivot_wider(
+      names_from = c("type"),
+      values_from = c("estimate")
+    ) |>
+    select(season_week, season, season_type, week_date, team, any_of(c("overall", "offense", "defense", "special"))) |>
+    rename_with(
+      .cols = any_of(c("overall", "offense", "defense", "special")),
+      .fn = ~ paste0("postgame_", .x)
+    ) |>
+    group_by(team) |>
+    mutate(
+      pregame_overall = dplyr::lag(postgame_overall, 1),
+      pregame_offense = dplyr::lag(postgame_offense, 1),
+      pregame_defense = dplyr::lag(postgame_defense, 1),
+      pregame_special = dplyr::lag(postgame_special, 1)
+    ) |>
+    ungroup()
+}
+
+join_team_estimates <- function(data, season_vars = c("season", "season_type", "season_week"), estimates) {
+  data |>
+    inner_join(
+      estimates |>
+        select(
+        any_of(season_vars),
+          home = team,
+          home_overall = pregame_overall,
+          home_offense = pregame_offense,
+          home_defense = pregame_defense,
+          home_special = pregame_special
+        ),
+      by = join_by(season, season_week, season_type, home)
+    ) |>
+    inner_join(
+      estimates |>
+        select(
+          any_of(season_vars),
+          away = team,
+          away_overall = pregame_overall,
+          away_offense = pregame_offense,
+          away_defense = pregame_defense,
+          away_special = pregame_special
+        ),
+      by = join_by(season, season_week, season_type, away)
+    )
+}
+
+add_game_outcomes <- function(data) {
+  data |>
+    mutate(
+      home_margin = home_points - away_points,
+      home_win = case_when(
+        home_points > away_points ~ "yes",
+        home_points < away_points ~ "no"
+      ),
+      home_win = factor(home_win, levels = c("yes", "no")),
+      total_points = home_points + away_points
+    )
+}
+
+prepare_fcs_teams <- function(data) {
+  # handle fcs case
+  data |>
+    mutate(
+      home = case_when(is.na(home_division) | home_division != "fbs" ~ "fcs", TRUE ~ home_team),
+      away = case_when(is.na(away_division) | away_division != "fbs" ~ "fcs", TRUE ~ away_team)
+    )
+}
+
+add_game_weeks <- function(data) {
+  find_nearest_week <- function(data) {
+    data |>
+      mutate(diff = as.numeric(week_date - start_date)) |>
+      filter(diff > 0) |>
+      group_by(game_id) |>
+      slice_min(diff, n = 1) |>
+      ungroup() |>
+      select(-diff)
+  }
+
+  season_weeks <-
+    data |>
+    find_season_weeks()
+
+  joined <-
+    data |>
+    mutate(start_date = as.Date(start_date)) |>
+    left_join(
+      season_weeks,
+      by = c("season", "season_type", "week"),
+      relationship = "many-to-many"
+    )
+
+  out <-
+    joined |>
+    find_nearest_week() |>
+    select(season, season_type, season_week, week, week_date, week, start_date, game_id, everything())
+
+  if (nrow(data) > nrow(out)) {
+    dropped <- data$game_id[!(data$game_id %in% out$game_id)]
+
+    warning(paste(paste(dropped, collapse = ","), "game ids dropped from data"))
+  } else if (nrow(data) < nrow(out)) {
+    warning("too many games returned; check")
+  }
+
+  out
+}
+
+rename_team_variables <- function(
+    data,
+    home_away,
+    team_variables = c("pregame_overall", "pregame_offense", "pregame_defense", "pregame_special"),
+    season_variables = c("season", "season_type", "season_week")) {
+  team_text <- paste0(home_away, "_")
+
+  data |>
+    select(
+      any_of(season_variables),
+      team,
+      any_of(team_variables)
+    ) |>
+    rename_with(
+      .cols = any_of(team_variables),
+      .fn = function(x) gsub("^[^_]+_", team_text, x)
+    ) |>
+    rename_with(
+      .cols = "team",
+      .fn = ~ paste0(team_text, .x)
+    )
+}
+
+join_team_variables <- function(
+    games_data,
+    teams_data,
+    team_variables = c("pregame_overall", "pregame_offense", "pregame_defense", "pregame_special"),
+    season_variables = c("season", "season_type", "season_week")) {
+  home_team_data <-
+    teams_data |>
+    rename_team_variables(
+      home_away = "home",
+      team_variables = team_variables,
+      season_variables = season_variables
+    ) |>
+    rename(home = home_team)
+
+  away_team_data <-
+    teams_data |>
+    rename_team_variables(
+      home_away = "away",
+      team_variables = team_variables,
+      season_variables = season_variables
+    ) |>
+    rename(away = away_team)
+
+  games_data |>
+    left_join(
+      home_team_data
+    ) |>
+    left_join(
+      away_team_data
+    )
+}
+
+prepare_game_info <- function(data) {
+  data |>
+    mutate(
+      start_date = as.Date(start_date),
+      neutral_site = case_when(neutral_site == T ~ 1, TRUE ~ 0)
+    ) |>
+    select(
+      -ends_with("_elo"),
+      -ends_with("excitement_index"),
+      -ends_with("post_win_prob"),
+      -any_of(c("highlights")),
+      -any_of(c("notes"))
+    ) |>
+    filter(season_type %in% c("regular", "postseason"))
+}
+
+
+prepare_game_estimates <- function(
+    games,
+    team_estimates,
+    season_variables = c("season", "season_type", "season_week"),
+    team_variables = c("pregame_overall", "pregame_offense", "pregame_defense", "pregame_special")) {
+  games |>
+    prepare_game_info() |>
+    add_game_weeks() |>
+    prepare_fcs_teams() |>
+    join_team_variables(
+      teams_data = team_estimates,
+      team_variables = team_variables,
+      season_variables = season_variables
+    )
+}
+
+join_team_scores <- function(data, estimates) {
+  data |>
+    left_join(
+      estimates |>
+        select(
+          season,
+          season_type,
+          season_week,
+          home = team,
+          home_overall = overall
+        )
+    ) |>
+    left_join(
+      estimates |>
+        select(
+          season,
+          season_type,
+          season_week,
+          away = team,
+          away_overall = overall
+        )
+    )
+}
+
+simulate_games <- function(object, newdata, ndraws = 1000, ...) {
+  if (class(object) == "workflow") {
+    model <- object |>
+      hardhat::extract_fit_engine()
+  } else if (inherits(model |> extract_fit_engine(), "stanreg")) {
+    model <- object
+  } else {
+    error("requires stanreg")
+  }
+
+  model |>
+    tidybayes::predicted_draws(newdata = newdata, ndraws = ndraws, ...) |>
+    mutate(.prediction = case_when(
+      .prediction == 0 ~ sample(c(3, -3), size = 1, replace = T),
+      TRUE ~ .prediction
+    ))
+}
+
+summarize_simulations <- function(simulations) {
+  simulations |>
+    mutate(
+      home_win = case_when(
+        .prediction > 0 ~ "yes",
+        .prediction == 0 ~ sample(c("yes", "no"), size = 1, replace = T),
+        .prediction < 0 ~ "no"
+      ),
+      home_win = factor(home_win, levels = c("yes", "no"))
+    ) |>
+    group_by(across(any_of(c("season", "season_type", "season_week", "game_id", "home_team", "away_team")))) |>
+    summarize(
+      home_wins = sum(home_win == "yes"),
+      pred_margin = round_any(mean(.prediction), .5),
+      sims = n_distinct(.draw),
+      .groups = "drop"
+    ) |>
+    mutate(
+      home_prob = home_wins / sims,
+      home_pred = case_when(
+        home_prob >= .5 ~ "yes",
+        home_prob < .5 ~ "no"
+      ),
+      home_pred = factor(home_pred, levels = c("yes", "no"))
+    ) |>
+    select(any_of(c("season", "season_type", "season_week", "game_id", "home_team", "away_team", "pred_margin", "home_prob", "home_pred")))
+}
+
+calculate_game_quality <- function(data, groups = NULL, home_adjust = 3) {
+  data |>
+    mutate(across(c(home_overall, away_overall), normalize)) |>
+    group_by(across(any_of(groups))) |>
+    mutate(
+      game_quality = harmonic_mean(home_overall+home_adjust, away_overall),
+      game_quality = normalize(game_quality)
+    ) |>
+    ungroup()
+}
+
+harmonic_mean <- function(x, y) {
+  2 / ((1 / x) + (1 / y))
+}
+
+normalize <- function(x) {
+  (x - min(x)) / ((max(x) - min(x)))
+}
+
+split_by_season <- function(data, end_train_season, valid_seasons) {
+  train <- data |>
+    filter(season <= end_train_season)
+
+  valid <- data |>
+    filter(season > end_train_season & season <= end_train_season + valid_seasons)
+
+  test <- data |>
+    filter(season > end_train_season + valid_seasons)
+
+  n_train <- nrow(train)
+  n_val <- nrow(valid)
+  train_id <- seq(1, n_train, by = 1)
+  val_id <- seq(n_train + 1, n_train + n_val, by = 1)
+
+  res <- list(data = data, train_id = train_id, val_id = val_id, test_id = NA, id = "split")
+  class(res) <- c(
+    "initial_validation_time_split", "initial_validation_split",
+    "three_way_split"
+  )
+  res
+}
+
+game_formula <- function() {
+  as.formula(home_margin ~ home_offense + home_defense + home_special + away_offense + away_defense + away_special + neutral_site)
+}
+
+build_games_wflow <- function(data,
+                             model = linear_reg(engine = "stan"),
+                             formula = game_formula(),
+                             weights = T) {
+  wflow <-
+    workflow() |>
+    add_model(
+      model
+    ) |>
+    add_formula(
+      formula
+    )
+
+  if (weights == T) {
+    wflow <- wflow |>
+      add_case_weights(weight)
+  }
+
+  wflow
+}
+
+calculate_team_scores <- function(model, data) {
+  model |>
+    augment(
+      new_data =
+        data |>
+          mutate(season_week,
+            season,
+            season_type,
+            team,
+            home_offense = postgame_offense,
+            home_defense = postgame_defense,
+            home_special = postgame_special,
+            away_offense = 0,
+            away_defense = 0,
+            away_special = 0,
+            neutral_site = 1,
+            .keep = "none"
+          )
+    ) |>
+    add_season_week() |>
+    select(
+      season,
+      season_type,
+      season_week,
+      team,
+      score = .pred,
+      offense = home_offense,
+      defense = home_defense,
+      special = home_special
+    )
+}
+
+add_correct = function(data, pred = home_pred, actual = home_win) {
+
+  data |>
+    mutate(correct = case_when({{pred}} == {{actual}} ~ "yes", TRUE ~ "no"))
+
+}
+plot_game_predictions <- function(predictions) {
+  predictions |>
+    ggplot(aes(
+      x = pred_margin,
+      color = correct,
+      shape = season_type,
+      label = paste(paste(home_team, away_team, sep = " vs "), paste(home_points, away_points, sep = "-")),
+      y = home_margin
+    )) +
+    geom_point() +
+    geom_text(size = 2, check_overlap = T, vjust = -1.25) +
+    theme_cfb() +
+    scale_color_manual(values = c("red", "dodgerblue2")) +
+    coord_obs_pred() +
+    facet_wrap(season ~ .) +
+    xlab("Predicted Margin") +
+    ylab("Actual Margin") +
+    guides(color = "none") +
+    scale_shape_manual(values = c(1, 19)) +
+    geom_abline()
+}
+
+join_game_outcomes = function(data, games) {
+
+  data |>
+  left_join(
+  games |>
+    add_game_outcomes() |>
+    select(game_id, home_margin, home_win, home_points, away_points),
+  by = join_by(game_id)
+) |>
+  add_season_week() |>
+  add_correct()
+
+}
+
+plot_game_predictions <- function(data) {
+  data |>
+    group_by(game_id) |>
+    mutate(
+      pred = round_any(mean(.prediction), .5),
+      pred_team = case_when(
+        pred > 0 ~ home_team,
+        pred == 0 ~ "toss up",
+        pred < 0 ~ away_team
+      )
+    ) |>
+    mutate(game_label = paste(
+      paste(home_team, away_team, sep = " vs "), "\n",
+      paste(unique(pred_team), unique(pred), sep = " by ")
+    )) |>
+    mutate(win_color = case_when(
+      .prediction > 0 ~ home_team,
+      .prediction < 0 ~ away_team
+    )) |>
+    ggplot(aes(x = .prediction)) +
+    geom_histogram(aes(fill = win_color), bins = 80) +
+    facet_wrap(game_label ~ ., ncol = 3) +
+    cfbplotR::scale_fill_cfb() +
+    cfbplotR::scale_color_cfb() +
+    geom_vline(aes(xintercept = pred),
+      linetype = "dashed",
+      color = "white"
+    ) +
+    coord_cartesian(xlim = c(-75, 75))
+}
+
+calculate_game_interest = function(data) {
+
+data |>
+  mutate(
+    game_compete  = -4 * (home_prob - 0.5)^2 + 1,
+    game_interest = (0.4 * game_compete) + (0.6 * game_quality),
+    game_interest = normalize(game_interest)
+  )
+
+}

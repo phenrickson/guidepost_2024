@@ -133,44 +133,44 @@ list(
     ) |>
       as_tibble()
   ),
-  # betting lines
-  tar_target(
-    cfbd_betting_lines_tbl,
-    {
-      tmp <- expand_grid(
-        season = seasons,
-        type = c("regular", "postseason")
-      )
-      
-      map2_df(
-        .x = tmp$season,
-        .y = tmp$type,
-        ~ cfbd_betting_lines(
-          year = .x,
-          season_type = .y
-        )
-      )
-    }
-  ),
-  # rankings
-  tar_target(
-    cfbd_game_rankings_tbl,
-    {
-      tmp <- expand_grid(
-        season = seasons,
-        type = c("regular", "postseason")
-      )
-      
-      map2_df(
-        .x = tmp$season,
-        .y = tmp$type,
-        ~ cfbd_rankings(
-          year = .x,
-          season_type = .y
-        )
-      )
-    }
-  ),
+  # # betting lines
+  # tar_target(
+  #   cfbd_betting_lines_tbl,
+  #   {
+  #     tmp <- expand_grid(
+  #       season = seasons,
+  #       type = c("regular", "postseason")
+  #     )
+
+  #     map2_df(
+  #       .x = tmp$season,
+  #       .y = tmp$type,
+  #       ~ cfbd_betting_lines(
+  #         year = .x,
+  #         season_type = .y
+  #       )
+  #     )
+  #   }
+  # ),
+  # # rankings
+  # tar_target(
+  #   cfbd_game_rankings_tbl,
+  #   {
+  #     tmp <- expand_grid(
+  #       season = seasons,
+  #       type = c("regular", "postseason")
+  #     )
+
+  #     map2_df(
+  #       .x = tmp$season,
+  #       .y = tmp$type,
+  #       ~ cfbd_rankings(
+  #         year = .x,
+  #         season_type = .y
+  #       )
+  #     )
+  #   }
+  # ),
   # draft picks
   tar_target(
     cfbd_draft_picks,
@@ -405,7 +405,7 @@ list(
   tar_target(
     elo_teams,
     elo_games |>
-      pluck('team_outcomes', 1)
+      pluck("team_outcomes", 1)
   ),
   # expected points modeling
   tar_target(
@@ -456,8 +456,8 @@ list(
       last_fit(
         split =
           split_pbp |>
-          validation_set() |>
-          pluck("splits", 1),
+            validation_set() |>
+            pluck("splits", 1),
         metrics = class_metrics
       )
   ),
@@ -512,8 +512,10 @@ list(
   tar_target(
     pbp_efficiency,
     pbp_predicted |>
-      prepare_efficiency(games = cfbd_game_info_tbl,
-                         game_type = c("regular", "postseason"))
+      prepare_efficiency(
+        games = cfbd_game_info_tbl,
+        game_type = c("regular", "postseason")
+      )
   ),
   # now add in efficiency estimates
   # overall
@@ -530,23 +532,23 @@ list(
   tar_target(
     adjusted_efficiency_overall_epa,
     pbp_efficiency |>
-      estimate_efficiency_overall(metric = 'expected_points_added')
+      estimate_efficiency_overall(metric = "expected_points_added")
   ),
   tar_target(
     adjusted_efficiency_overall_ppa,
     pbp_efficiency |>
-      estimate_efficiency_overall(metric = 'predicted_points_added')
+      estimate_efficiency_overall(metric = "predicted_points_added")
   ),
   # pass/rush
   tar_target(
     adjusted_efficiency_category_epa,
     pbp_efficiency |>
-      estimate_efficiency_category(metric = 'expected_points_added')
+      estimate_efficiency_category(metric = "expected_points_added")
   ),
   tar_target(
     adjusted_efficiency_category_ppa,
     pbp_efficiency |>
-      estimate_efficiency_category(metric = 'predicted_points_added')
+      estimate_efficiency_category(metric = "predicted_points_added")
   ),
   tar_target(
     cfb_season_weeks,
@@ -557,48 +559,74 @@ list(
     efficiency_weeks,
     cfb_season_weeks |>
       filter(season >= 2011) |>
-      pull(week_date)
+      pull(week_date) |>
+      unique()
   ),
   # branch over weeks and estimate efficiency in season
   tar_target(
     efficiency_ppa_by_week,
     pbp_efficiency |>
-      estimate_efficiency_by_week(metric = 'predicted_points_added',
-                                  date = efficiency_weeks),
+      estimate_efficiency_by_week(
+        metric = "predicted_points_added",
+        date = efficiency_weeks
+      ),
     pattern = map(efficiency_weeks)
   ),
   # join with season weeks
   tar_target(
     efficiency_by_week,
     efficiency_ppa_by_week |>
-      rename(week_date = start_date) |>
-      inner_join(cfb_season_weeks)  |>
-      mutate(type = case_when(play_situation == 'special' & type == 'overall' ~ 'special',
-                              TRUE ~ type))
+      prepare_weekly_efficiency() |>
+      inner_join(
+        cfb_season_weeks
+      )
+  ),
+  # prepare team estimates for use in games
+  tar_target(
+    team_estimates,
+    efficiency_by_week |>
+      prepare_team_estimates()
+  ),
+  # join games with team estimates
+  tar_target(
+    games_and_estimates,
+    cfbd_game_info_tbl |>
+      prepare_game_estimates(
+        team_estimates = team_estimates,
+        season_variables = c("season", "season_type", "season_week"),
+        team_variables = c("pregame_overall", "pregame_offense", "pregame_defense", "pregame_special")
+      ) |>
+      add_game_outcomes() |>
+      add_game_weights(ref = "2017-01-01", base = .999)
+  ),
+  tar_target(
+    split_games,
+    games_and_estimates |>
+      split_by_season(
+        end_train_season = 2021,
+        valid_season = 1
+      )
+  ),
+  tar_target(
+    games_train_fit,
+    build_games_wflow() |>
+      fit(
+        split_games |>
+          training()
+      )
+  ),
+  tar_target(
+    games_final_fit,
+    build_games_wflow() |>
+      fit(
+        split_games$data
+      )
+  ),
+  tar_target(
+    team_scores,
+    games_train_fit |>
+      calculate_team_scores(data = team_estimates)
   )
-  # tar_target(
-  #   estimated_efficiency_ppa,
-  #   map(
-  #     c(2018, 2019, 2020, 2021, 2022, 2023),
-  #     ~ pbp_efficiency |>
-  #       estimate_efficiency_in_season(season = .x,
-  #                                     metric = 'predicted_points_added')
-  #   ) |>
-  #     list_rbind()
-  # )
-  # in season efficiency estimates
-  # # # estimate within each
-  # tar_target(
-  #   estimated_efficiency_ppa,
-  #   map(
-  #     c(2018, 2019, 2020, 2021, 2022, 2023),
-  #     ~ pbp_efficiency |>
-  #       filter(play_situation != 'special') |>
-  #       estimate_efficiency_by_week(season = .x,
-  #                                   metric = 'predicted_points_added')
-  #   ) |>
-  #     list_rbind()
-  # )
   # # quarto
   # tar_quarto(
   #   reports,

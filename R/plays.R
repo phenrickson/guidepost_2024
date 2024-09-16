@@ -120,7 +120,7 @@ clean_yards <- function(data) {
       ) |>
       select(-yard_line_str)
   }
-  
+
   # recalculate yards_to_goal
   clean_yards_to_goal <- function(data) {
     data |>
@@ -129,7 +129,7 @@ clean_yards <- function(data) {
         offense != home ~ yard_line
       ))
   }
-  
+
   data |>
     clean_yard_line() |>
     clean_yards_to_goal()
@@ -555,7 +555,7 @@ add_play_category <- function(data, remove = T) {
           # default to pass
           pass == 1 & rush == 1 ~ "pass"
         ),
-      play_situation = 
+      play_situation =
         case_when(
           play_category == 'pass' | play_category == 'rush' ~ 'offense/defense',
           play_category == 'special' & play_type == 'Penalty' ~ 'offense/defense',
@@ -563,7 +563,7 @@ add_play_category <- function(data, remove = T) {
           TRUE ~ 'offense/defense'
         )
     )
-  
+
   if (remove == T) {
     tmp |>
       select(-any_of(c("rush", "pass")))
@@ -652,10 +652,10 @@ add_penalty_plays <- function(data) {
   pen_offset_text <- stringr::str_detect(data$play_text, regex("off-setting", ignore_case = TRUE))
   #-- '1st Down' in play text ----
   pen_1st_down_text <- stringr::str_detect(data$play_text, regex("1st down", ignore_case = TRUE))
-  
+
   #-- Penalty play_types
   pen_type <- data$play_type == "Penalty" | data$play_type == "penalty"
-  
+
   #-- T/F flag conditions penalty_flag
   data$penalty_flag <- FALSE
   data$penalty_flag[pen_type] <- TRUE
@@ -680,7 +680,7 @@ add_penalty_plays <- function(data) {
   data$penalty_text <- FALSE
   data$penalty_text[pen_text & !pen_type & !pen_declined_text &
                       !pen_offset_text & !pen_no_play_text] <- TRUE
-  
+
   data |>
     dplyr::mutate(
       penalty_detail = case_when(
@@ -1171,20 +1171,20 @@ prepare_efficiency <- function(data, games, game_type = c("regular")) {
 }
 
 efficiency_model = function() {
-  
+
   linear_reg(
     penalty = 0.001,
     mixture = 0
   )|>
     set_engine("glmnet")
-  
+
 }
 
-build_efficiency_recipe = function(data, 
+build_efficiency_recipe = function(data,
                                    outcome = "expected_points_added",
                                    predictors =  c("home_field_advantage", "offense_id", "defense_id"),
                                    ids =  c("game_id", "home", "away")) {
-  
+
   data |>
     build_recipe(outcome = outcome,
                  predictors = predictors,
@@ -1195,26 +1195,26 @@ build_efficiency_recipe = function(data,
       one_hot = T,
       naming = dummy_teams
     )
-  
+
 }
 
 dummy_teams = function(var, lvl, ordinal = FALSE, sep = "_")  {
   args <- vctrs::vec_recycle_common(var, lvl)
   var <- args[[1]]
   lvl <- args[[2]]
-  
+
   paste(var, as.character(lvl), sep = sep)
 }
 
 build_efficiency_wflow = function(data, metric = "expected_points_added", model  = efficiency_model(), weights = F) {
-  
-  rec = 
+
+  rec =
     data |>
     build_efficiency_recipe(
       outcome = metric
     )
-  
-  wflow = 
+
+  wflow =
     workflow() |>
     add_recipe(
       rec
@@ -1222,48 +1222,48 @@ build_efficiency_wflow = function(data, metric = "expected_points_added", model 
     add_model(
       model
     )
-  
+
   if (weights == T) {
-    wflow = 
-      wflow |> 
+    wflow =
+      wflow |>
       add_case_weights(weight)
   }
-  
+
   wflow
-  
+
 }
 
 estimate_efficiency = function(data, metric = "expected_points_added", ...) {
-  
+
   # remove missingness from outcome
   prepared =
     data |>
     filter(if_any(all_of(metric), ~ !is.na(.)))
-  
-  wflow = 
+
+  wflow =
     prepared |>
     # remove NAs
     filter(if_any(all_of(metric), ~ !is.na(.))) |>
     build_efficiency_wflow(metric = metric,
                            ...)
-  
-  fit = 
+
+  fit =
     wflow |>
     fit(prepared)
-  
+
   metric_label = case_when(metric == 'expected_points_added' ~ 'epa',
                            metric == 'predicted_points_added' ~ 'ppa')
-  
-  coefs = 
+
+  coefs =
     fit |>
-    tidy() 
-  
+    tidy()
+
   intercept =
     coefs |>
     filter(term == "(Intercept)") |>
     pull(estimate)
-  
-  out = 
+
+  out =
     coefs |>
     filter(term != ("(Intercept)"),
            term != "home_field_advantage") |>
@@ -1273,12 +1273,12 @@ estimate_efficiency = function(data, metric = "expected_points_added", ...) {
       metric = metric_label,
       intercept = intercept
     )
-  
+
   out |>
     select(
       metric,
-      type, 
-      team, 
+      type,
+      team,
       estimate,
       intercept
     ) |>
@@ -1286,11 +1286,11 @@ estimate_efficiency = function(data, metric = "expected_points_added", ...) {
       estimate = case_when(grepl("defense", type) ~ -estimate,
                            TRUE ~ estimate)
     )
-  
+
 }
 
 estimate_efficiency_overall = function(data, metric = 'expected_points_added') {
-  
+
   data |>
     nest(data = -c(season, play_situation)) |>
     mutate(estimated = map(data, ~ estimate_efficiency(.x, metric = metric))) |>
@@ -1299,13 +1299,13 @@ estimate_efficiency_overall = function(data, metric = 'expected_points_added') {
 }
 
 estimate_efficiency_category = function(data, metric = 'expected_points_added') {
-  
+
   data |>
     filter(play_category %in% c('pass', 'rush'), garbage_time == 0) |>
     nest(data = -c(season, play_category)) |>
     mutate(estimated = map(data, ~ estimate_efficiency(.x, metric = metric))) |>
     select(-data) |>
-    unnest(estimated) 
+    unnest(estimated)
 }
 
 calculate_efficiency <- function(data, groups = c("season", "type", "team")) {
@@ -1358,34 +1358,45 @@ add_overall_efficiency <- function(data, metric = "ppa") {
     )
 }
 
+prepare_weekly_efficiency = function(data) {
+
+  data |>
+  rename(week_date = start_date) |>
+  mutate(type = case_when(
+    play_situation == "special" & type == "overall" ~ "special",
+    TRUE ~ type
+  ))
+
+}
+
 add_team_ranks = function(data, groups = c("season", "season_week", "type", "metric")) {
-  
+
   data |>
     group_by(across(any_of(groups))) |>
     mutate(rank = rank(-estimate))|>
     ungroup()
-  
+
 }
 
 
 plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, seed = 1) {
-  
+
   all_teams_data <-
     data |>
     group_by(across(any_of(c("metric", "type")))) |>
     mutate(min = min(estimate)) |>
     ungroup()
-  
-  p = 
+
+  p =
     all_teams_data |>
     ggplot(aes_string(
       x = glue::glue("as.factor({x})"),
       y = "estimate"
     ))
-  
+
   if (line == T) {
-    
-    p = 
+
+    p =
       p +
       geom_line(
         aes(group = team),
@@ -1393,11 +1404,11 @@ plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, se
         color = 'grey80',
         alpha = 0.1
       )
-  } 
-  
+  }
+
   if (point == T) {
-    
-    p = 
+
+    p =
       p +
       geom_point(
         alpha = 0.15,
@@ -1405,39 +1416,39 @@ plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, se
         color = "grey80",
         position = ggforce::position_auto(jitter.width = 0.25, scale = F, seed = seed)
       )
-    
+
   }
-  
+
   p +
     facet_grid(type ~ ., scales = "free_y") +
     guides(color = "none") +
     geom_hline(yintercept = 0, linetype = "dotted") +
     theme_cfb()+
     xlab({{x}})
-  
+
 }
 
 plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = T, line = T) {
-  
+
   all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, point = point, line = line)
   all_teams_data = all_teams_plot$data
-  
+
   selected_teams <- tibble(team = teams)
   team_data <- all_teams_data |>
     inner_join(selected_teams, by = join_by(team))
-  
+
   p = all_teams_plot
-  
+
   if (point ==T) {
-    
-    p = 
+
+    p =
       p +
       geom_point(
         data = team_data,
         aes(color = team)
       )
-  } 
-  
+  }
+
   if (line == T) {
     p = p +
       geom_line(
@@ -1445,7 +1456,7 @@ plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = 
         aes(group = team, color = team),
         lwd = 1.2,
         alpha = 0.8
-      ) 
+      )
   }
   p +
     scale_color_cfb_muted(guide = guide_legend()) +
@@ -1459,21 +1470,21 @@ plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = 
     ylab("Team Net Points per Play")
 }
 
-plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1, label = T, ...) {
-  
-  team_plot = 
+plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1, label = T,  title = T, ...) {
+
+  team_plot =
     plot_efficiency_by_team(data = data, x=x, teams = teams, seed = seed, ...)
-  
-  team_data = 
+
+  team_data =
     team_plot$data |>
     inner_join(
       tibble(team = teams),
       by = join_by(team)
     )
-  
+
   if (label ==T ) {
-    
-    team_plot = 
+
+    team_plot =
       team_plot +
       geom_label(
         data = team_data,
@@ -1486,20 +1497,27 @@ plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed =
         vjust = -0.75
       )
   }
-  
-  team_plot +
-    guides(color = 'none') +
-    # add season ranks
-    labs(title = paste("Team Efficiency", paste(teams, sep = ","), sep = " - "),
-         subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams,"'s"), "rating by season along with their ranking among all FBS teams."), 120))
-  
+
+  if (title == T) {
+    team_plot =
+      team_plot +
+  guides(color = "none") +
+  # add season ranks
+  labs(
+    title = paste("Team Efficiency", paste(teams, sep = ","), sep = " - "),
+    subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(teams, "'s"), "rating by season along with their ranking among all FBS teams."), 120)
+  )
+  }
+
+  team_plot
+
 }
 
 
 gt_est_color = function(tab,
                         columns = contains("estimate"),
                         domain = c(-.75, .75)) {
-  
+
   tab |>
     gt::data_color(
       columns = columns,
@@ -1507,12 +1525,12 @@ gt_est_color = function(tab,
       palette = rev(my_gt_palette()),
       domain = domain
     )
-  
+
 }
 
 efficiency_tbl = function(data, with_estimates = F, with_ranks = T) {
-  
-  tab = 
+
+  tab =
     data |>
     # relocate(starts_with("estimate_"), .after = last_col()) |>
     gt_tbl() |>
@@ -1533,10 +1551,10 @@ efficiency_tbl = function(data, with_estimates = F, with_ranks = T) {
       columns = c(starts_with("estimate")),
       decimals = 3
     )
-  
+
   if (with_estimates == T) {
-    
-    tab = 
+
+    tab =
       tab |>
       gt::cols_label(
         estimate_overall = "overall",
@@ -1544,10 +1562,10 @@ efficiency_tbl = function(data, with_estimates = F, with_ranks = T) {
         estimate_defense = "defense"
       )
   }
-  
+
   if (with_ranks == T) {
-    
-    tab = 
+
+    tab =
       tab |>
       gt_rank_color() |>
       gt::tab_spanner(
@@ -1559,20 +1577,20 @@ efficiency_tbl = function(data, with_estimates = F, with_ranks = T) {
         rank_offense = "offense",
         rank_defense = "defense"
       )
-  } 
-  
+  }
+
   tab
-  
+
 }
 
 my_gt_palette = function() {
-  
+
   c("dodgerblue", "white", "red")
-  
+
 }
 
 gt_rank_color = function(tab) {
-  
+
   tab |>
     gt::data_color(
       columns = contains("rank"),
@@ -1583,9 +1601,9 @@ gt_rank_color = function(tab) {
 }
 
 efficiency_overall_tbl = function(data) {
-  
+
   data |>
-    select(season, 
+    select(season,
            team,
            estimate_overall,
            estimate_offense,
@@ -1595,18 +1613,18 @@ efficiency_overall_tbl = function(data) {
            rank_defense
     ) |>
     gt_tbl()
-  
+
 }
 
 efficiency_category_tbl = function(data) {
-  
+
   data |>
-    select(season, 
-           team, 
-           estimate_pass_offense, 
-           estimate_rush_offense, 
-           estimate_pass_defense, 
-           estimate_rush_defense, 
+    select(season,
+           team,
+           estimate_pass_offense,
+           estimate_rush_offense,
+           estimate_pass_defense,
+           estimate_rush_defense,
            contains("rank")) |>
     gt_tbl() |>
     gt_est_color() |>
@@ -1659,7 +1677,7 @@ efficiency_category_tbl = function(data) {
 }
 
 team_efficiency_category_tbl = function(data, teams) {
-  
+
   data |>
     filter(play_category != 'special') |>
     add_team_ranks(groups = c("season", "play_category", "metric", "type")) |>
@@ -1672,13 +1690,13 @@ team_efficiency_category_tbl = function(data, teams) {
 }
 
 team_efficiency_overall_tbl = function(data, teams) {
-  
-  
-  
+
+
+
 }
 
 efficiency_top_categories_tbl = function(data) {
-  
+
   data |>
     gt_tbl() |>
     gt_est_color(columns = c(contains("offense"), contains("defense"))) |>
@@ -1702,7 +1720,7 @@ efficiency_top_categories_tbl = function(data) {
 }
 
 efficiency_top_teams_tbl = function(data, n = 100) {
-  
+
   data |>
     add_overall_efficiency() |>
     add_team_ranks() |>
@@ -1714,8 +1732,8 @@ efficiency_top_teams_tbl = function(data, n = 100) {
     arrange(desc(estimate_overall)) |>
     mutate(rank = row_number()) |>
     select(rank, season, team, starts_with("estimate_")) |>
-    efficiency_tbl(with_ranks = F, with_estimates = T) 
-  
+    efficiency_tbl(with_ranks = F, with_estimates = T)
+
 }
 
 weights_from_dates <- function(x, ref, base, max = 365 * 2) {
@@ -1729,42 +1747,42 @@ weights_from_dates <- function(x, ref, base, max = 365 * 2) {
 }
 
 add_game_weights = function(data, ref = NULL, base = 0.995, importance = T, filter = T) {
-  
+
   if (is.null(ref)) {
     ref = max(data$start_date)
   }
-  
+
   tmp =
     data |>
     mutate(weight = weights_from_dates(start_date, ref = ref, base = base))
-  
+
   if (filter == T) {
-    
-    tmp = 
+
+    tmp =
       tmp |>
       filter(weight > 0)
   }
-  
+
   if (importance == T) {
-    
-    tmp = 
+
+    tmp =
       tmp |>
       mutate(weight = recipes::importance_weights(weight))
   }
-  
+
   tmp
-  
+
 }
 estimate_efficiency_cumulative = function(data, metric) {
-  
-  dates = 
+
+  dates =
     data |>
-    mutate(season, 
-           week, 
+    mutate(season,
+           week,
            .keep = 'none'
     ) |>
     distinct()
-  
+
   map2(
     .x = dates$season,
     .y = dates$week,
@@ -1777,15 +1795,15 @@ estimate_efficiency_cumulative = function(data, metric) {
       select(season_week, everything())
   ) |>
     list_rbind()
-  
+
 }
 estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
-  
+
   map(
     dates,
     ~ {
       message(paste0("estimating week ", .x, "..."))
-      
+
       data |>
         filter(start_date <= .x) |>
         add_game_weights(base =base) |>
@@ -1798,9 +1816,9 @@ estimate_efficiency_weighted = function(data, metric, dates, base = .995) {
 }
 
 estimate_efficiency_by_week = function(data, metric, date, base = .995) {
-  
-  
-  est = 
+
+
+  est =
     data |>
     filter(start_date <= date) |>
     # offense/defense vs special teams
@@ -1810,34 +1828,34 @@ estimate_efficiency_by_week = function(data, metric, date, base = .995) {
                                                                  base = base,
                                                                  metric = metric))
     )
-  
+
   # extract results
   est |>
     select(play_situation, estimates) |>
     unnest(estimates)
-  
+
 }
 
 
-plot_team_efficiency_by_week = function(data, team, label =T, line = T, point = F) {
-  
+plot_team_efficiency_by_week = function(data, team, label =T, line = T, title = T, point = F) {
+
   data|>
     mutate(week = as.numeric(stringr::str_sub(season_week, 6, 7))) |>
-    add_team_ranks(groups = c("season", "week", "type", "metric")) |> 
-    plot_team_efficiency(x = 'week', teams = team, label = label, line = line, point = point)+
+    add_team_ranks(groups = c("season", "week", "type", "metric")) |>
+    plot_team_efficiency(x = 'week', teams = team, label = label, line = line, point = point, title = title)+
     facet_grid(type ~ season,
                scales = "free_y")+
     xlab("Season Week")+
     scale_x_discrete(breaks = function(x){x[c(TRUE, FALSE, FALSE, FALSE, FALSE, T, FALSE, FALSE, FALSE)]})
-  
-  
+
+
 }
 
 find_season_dates = function(data, season, season_type = c("regular", "postseason"), week_start = "Wednesday") {
-  
-  # create a data frame for the cfb season at the weekly level; 
+
+  # create a data frame for the cfb season at the weekly level;
   # adds a week zero and creates individual weeks for the postseason
-  tmp = 
+  tmp =
     data |>
     inner_join(
       tibble(season = season,
@@ -1851,8 +1869,7 @@ find_season_dates = function(data, season, season_type = c("regular", "postseaso
       .groups = 'drop'
     ) |>
     arrange(start_date)
-  
-  
+
   # fix issues where games overlap between weeks
   tmp |>
     mutate(flag = case_when(week_date == dplyr::lag(week_date, 1) ~ T,
@@ -1860,16 +1877,16 @@ find_season_dates = function(data, season, season_type = c("regular", "postseaso
     filter(flag == F) |>
     select(-flag, -week_date) |>
     mutate(season_week = paste(season, row_number()-1, sep = "_")) |>
-    select(season_week, everything()) 
-  
+    select(season_week, everything())
+
 }
 
 # estimate efficiency in season
-estimate_efficiency_in_season = function(data, 
+estimate_efficiency_in_season = function(data,
                                          season,
-                                         metric = 'predicted_points_added', 
+                                         metric = 'predicted_points_added',
                                          situation = c('offense/defense')) {
-  
+
   data |>
     filter(play_situation %in% situation) |>
     estimate_efficiency_by_week(season = season,
@@ -1877,10 +1894,10 @@ estimate_efficiency_in_season = function(data,
 }
 
 get_season_weeks = function(games) {
-  
+
   games |>
     mutate(start_date = as.Date(start_date)) |>
-    mutate(year = season) |> 
+    mutate(year = season) |>
     nest(data =-year) |>
     mutate(calendar = map2(data, year, ~ find_season_dates(data = .x,  season = .y))) |>
     select(calendar) |>
@@ -1888,33 +1905,33 @@ get_season_weeks = function(games) {
 }
 
 plot_ranking = function(plot, ranking) {
-  
-  rank_data = 
+
+  rank_data =
     plot$data |>
     add_team_ranks() |>
     filter(rank %in% c(ranking)) |>
     mutate(team = case_when(rank <= 75 ~ paste('top', rank),
                             rank > 75 ~ paste('bottom', 135 - rank)))
-  
+
   plot +
     geom_line(
-      data =   
+      data =
         rank_data,
       aes(group = team),
       linetype = 'dashed',
       alpha = 0.7
     ) +
     geom_text(
-      data = 
+      data =
         rank_data |>
         filter(season == min(season),
                week == min(week)),
-      aes(y = estimate, 
+      aes(y = estimate,
           label = team
       ),
       hjust = 1.4,
       size = 2
     )+
     coord_cartesian(clip = "off")
-  
+
 }
