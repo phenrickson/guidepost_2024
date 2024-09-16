@@ -1124,3 +1124,114 @@ data |>
   )
 
 }
+
+add_team_scores <- function(data, teams_data) {
+  completed_games <-
+    data |>
+    filter(completed == T)
+
+  upcoming_games <-
+    data |>
+    filter(completed != T)
+
+  active_teams_data <-
+    teams_data |>
+    group_by(team) |>
+    slice_max(season_week, n = 1) |>
+    ungroup()
+
+  completed <-
+    completed_games |>
+    left_join(
+      teams_data |>
+        select(
+          season,
+          season_type,
+          season_week,
+          home = team,
+          home_overall = score,
+          home_offense = offense,
+          home_defense = defense,
+          home_special = special
+        )
+    ) |>
+    left_join(
+      teams_data |>
+        select(
+          season,
+          season_type,
+          season_week,
+          away = team,
+          away_overall = score,
+          away_offense = offense,
+          away_defense = defense,
+          away_special = special
+        )
+    )
+
+  upcoming <-
+    upcoming_games |>
+    left_join(
+      active_teams_data |>
+        select(
+          season,
+          home = team,
+          home_overall = score,
+          home_offense = offense,
+          home_defense = defense,
+          home_special = special
+        )
+    ) |>
+    left_join(
+      active_teams_data |>
+        select(
+          season,
+          away = team,
+          away_overall = score,
+          away_offense = offense,
+          away_defense = defense,
+          away_special = special
+        )
+    )
+
+  bind_rows(
+    completed,
+    upcoming
+  )
+}
+
+prepare_game_predictions <- function(data) {
+  data |>
+    mutate(start_date = lubridate::as_datetime(start_date), tz = "UTC") |>
+    select(
+      season,
+      season_type,
+      start_date,
+      week,
+      game_id,
+      home_team,
+      away_team,
+      pred_margin,
+      home_margin,
+      home_prob,
+      home_pred,
+      home_win,
+      home_overall,
+      away_overall
+    ) |>
+    mutate(
+      correct = case_when(home_pred == home_win ~ "yes", home_pred != home_win ~ "no"),
+      prediction = case_when(
+        home_pred == "yes" ~ paste(home_team, pred_margin, sep = " by "),
+        home_pred == "no" ~ paste(away_team, -pred_margin, sep = " by ")
+      ),
+      actual = case_when(
+        home_win == "yes" ~ paste(home_team, home_margin, sep = " by "),
+        home_win == "no" ~ paste(away_team, -home_margin, sep = " by ")
+      )
+    ) |>
+    calculate_game_quality() |>
+    calculate_game_interest() |>
+    select(game_id, season, season_type, week, start_date, game_quality, game_interest, home_team, away_team, home_prob, prediction, actual, correct) |>
+    arrange(desc(week), desc(game_quality))
+}

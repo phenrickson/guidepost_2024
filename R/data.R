@@ -242,3 +242,84 @@ add_game_weeks <- function(data) {
       -any_of(c("highlights"))
     )
 }
+
+find_team_ids <- function(data) {
+  data |>
+    select(
+      team = home_team,
+      team_id = home_id
+    ) |>
+    distinct() |>
+    bind_rows(
+      data |>
+        select(
+          team = away_team,
+          team_id = away_id
+        )
+    ) |>
+    distinct()
+}
+
+# adjust changes to team names that occurred in 2024
+adjust_team_names <- function(data) {
+  data |>
+    mutate(
+      across(
+        c(home_team, away_team),
+        ~ case_when(
+          .x == "Sam Houston" ~ "Sam Houston State",
+          .x == "UL Monroe" ~ "Louisiana Monroe",
+          .x == "App State" ~ "Appalachian State",
+          .x == "UConn" ~ "Connecticut",
+          .x == "Massachusetts" ~ "UMass",
+          .x == "Southern Miss" ~ "Southern Mississippi",
+          .x == "UTSA" ~ "UT San Antonio",
+          TRUE ~ .x
+        )
+      )
+    )
+}
+
+# given data and teams filter to long
+filter_to_team <- function(data, teams) {
+  home_team_data <-
+    data |>
+    inner_join(
+      tibble(home_team = teams)
+    ) |>
+    select(
+      season,
+      season_type,
+      season_week,
+      game_id,
+      team = home_team,
+      opponent = away_team,
+      .draw,
+      .prediction
+    ) |>
+    mutate(is_home = "yes") |>
+    mutate(win = case_when(.prediction > 0 ~ 1, .prediction < 0 ~ 0))
+
+  away_team_data <-
+    data |>
+    inner_join(
+      tibble(away_team = teams)
+    ) |>
+    select(
+      season,
+      season_type,
+      season_week,
+      game_id,
+      team = away_team,
+      opponent = home_team,
+      .draw,
+      .prediction
+    ) |>
+    mutate(is_home = "no") |>
+    mutate(win = case_when(.prediction > 0 ~ 0, .prediction < 0 ~ 1))
+
+  bind_rows(
+    home_team_data,
+    away_team_data
+  )
+}

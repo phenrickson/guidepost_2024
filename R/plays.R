@@ -1935,3 +1935,36 @@ plot_ranking = function(plot, ranking) {
     coord_cartesian(clip = "off")
 
 }
+
+# use pbp model to predict plays
+predict_pbp <- function(model, data) {
+  model |>
+    augment(
+      data |>
+        prepare_pbp() |>
+        add_score_events()
+    ) |>
+    calculate_expected_points() |>
+    calculate_points_added()
+}
+
+# find most recent estiamtes for each team
+find_most_recent_team_estimates <- function(data, game_info) {
+  data |>
+    inner_join(
+      game_info |>
+        add_game_weeks() |>
+        filter(completed == T) |>
+        select(season, season_type, season_week, game_id, home_team, away_team) |>
+        pivot_longer(
+          cols = c("home_team", "away_team"),
+          names_to = c("team_type"),
+          values_to = c("team")
+        ) |>
+        select(-team_type)
+    ) |>
+    group_by(team) |>
+    slice_max(week_date, n = 1) |>
+    select(season, season_type, season_week, team, starts_with("postgame")) |>
+    ungroup()
+}

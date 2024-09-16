@@ -1,5 +1,5 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|2a5ab87194087c8b|||||||||||||||
+.Random.seed|object|f80006c8414e5566|||||||||||||||
 add_correct|function|97dca03b88f8fa2a|||||||||||||||
 add_elo_predictions|function|e3eb35fb1b7ad6e4|||||||||||||||
 add_expected_points|function|0bf3484101e66081|||||||||||||||
@@ -25,7 +25,9 @@ add_season|function|53eacacae62d6689|||||||||||||||
 add_season_week|function|1d7b8254f317131d|||||||||||||||
 add_spread_features|function|228372fa985f4722|||||||||||||||
 add_team_ranks|function|5c67f9dc44a80922|||||||||||||||
+add_team_scores|function|6fa43878dc6d6395|||||||||||||||
 add_turnover_plays|function|556050e33166c889|||||||||||||||
+adjust_team_names|function|91d9b79a90e7becb|||||||||||||||
 adjusted_efficiency_category_epa|stem|604a4528db1803f8|300161a8ca3ae669|84a12e71d3d11c62|1757190048|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_epa*version=1725831894841489|t19974.9061877871s||68382|qs|gcp|vector|||239.409||
 adjusted_efficiency_category_ppa|stem|d916305e65ea01ea|680480bd46f97934|84a12e71d3d11c62|-1437316832|bucket=cfb_models*key=data/objects/adjusted_efficiency_category_ppa*version=1725824100493705|t19974.8159754729s||68418|qs|gcp|vector|||126.093||
 adjusted_efficiency_overall_epa|stem|059962fb76b2579a|88a00b3d96e3efcd|f74ff16628ae478c|1802248108|bucket=cfb_models*key=data/objects/adjusted_efficiency_overall_epa*version=1725889911242402|t19975.5776744831s||69231|qs|gcp|vector|||110.363|There was 1 warning in mutate.ℹ In argument estimated  mapdata, estimate_efficiency.x, metric   metric.Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
@@ -40,7 +42,8 @@ build_recipe|function|96fcc1b054526339|||||||||||||||
 calc_elo_ratings|function|fd49837d3752ec5f|||||||||||||||
 calculate_efficiency|function|316722e3f1394180|||||||||||||||
 calculate_expected_points|function|0bf3484101e66081|||||||||||||||
-calculate_game_quality|function|52b08058d94ee76e|||||||||||||||
+calculate_game_interest|function|18d9f45decfc7f92|||||||||||||||
+calculate_game_quality|function|c4973e7372b4db09|||||||||||||||
 calculate_points_added|function|060f5b1a4035d14a|||||||||||||||
 calculate_team_efficiency|function|47ce907bdb591a8c|||||||||||||||
 calculate_team_scores|function|17e0f227ddb9a6f2|||||||||||||||
@@ -847,10 +850,11 @@ clean_plays_func|function|4aabe602e28ec9dc|||||||||||||||
 clean_timeouts|function|ea6843e418eee0a0|||||||||||||||
 clean_yards|function|bdc86fcb12ff0cac|||||||||||||||
 combined|object|874dd1d8ba164815|||||||||||||||
+current_season|object|1f9b22175ab58c3c|||||||||||||||
 defense_score_text|function|d1140ba21ee17dc9|||||||||||||||
 dummy_teams|function|e54bffc1e109eeeb|||||||||||||||
 dynamic|object|964437912578b57e|||||||||||||||
-efficiency_by_week|stem|dd46ae8d66beaec8|4eb59bbd3123d3a2|f6f94b427e477f51|-782060775|bucket=cfb_models*key=data/objects/efficiency_by_week*version=1726244006296473|t19979.6759880642s||1465159|qs|gcp|vector|||0.055|Detected an unexpected manytomany relationship between x and y.ℹ Row 155521 of x matches multiple rows in y.ℹ Row 203 of y matches multiple rows in x.ℹ If a manytomany relationship is expected, set relationship   manytomany to silence this warning.|
+efficiency_by_week|stem|dd46ae8d66beaec8|b7586d78a1b950b6|e13cb0ecbe380fec|-782060775|bucket=cfb_models*key=data/objects/efficiency_by_week*version=1726511703371088|t19982.774335029s||1465159|qs|gcp|vector|||0.06|Detected an unexpected manytomany relationship between x and y.ℹ Row 155521 of x matches multiple rows in y.ℹ Row 203 of y matches multiple rows in x.ℹ If a manytomany relationship is expected, set relationship   manytomany to silence this warning.|
 efficiency_category_tbl|function|961f8c91b1636b25|||||||||||||||
 efficiency_model|function|b208e06034fa15e8|||||||||||||||
 efficiency_overall_tbl|function|584a0190a91be20f|||||||||||||||
@@ -1169,13 +1173,21 @@ factor_team_names|function|841932ba7be35d68|||||||||||||||
 filter_play_type|function|e1363a13cfafa77d|||||||||||||||
 filter_plays|function|ca50eac0c45804a7|||||||||||||||
 filter_to_fbs|function|7082f2d784f26465|||||||||||||||
+filter_to_team|function|d7159d2a2b720ef5|||||||||||||||
 filtered_pbp|stem|f01bdaad01ae69a8|515edb0ada8ba717|79902a5df92bd535|-1114630478|bucket=cfb_models*key=data/objects/filtered_pbp*version=1724695040354477|t19961.7480999948s||88469143|qs|gcp|vector|||7.533||
+find_most_recent_team_estimates|function|e964062e232c49cc|||||||||||||||
 find_season_dates|function|5c640b430e7036bb|||||||||||||||
 find_season_weeks|function|82cf2714232e8ef6|||||||||||||||
 find_team_divisions|function|3441c337af540103|||||||||||||||
+find_team_ids|function|515842715d710170|||||||||||||||
 game_formula|function|265868a6962f652a|||||||||||||||
+game_predictions_tbl|function|677ffabd76a9f206|||||||||||||||
 games_and_estimates|stem|afe213ad451f05ac|7b7b55fb329ddc28|0c3834fe36ef20e3|737600301|bucket=cfb_models*key=data/objects/games_and_estimates*version=1726249956022994|t19979.74485925s||639751|qs|gcp|vector|||1.55||
+games_draws|stem|aeb92b3a3d56082b|e0f54d2b5f573525|a5ce432ddbafb681|879213189|bucket=cfb_models*key=data/objects/games_draws*version=1726517016350641|t19982.8358048732s||6270810|qs|gcp|vector|||1.491||
 games_final_fit|stem|ebbb542b62d2a04d|c1ef9e6abcfa8042|79b5de65537e422a|355868259|bucket=cfb_models*key=data/objects/games_final_fit*version=1726249961890701|t19979.7449263715s||2256709|qs|gcp|vector|||4.639||
+games_model|stem|1b02c37ad7a1a2b3|31d964a395e9c5b6|a9cee3b1e8c1e979|-547522912|bucket=cfb_models*key=data/objects/games_model*version=1726516794636292|t19982.8332511449s||2256552|qs|gcp|vector|||0||
+games_predictions|stem|e5c870187564a281|4f0a7031b0b4657a|af48c5cee93b09d3|538606680|bucket=cfb_models*key=data/objects/games_predictions*version=1726517019153058|t19982.8358666401s||64983|qs|gcp|vector|||0.069||
+games_sims|stem|1056391d6ae4c9f4|7db14ee1cd2c4c83|97b204d996344862|1546708228|bucket=cfb_models*key=data/objects/games_sims*version=1726517018354936|t19982.8358575623s||14697|qs|gcp|vector|||0.773||
 games_train_fit|stem|336f6dc139c9a2af|14dbe5c150a83279|79b5de65537e422a|443762647|bucket=cfb_models*key=data/objects/games_train_fit*version=1726249965036846|t19979.744963235s||1949903|qs|gcp|vector|||2.448||
 get_cfbd_pbp_data|function|720c479d7ba7fed7|||||||||||||||
 get_cfbd_plays|function|07f083550c5408ab|||||||||||||||
@@ -1208,6 +1220,7 @@ pbp_efficiency|stem|e286a0a58c9d766b|b959891b1839d295|3436dbb0ffaca137|-88837316
 pbp_final_fit|stem|65ee2578a573eaac|38ae411e301d1e83|8650b54567b0e8e8|-870871864|bucket=cfb_models*key=data/objects/pbp_final_fit*version=1725823199379205|t19974.8054592421s||319440914|qs|gcp|vector|||276.365||
 pbp_ids|function|3848dd91513932ab|||||||||||||||
 pbp_last_fit|stem|37dfaf71044bb652|14496f13e2434016|fc3275400cf66136|-1864951580|bucket=cfb_models*key=data/objects/pbp_last_fit*version=1725822784519429|t19974.8006569562s||312719426|qs|gcp|vector|||159.884||
+pbp_model|stem|65ee2578a573eaac|537fa52cfca23943|cb2ff78b1c4c8dd1|-1193290672|bucket=cfb_models*key=data/objects/pbp_model*version=1726515698201433|t19982.8204312419s||319440914|qs|gcp|vector|||0||
 pbp_model_spec|stem|fe9cd5d938c3c6bb|0b8c3a01f3762aa0|2c530c1562a7fbd1|1157590891|bucket=cfb_models*key=data/objects/pbp_model_spec*version=1724795662343562|t19962.9127539436s||249|qs|gcp|vector|||2.784||
 pbp_predicted|stem|a093a1844452d3bf|34c6ab706e32112f|da52af8f068d9060|-403637594|bucket=cfb_models*key=data/objects/pbp_predicted*version=1725823657829223|t19974.8107815515s||238870250|qs|gcp|vector|||444.505||
 pbp_predictors|function|92e6dcf7720afa83|||||||||||||||
@@ -1229,11 +1242,13 @@ plot_ranking|function|d44b259ecedeefc2|||||||||||||||
 plot_split_plan|function|69c5a731895efa4e|||||||||||||||
 plot_team_efficiency|function|554cd543e960830e|||||||||||||||
 plot_team_efficiency_by_week|function|ed8922121d6847c1|||||||||||||||
+predict_pbp|function|89fc673f4a23390b|||||||||||||||
 prepare_drives|function|0cd66ed59e1e3d78|||||||||||||||
 prepare_efficiency|function|2621b3baaa00e971|||||||||||||||
 prepare_fcs_teams|function|d7a38d9e510825ba|||||||||||||||
 prepare_game_estimates|function|b39f4159f1b6fb19|||||||||||||||
 prepare_game_info|function|6b17c2026c5a0ae6|||||||||||||||
+prepare_game_predictions|function|b3b9fc3601ae95d5|||||||||||||||
 prepare_game_weeks|function|b92fdc8c20a8a9fa|||||||||||||||
 prepare_games|function|49779747191ba766|||||||||||||||
 prepare_pbp|function|1f9c59e8ef4a3dcd|||||||||||||||
@@ -1250,6 +1265,27 @@ rename_team_variables|function|6aed6967b09b2d49|||||||||||||||
 round_any|function|1f9a74510238f8e9|||||||||||||||
 scale_color_cfb_muted|function|4fa53d5f78e5c83d|||||||||||||||
 score_text|function|2beaea614d9d0fbe|||||||||||||||
+season_completed_games|stem|766b0f32d2e6fc6a|d4a53002c29edfda|afe4abbf3d983837|-19696956|bucket=cfb_models*key=data/objects/season_completed_games*version=1726515645089753|t19982.8199635398s||246|qs|gcp|vector||season_completed_games_efae039a815a508f*season_completed_games_f25f00bc640956ba*season_completed_games_7c87c6641d10d3dc|0.004||
+season_completed_weeks|stem|b289f4ecf8895f1a|7059808ecec93cc9|d7a723b17643e92a|-371119414|bucket=cfb_models*key=data/objects/season_completed_weeks*version=1726515644816134|t19982.8199605321s||74|qs|gcp|vector||season_completed_weeks_9bd9539b9eccfa76*season_completed_weeks_8fcd64a031859a4f*season_completed_weeks_0fdd186151f4a9b9*season_completed_weeks_6da0a2ca3e5843dd|0.022||
+season_efficiency_by_week|pattern|f66628769d5f0eb0|305514e221a06b84||782907160||||30702|qs|gcp|vector||season_efficiency_by_week_ab8e04e0a16a83ec*season_efficiency_by_week_fce445198ab42dc5*season_efficiency_by_week_0303c1983de6bd2b*season_efficiency_by_week_e5770bc60462551b|94.711||
+season_efficiency_by_week_0303c1983de6bd2b|branch|63eae5737bd4dfe6|305514e221a06b84|20313cc3980321fe|1078535724|bucket=cfb_models*key=data/objects/season_efficiency_by_week_0303c1983de6bd2b*version=1726516297501331|t19982.8275144425s||7657|qs|gcp|vector|season_efficiency_by_week||21.115||
+season_efficiency_by_week_ab8e04e0a16a83ec|branch|89f25c400197d5c6|305514e221a06b84|20313cc3980321fe|-1449592607|bucket=cfb_models*key=data/objects/season_efficiency_by_week_ab8e04e0a16a83ec*version=1726516244632044|t19982.8269026236s||7657|qs|gcp|vector|season_efficiency_by_week||30.815|There was 1 warning in mutate.ℹ In argument estimates  map....Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
+season_efficiency_by_week_e5770bc60462551b|branch|2e53da485feef189|305514e221a06b84|20313cc3980321fe|-730259667|bucket=cfb_models*key=data/objects/season_efficiency_by_week_e5770bc60462551b*version=1726516321986272|t19982.8277979061s||7652|qs|gcp|vector|season_efficiency_by_week||19.834||
+season_efficiency_by_week_fce445198ab42dc5|branch|51ce5d92c40ef69b|305514e221a06b84|20313cc3980321fe|-1910294075|bucket=cfb_models*key=data/objects/season_efficiency_by_week_fce445198ab42dc5*version=1726516271710711|t19982.827215845s||7736|qs|gcp|vector|season_efficiency_by_week||22.947||
+season_game_info|stem|d1837bbfb2b3bc37|812e37a7776e093f|cd3a0410acb72546|1772608410|bucket=cfb_models*key=data/objects/season_game_info*version=1726515644500352|t19982.8199556311s||30133|qs|gcp|vector|||3.373||
+season_games_to_date|stem|7972aedfa0acf742|9e9dfe5d9636eaf1|363c4dcdb921c0c2|-313408234|bucket=cfb_models*key=data/objects/season_games_to_date*version=1726517009655493|t19982.8357563195s||22005|qs|gcp|vector|||0.086||
+season_games_upcoming|stem|748947070f72d0ad|7d92f71318c6c3a5|31144c28f55f870b|-1273256705|bucket=cfb_models*key=data/objects/season_games_upcoming*version=1726516326849765|t19982.8278542669s||46692|qs|gcp|vector|||0.398||
+season_pbp_efficiency|stem|1dd9bdb5ebcf0f8f|3ad7a5f27c784506|aed677fe9541fead|1229263270|bucket=cfb_models*key=data/objects/season_pbp_efficiency*version=1726515729570056|t19982.8209405407s||956176|qs|gcp|vector|||0.398||
+season_pbp_preds|stem|3d4922cdac339863|1082ceff63bb0a46|017cd9a930787460|-1779182358|bucket=cfb_models*key=data/objects/season_pbp_preds*version=1726515728052219|t19982.8209198158s||5974722|qs|gcp|vector|||11.917||
+season_pbp_raw|pattern|60bf3f4f28cb1d8d|a3643253064904fd||-291909273||||2158770|qs|gcp|vector||season_pbp_raw_743821c9450413d5*season_pbp_raw_932b71bf2e546313*season_pbp_raw_a62a693d86da2867|10.382||
+season_pbp_raw_743821c9450413d5|branch|2c6dcf5392490b4e|a3643253064904fd|aeac5011eeb4b76f|-1286497670|bucket=cfb_models*key=data/objects/season_pbp_raw_743821c9450413d5*version=1726515649702167|t19982.8200102917s||764790|qs|gcp|vector|season_pbp_raw||3.731||
+season_pbp_raw_932b71bf2e546313|branch|8391e075927312ae|a3643253064904fd|aeac5011eeb4b76f|753578646|bucket=cfb_models*key=data/objects/season_pbp_raw_932b71bf2e546313*version=1726515653498194|t19982.8200593682s||738628|qs|gcp|vector|season_pbp_raw||3.374||
+season_pbp_raw_a62a693d86da2867|branch|5a5823949d3f2b7a|a3643253064904fd|aeac5011eeb4b76f|1578481254|bucket=cfb_models*key=data/objects/season_pbp_raw_a62a693d86da2867*version=1726515657114295|t19982.8201021411s||655352|qs|gcp|vector|season_pbp_raw||3.277||
+season_team_estimates|stem|77cf610d3a21d236|55060e50e5438d16|a6bfce6b1ea26c91|1027388607|bucket=cfb_models*key=data/objects/season_team_estimates*version=1726516324152062|t19982.8278210828s||1990554|qs|gcp|vector|||0.185||
+season_team_estimates_0303c1983de6bd2b|branch|63eae5737bd4dfe6|305514e221a06b84|20313cc3980321fe|637214183|bucket=cfb_models*key=data/objects/season_team_estimates_0303c1983de6bd2b*version=1726515807746718|t19982.8218460692s||7657|qs|gcp|vector|season_team_estimates||22.243||
+season_team_estimates_ab8e04e0a16a83ec|branch|89f25c400197d5c6|305514e221a06b84|20313cc3980321fe|883965315|bucket=cfb_models*key=data/objects/season_team_estimates_ab8e04e0a16a83ec*version=1726515755059297|t19982.8212362813s||7657|qs|gcp|vector|season_team_estimates||20.27|There was 1 warning in mutate.ℹ In argument estimates  map....Caused by warning Using an external vector in selections was deprecated in tidyselect 1.1.0.ℹ Please use all_of or any_of instead.   Was  data  selectoutcome   Now  data  selectall_ofoutcomeSee httpstidyselect.rlib.orgreferencefaqexternalvector.html.|
+season_team_estimates_e5770bc60462551b|branch|2e53da485feef189|305514e221a06b84|20313cc3980321fe|1159613983|bucket=cfb_models*key=data/objects/season_team_estimates_e5770bc60462551b*version=1726515834116798|t19982.8221511182s||7652|qs|gcp|vector|season_team_estimates||21.661||
+season_team_estimates_fce445198ab42dc5|branch|51ce5d92c40ef69b|305514e221a06b84|20313cc3980321fe|-1816414581|bucket=cfb_models*key=data/objects/season_team_estimates_fce445198ab42dc5*version=1726515780757623|t19982.821533445s||7736|qs|gcp|vector|season_team_estimates||20.926||
 season_weeks|stem||be6a5cc1e1a7f33f|238f3d65600cf5cc|1562183061||t19973.8505905804s||0|qs|gcp|vector|||1.501|Supplying ... without names was deprecated in tidyr 1.0.0.ℹ Please specify a name for each selection.ℹ Did you want data  season|ℹ In argument data  mapdata, find_season_dates.x, season   season.Caused by error in UseMethod no applicable method for inner_join applied to an object of class function
 seasons|object|a3a5673ed49c208e|||||||||||||||
 select_elo_params|function|6903f9afe9c00a9f|||||||||||||||
@@ -1268,7 +1304,7 @@ team_divisions|stem|7249689131c1e345|9525b59e12621e01|f285f1c6abba5a8c|220262582
 team_efficiency_category_tbl|function|8c08409712b99581|||||||||||||||
 team_efficiency_overall_tbl|function|58666323ae35fb4b|||||||||||||||
 team_estimates|stem|90a963109b5c4033|1de2d5be1abd6002|ded4c3fe08262c14|1578715928|bucket=cfb_models*key=data/objects/team_estimates*version=1726244007464219|t19979.676005794s||1955660|qs|gcp|vector|||0.243||
-team_scores|stem|f649d20574ffcbb0|9edf9253e8149a67|0325c1617a077c3e|-1315939162|bucket=cfb_models*key=data/objects/team_scores*version=1726249970748726|t19979.7450289417s||990293|qs|gcp|vector|||4.177||
+team_scores|stem|8c6a2882cb8ce0d7|211a5b83b200eebf|0f033b5706e6ef84|-1315939162|bucket=cfb_models*key=data/objects/team_scores*version=1726516802292109|t19982.8333559137s||1003919|qs|gcp|vector|||3.083||
 theme_cfb|function|626133eb8283821d|||||||||||||||
 top_plays_by_game|function|71be01327e7123bb|||||||||||||||
 tune_elo_ratings|function|c4dea64ad0e68bc1|||||||||||||||
