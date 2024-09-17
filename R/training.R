@@ -104,6 +104,7 @@ build_recipe = function(data,
         update_role(
             -has_role("predictor"),
             -has_role("outcome"),
+            -has_role("case_weights"),
             -has_role("id"),
             new_role = "extras"
         ) |>

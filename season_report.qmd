@@ -1,0 +1,118 @@
+---
+title: "CFB Team Efficiency and Rankings"
+subtitle: "{{< meta params.season >}} Season Report"
+editor: visual
+format:
+  html: 
+    message: false
+    echo: false
+    warning: false
+params:
+    season: 2024
+---
+
+```{r}
+#| include: false
+# packages
+library(targets)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(quarto)
+library(gt)
+library(gtExtras)
+library(yardstick)
+library(patchwork)
+
+# src code
+tar_source("R")
+
+add_gt_formatting = function(tbl, ...) {
+  
+  tbl |>
+    gt::opt_row_striping(row_striping = F) |>
+    gt::tab_options(table.font.size = 14,
+                    ...)
+}
+
+```
+
+```{r}
+
+team_info <- tar_read("cfbd_team_info_tbl")
+team_estimates <- tar_read("season_team_estimates")
+team_scores <- tar_read("team_scores")
+
+```
+
+```{r}
+
+team_scores |>
+  filter(season == 2024) |>
+  filter(season_week == max(season_week)) |>
+  add_season_week() |>
+  arrange(desc(season_week), desc(score)) |>
+  mutate(rank = rank(-score)) |>
+  select(season, week, rank, team, everything()) |>
+  gt_tbl() |>
+  gt::cols_hide(
+    columns = c(season_type, season_week, special, week)
+  ) |>
+  gt::fmt_number(
+    columns = c(score),
+    decimals = 2
+  ) |>
+  gt::fmt_number(
+    columns = c(offense, defense, special),
+    decimals = 3
+  ) |>
+  gt::cols_align(
+    columns = -c(team),
+    align = "center"
+  ) |>
+  gt::cols_label(
+    season = "Season",
+    week = "Week",
+    rank = "Rank",
+    team = "Team",
+    score = "Team Score",
+    offense = "Offense",
+    defense = "Defense",
+    special = "Special Teams"
+  ) |>
+  gt::cols_width(
+    season ~ px(75),
+    week ~ px(75),
+    rank ~ px(75)
+  ) |>
+  gt::opt_interactive(
+    use_compact_mode = T,
+    use_filters = T,
+    page_size_default = 25
+  ) |>
+  add_gt_formatting()
+
+```
+
+```{r}
+
+team_scores |>
+  filter(season == 2024) |>
+  filter(season_week == max(season_week)) |>
+  ggplot(aes(x=offense,
+             y=defense,
+             color = team,
+             label = team)
+  )+
+  geom_label(size = 2, alpha = 0.8)+
+  cfbplotR::scale_color_cfb()+
+  theme_cfb()+
+  geom_vline(xintercept = 0, linetype = 'dotted')+
+  geom_hline(yintercept = 0, linetype = 'dotted')+
+  coord_cartesian(
+    xlim = c(-0.45, 0.45),
+    ylim = c(-0.45, 0.45)
+  )
+
+```
+

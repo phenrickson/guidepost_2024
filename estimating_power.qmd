@@ -1,0 +1,81 @@
+---
+title: "CFB Team Power"
+subtitle: "Measuring Team Performance In-Season"
+format: html
+---
+
+```{r}
+#| include: false
+# packages
+library(targets)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(quarto)
+library(gt)
+library(gtExtras)
+
+# src code
+tar_source("R")
+
+```
+
+# Team Power
+
+Who are the best college football teams? How do we measure a team's performance?
+
+I detail my methodology for estimating a college football team's offensive/defensive efficiency in-season. I use these estimates along with a model of game outcomes to estimate every team's expected margin of victory against an average FBS opponent - I refer to each team's expected margin of victory as a team's *power*.
+
+```{r}
+
+tar_load(team_scores)
+tar_load(adjusted_efficiency_overall_ppa)
+tar_load(adjusted_efficiency_category_ppa)
+
+```
+
+## Estimating Performance In-Season
+
+I have previously discussed my methodology for estimating a team's offensive/defensive efficiency in terms of predicted points per play. I use a ridge regression to produce opponent-adjusted estimates of team performance at the season level.
+
+Examining these season level estimates produces a visual way to track how a team has performed year over year. Using Texas as an example, we can track their fall and rise over the last two decades - their fall in 2010, mediocre teams under Charlie Strong from 2014-2016, a slight improvement under Tom Herman, and a return to top tier (Texas is back?) under Sarkisian after a rough start in 2021.
+
+```{r}
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == "offense/defense") |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = "Texas")
+```
+
+We can zoom into these estimates further to understand why this was the case - it wouldn't shock anyone to see that Texas' decline in the 2010s began with a sharp drop in offensive efficiency. Their 2010 and 2011 teams had decent defenses but they could not overcome a bad offense, owing to bad passing efficiency.
+
+```{r}
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(
+    type %in% c("offense", "defense"),
+    play_category %in% c("pass", "rush")
+  ) |>
+  plot_team_efficiency(teams = "Texas") +
+  facet_grid(play_category ~ type)+
+  scale_x_discrete(breaks = scales::pretty_breaks(n=8))
+
+```
+
+These post-season diagnoses are interesting, but they only arrive after seeing an entire season of evidence in the form of play by play data. What if we want to estimate how a team is performing in the middle of a season?
+
+The answer to this question is yes, but with some changes.
+
+```{r}
+team_scores |>
+    filter(season <= 2023)
+```
+
+
+```{r}
+
+
+
+```
