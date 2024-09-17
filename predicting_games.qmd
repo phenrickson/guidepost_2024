@@ -507,7 +507,7 @@ spread_predictions |>
 
 ```
 
-The following table displays my model's predictions to date compared to betting
+The following table displays my model's predictions to date against betting lines.
 
 ```{r}
 #| column: body-outset-right
