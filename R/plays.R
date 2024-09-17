@@ -1379,7 +1379,7 @@ add_team_ranks = function(data, groups = c("season", "season_week", "type", "met
 }
 
 
-plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, seed = 1) {
+plot_efficiency_all_teams = function(data, x = 'season', all_teams_line = F, point = T, seed = 1) {
 
   all_teams_data <-
     data |>
@@ -1394,7 +1394,7 @@ plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, se
       y = "estimate"
     ))
 
-  if (line == T) {
+  if (all_teams_line == T) {
 
     p =
       p +
@@ -1430,7 +1430,7 @@ plot_efficiency_all_teams = function(data, x = 'season', line = F, point = T, se
 
 plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = T, line = T) {
 
-  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, point = point, line = line)
+  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, point = point, all_teams_line = F)
   all_teams_data = all_teams_plot$data
 
   selected_teams <- tibble(team = teams)
@@ -1967,4 +1967,39 @@ find_most_recent_team_estimates <- function(data, game_info) {
     slice_max(week_date, n = 1) |>
     select(season, season_type, season_week, team, starts_with("postgame")) |>
     ungroup()
+}
+
+plot_team_scores <- function(data, team, rankings = c(25, 50), patchwork = F) {
+  tmp <- data |>
+    rename(overall = score) |>
+    pivot_longer(
+      cols = c(overall, offense, defense, special),
+      names_to = c("type"),
+      values_to = c("estimate")
+    ) |>
+    mutate(type = factor(type, levels = c("overall", "offense", "defense", "special")))
+
+  if (patchwork == T) {
+    team_score_plot <-
+      tmp |>
+      filter(type == "overall") |>
+      plot_team_efficiency_by_week(team = team, label = F, point = F, line = T, title = T) |>
+      plot_ranking(ranking = rankings) +
+      ylab("Expected Margin of Victory") +
+      xlab("")
+
+    team_components_plot <-
+      tmp |>
+      filter(type != "overall") |>
+      plot_team_efficiency_by_week(team = team, label = F, point = F, line = T, title = F) |>
+      plot_ranking(ranking = rankings) +
+      ylab("Net Points per Play")
+
+    team_score_plot / team_components_plot
+  } else {
+    tmp |>
+      plot_team_efficiency_by_week(team = team, label = F, point = F, line = T, title = T) |>
+      plot_ranking(ranking = rankings) +
+      ylab("")
+  }
 }

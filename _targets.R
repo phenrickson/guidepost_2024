@@ -244,18 +244,18 @@ list(
   #       as_tibble()
   #   )
   # ),
-  # # drives
-  # tar_target(
-  #   cfbd_drives_tbl,
-  #   map_df(
-  #     seasons,
-  #     ~ cfbd_drives(
-  #       year = .x,
-  #       season_type = "both"
-  #     ) |>
-  #       add_season(year = .x)
-  #   )
-  # ),
+  # drives
+  tar_target(
+    cfbd_drives_tbl,
+    map_df(
+      seasons,
+      ~ cfbd_drives(
+        year = .x,
+        season_type = "both"
+      ) |>
+        add_season(year = .x)
+    )
+  ),
   ### now get espn data
   # calendar
   # tar_target(
@@ -614,7 +614,8 @@ list(
     fit(
       split_games |>
       training()
-    )
+    ),
+    packages = c("rstanarm")
   ),
   tar_target(
     games_final_fit,

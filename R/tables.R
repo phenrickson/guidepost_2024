@@ -56,10 +56,26 @@ top_plays_by_game <- function(plays, var = predicted_points_added, n = 10) {
     group_by(season, game_id)
 }
 
+gt_correct_color = function(tbl) { 
+  
+  tbl |>
+    tab_style(
+    style = cell_fill(color = "deepskyblue"),
+    locations = cells_body(
+      columns = "actual",
+      rows = correct == "yes"
+    )
+  )
+}
+
 # make table of game predictions
 game_predictions_tbl <- function(data) {
   data |>
     gt_tbl() |>
+    gt::fmt_number(
+      columns = c(game_interest, game_quality),
+      decimals = 0
+    ) |>
     gt::fmt_datetime(
       columns = c(start_date),
       date_style = "MMMEd",
@@ -73,12 +89,15 @@ game_predictions_tbl <- function(data) {
       columns = c(game_id, season_type, start_date, correct)
     ) |>
     gt::fmt_number(
-      columns = c(game_quality, game_interest, home_prob),
+      columns = c(home_prob),
       decimals = 3
     ) |>
     gt::cols_width(
       season ~ px(75),
       week ~ px(75),
+      game_quality ~ px(75),
+      game_interest ~ px(75),
+      home_prob ~ px(75),
       start_date ~ px(100),
       prediction ~ px(150),
       actual ~ px(150)
@@ -97,8 +116,8 @@ game_predictions_tbl <- function(data) {
     ) |>
     gt::data_color(
       columns = c("game_quality", "game_interest"),
-      domain = c(0, 1),
-      palette = c("orange", "white", "dodgerblue2")
+      domain = c(0, 100),
+      palette = c("orange", "white", "dodgerblue3")
     ) |>
     gt::data_color(
       columns = c("home_prob"),
@@ -110,5 +129,6 @@ game_predictions_tbl <- function(data) {
       page_size_default = 25,
       use_compact_mode = T,
       use_highlight = T
-    )
+    ) |>
+    gt_correct_color()
 }

@@ -405,26 +405,6 @@
       ],
       "Hash": "a4652c36d1f8abfc3ddf4774f768c934"
     },
-    "broom.mixed": {
-      "Package": "broom.mixed",
-      "Version": "0.2.9.5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "broom",
-        "coda",
-        "dplyr",
-        "forcats",
-        "furrr",
-        "methods",
-        "nlme",
-        "purrr",
-        "stringr",
-        "tibble",
-        "tidyr"
-      ],
-      "Hash": "c4e6c14e4d92d7b2d29ab0758184774a"
-    },
     "bslib": {
       "Package": "bslib",
       "Version": "0.8.0",
@@ -810,21 +790,6 @@
       ],
       "Hash": "99b79fcbd6c4d1ce087f5c5c758b384f"
     },
-    "desirability2": {
-      "Package": "desirability2",
-      "Version": "0.0.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "glue",
-        "purrr",
-        "rlang",
-        "stats",
-        "tibble"
-      ],
-      "Hash": "899f84ae47f975321efb2d16ece90d22"
-    },
     "diagram": {
       "Package": "diagram",
       "Version": "1.6.5",
@@ -1016,22 +981,6 @@
         "rlang"
       ],
       "Hash": "c2efdd5f0bcd1ea861c2d4e2a883a67d"
-    },
-    "forcats": {
-      "Package": "forcats",
-      "Version": "1.0.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "cli",
-        "glue",
-        "lifecycle",
-        "magrittr",
-        "rlang",
-        "tibble"
-      ],
-      "Hash": "1a0a9a3d5083d0d573c4214576f1e690"
     },
     "foreach": {
       "Package": "foreach",
@@ -1417,9 +1366,14 @@
     },
     "gt": {
       "Package": "gt",
-      "Version": "0.11.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "0.11.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "gt",
+      "RemoteUsername": "rstudio",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "72821a75dde23a75a947f1ac0c4c0af0743708e4",
       "Requirements": [
         "R",
         "base64enc",
@@ -1443,7 +1397,7 @@
         "vctrs",
         "xml2"
       ],
-      "Hash": "3470c2eb1123db6a2c54ec812de38284"
+      "Hash": "488f050cdf4d3666d72cb72f7e73730e"
     },
     "gtExtras": {
       "Package": "gtExtras",
@@ -2546,13 +2500,13 @@
     },
     "reactR": {
       "Package": "reactR",
-      "Version": "0.6.0",
+      "Version": "0.6.1",
       "Source": "Repository",
       "Repository": "RSPM",
       "Requirements": [
         "htmltools"
       ],
-      "Hash": "10f4d661c235181648a5958c02c0382a"
+      "Hash": "b8e3d93f508045812f47136c7c44c251"
     },
     "reactable": {
       "Package": "reactable",
@@ -3330,13 +3284,13 @@
     },
     "tinytex": {
       "Package": "tinytex",
-      "Version": "0.52",
+      "Version": "0.53",
       "Source": "Repository",
       "Repository": "RSPM",
       "Requirements": [
         "xfun"
       ],
-      "Hash": "cfbad971a71f0e27cec22e544a08bc3b"
+      "Hash": "9db859e8aabbb474293dde3097839420"
     },
     "tune": {
       "Package": "tune",
