@@ -95,9 +95,9 @@ game_predictions_tbl <- function(data) {
     gt::cols_width(
       season ~ px(75),
       week ~ px(75),
-      game_quality ~ px(75),
-      game_interest ~ px(75),
-      home_prob ~ px(75),
+      game_quality ~ px(85),
+      game_interest ~ px(85),
+      home_prob ~ px(85),
       start_date ~ px(100),
       prediction ~ px(150),
       actual ~ px(150)
@@ -126,7 +126,7 @@ game_predictions_tbl <- function(data) {
     ) |>
     gt::opt_interactive(
       use_filters = T,
-      page_size_default = 25,
+      page_size_default = 15,
       use_compact_mode = T,
       use_highlight = T
     ) |>

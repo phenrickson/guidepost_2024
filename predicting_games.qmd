@@ -1,12 +1,13 @@
 ---
 title: "Predicting College Football Games"
-subtitle: "{{< meta params.season >}} Season Game Predictions"
+subtitle: "{{< meta params.season >}} Season Predictions"
 author: "Phil Henrickson"
 format: 
   html:
     echo: false
     message: false
     warning: false
+    number-sections: false
 params:
     season: 2024
     week: 4
@@ -23,6 +24,7 @@ library(quarto)
 library(gt)
 library(gtExtras)
 library(yardstick)
+library(patchwork)
 
 # src code
 tar_source("R")
@@ -74,12 +76,11 @@ game_predictions_and_betting_lines =
 
 
 ```{r}
-
 add_gt_formatting = function(tbl, ...) {
   
   tbl |>
     gt::opt_row_striping(row_striping = F) |>
-    gt::tab_options(table.font.size = 12,
+    gt::tab_options(table.font.size = 14,
                     ...)
 }
 
@@ -136,7 +137,7 @@ spread_predictions_tbl = function(data) {
   data |>
     gt_tbl() |>
     gt::cols_align(
-      columns = -c(home_team, away_team),
+      #    columns = -c(home_team, away_team),
       align = "center"
     ) |>
     gt::cols_merge(
@@ -183,7 +184,7 @@ spread_predictions_tbl = function(data) {
     gt::opt_interactive(
       use_filters = T,
       use_compact_mode = T,
-      page_size_default = 25
+      page_size_default = 15
     )
 }
 
@@ -194,12 +195,13 @@ plot_vs_betting_lines = function(data) {
     geom_point() +
     geom_text(vjust = -1, size = 1.5, check_overlap = T) +
     geom_abline() +
-    tune::coord_obs_pred() +
     theme_cfb() +
     xlab("Estimated Spread") +
     ylab("Vegas Spread") +
     ggpubr::stat_cor(aes(label = ..r.label..)) +
-    facet_wrap(paste(season, paste("Week", week)) ~ .)
+    facet_wrap(paste(season, paste("Week", week)) ~ .)+
+    coord_cartesian(xlim = c(-50, 50),
+                    ylim = c(-50, 50))
 }
 
 betting_lines_tbl = function(data) {
@@ -232,19 +234,25 @@ betting_lines_tbl = function(data) {
 
 ```
 
-# Week {{< meta params.week >}}
+This page displays predictions for games in the {{< meta params.week >}} college football season season. These predictions come from a model built on historical college football play by play and game data in order to simulate upcoming games. All data is from collegefootballdata.com.
 
-## Predictions
+::: {.callout-note collapse="true"}
 
-The following table displays estimates and predictions for the upcoming week's college football games.
-
-<!-- ::: {.callout-note collapse="true"} -->
-
-## About the Model and Estimates
+## About the Model
 
 These predictions come from a game prediction model trained on historical college football data. My game prediction model uses team-level estimates of offensive, defensive, and special teams efficiency from play by play data. I simulate each game thousands of times in order to estimate the home team's win probability and expected margin of victory (or defeat).
 
-Notably, I **do not** use betting lines or the predictions of other models as features in my game prediction model. This allows me to directly compare my performance against that of other models.
+Notably, I *do not use betting lines or the predictions of other models as features in my game prediction model*. This allows me to directly compare my performance against that of other models and betting lines.
+
+:::
+
+# Week {{< meta params.week >}} Predictions
+
+The following table displays estimates and predictions for the upcoming week's college football games.
+
+::: {.callout-note collapse="true"}
+
+## About the Table
 
 **Quality** indicates the quality of the teams involved in the game. This is the (harmonic) mean of the two team’s power ratings and is scaled to range from 0 to 100, with 100 indicating a game between highly rated opponents.
 
@@ -254,10 +262,11 @@ Notably, I **do not** use betting lines or the predictions of other models as fe
 
 **Prediction** is the average margin of victory for the winning team across all simulations.
 
-<!-- ::: -->
+
+:::
 
 ```{r}
-
+#| column: body-outset-right
 game_predictions |>
   prepare_game_predictions() |>
   filter(week == params$week) |>
@@ -268,10 +277,10 @@ game_predictions |>
 
 ## Betting Lines
 
-How do these predictions compare to betting lines? The following plot shows my predicted spread against the opening spread from ESPN Bet.
+How do these predictions compare to betting lines? I compare my predicted spread against the opening spread from ESPN Bet.
 
 ```{r}
-#| fig-height: 8
+#| fig-width: 7.5
 game_predictions_and_betting_lines |>
   filter(provider == 'ESPN Bet') |>
   filter(week == params$week) |>
@@ -283,6 +292,7 @@ game_predictions_and_betting_lines |>
 The following table displays my prediction for each game compared to opening betting lines from various providers.
 
 ```{r}
+#| column: body-outset-right
 game_predictions_and_betting_lines |>
   filter(week == params$week) |>
   prepare_spread_predictions() |>
@@ -290,16 +300,13 @@ game_predictions_and_betting_lines |>
   add_gt_formatting()
 ```
 
-
-# Results as of Week  {{< meta params.week >}}
+# Results as of Week {{< meta params.week >}}
 
 How has the model performed to date?
 
-## Assessment
-
 The model predicts the probability that the home team will win and their expected margin of victory (or defeat). I assess the model’s performance by assessing the accuracy of its predictions (win/loss), the logloss of its probabilities, and the mean absolute error of the predicted margin.
 
-The following tables display how the model has performed so far this season.
+<!-- The following tables display how the model has performed so far this season. -->
 
 ```{r}
 
@@ -344,25 +351,30 @@ pivot_estimates = function(data) {
     )
 }
 
-game_predictions |>
+results_by_week = 
+  game_predictions |>
   filter(completed == T) |>
   assess_games() |>
   pivot_estimates() |>
   gt_tbl() |>
-  gt::cols_align(align = c("center"))
+  gt::cols_align(align = c("center")) |>
+  gt::tab_header(title = "Model Results by Week")
 
-game_predictions |>
+results_overall =
+  game_predictions |>
   filter(completed == T) |>
   assess_games(groups = c("season", "season_type")) |>
   pivot_estimates() |>
   gt_tbl() |>
-  gt::cols_align(align = c("center"))
+  gt::cols_align(align = c("center")) |>
+  gt::tab_header(title = "Season Model Results")
 
 
 ```
 
+The following plot shows my model's predicted margin of victory vs the actual margin of victory for all games so far this season.
+
 ```{r}
-#| fig-height: 8
 plot_games_margins = function(data) {
   
   data |>
@@ -389,7 +401,8 @@ plot_games_margins = function(data) {
   
 }
 
-game_predictions |>
+results_plot  = 
+  game_predictions |>
   filter(completed == T) |>
   mutate(
     correct = case_when(
@@ -400,12 +413,33 @@ game_predictions |>
 
 ```
 
-### Previous Weeks
+```{r}
+
+results_overall
+
+```
+
+
+```{r}
+#| fig-width: 7.5
+results_plot
+
+```
+
+```{r}
+
+results_by_week
+
+```
+
+
+### Previous Predictions
 
 The following table displays the model's predictions for previous weeks along with the actual result.
 
 ```{r}
-
+#| column: body-outset-right
+#| 
 game_predictions |>
   prepare_game_predictions() |>
   filter(start_date <= Sys.Date() & !is.na(actual)) |>
@@ -419,7 +453,7 @@ game_predictions |>
 
 ## Against the Spread
 
-How has the model performed against the spread?
+How has the model performed against the spread? I compare my model's predictions against betting lines from various providers.
 
 ```{r}
 
@@ -473,8 +507,10 @@ spread_predictions |>
 
 ```
 
-```{r}
+The following table displays my model's predictions to date compared to betting
 
+```{r}
+#| column: body-outset-right
 spread_predictions |>
   arrange(desc(week)) |>
   prepare_spread_predictions() |>
@@ -488,10 +524,10 @@ spread_predictions |>
 The following table displays predictions for all upcoming games based on the results of the season so far.
 
 ```{r}
-
+#| column: body-outset-right
 game_predictions |>
   prepare_game_predictions() |> 
-  filter(!is.na(actual)) |>
+  filter(is.na(actual)) |>
   group_by(week) |>
   arrange(desc(week), desc(game_interest)) |>
   ungroup() |>
