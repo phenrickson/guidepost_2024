@@ -236,7 +236,7 @@ betting_lines_tbl = function(data) {
 
 This page displays predictions for games in the {{< meta params.week >}} college football season season. These predictions come from a model built on historical college football play by play and game data in order to simulate upcoming games. All data is from collegefootballdata.com.
 
-::: {.callout-note collapse="true"}
+::: {.callout-note collapse="false"}
 
 ## About the Model
 
@@ -250,7 +250,7 @@ Notably, I *do not use betting lines or the predictions of other models as featu
 
 The following table displays estimates and predictions for the upcoming week's college football games.
 
-::: {.callout-note collapse="true"}
+::: {.callout-note collapse="false"}
 
 ## About the Table
 
