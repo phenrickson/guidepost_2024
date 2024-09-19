@@ -5,7 +5,8 @@ project:
   - "expected_points.qmd"
   - "predicting_games.qmd"
   - "estimating_efficiency.qmd"
-
+  - "season_report.qmd"
+  
 format:
   html:
     author: "Phil Henrickson"
