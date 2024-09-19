@@ -6,7 +6,7 @@
 # See https://github.com/r-lib/actions/tree/master/examples#readme for
 # additional example workflows available for the R community.
 
-name: check on targets status
+name: render quarto reports
 
 on:
   workflow_dispatch:
@@ -77,6 +77,15 @@ jobs:
           GITHUB_PAT: ${{ secrets.GH_PAT}}
           GCS_AUTH_FILE: ${{ secrets.GCS_AUTH_FILE}}
           CFBD_API_KEY: ${{ secrets.CFBD_API_KEY}}
+
+      - name: Render and Publish
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+          GCS_AUTH_FILE: ${{ secrets.GCS_AUTH_FILE }}
 
       # - name: Render README
       #   shell: bash
