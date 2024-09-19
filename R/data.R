@@ -261,11 +261,11 @@ find_team_ids <- function(data) {
 }
 
 # adjust changes to team names that occurred in 2024
-adjust_team_names <- function(data) {
+adjust_team_names <- function(data, cols = c("home_team", "away_team")) {
   data |>
     mutate(
       across(
-        c(home_team, away_team),
+        any_of(c(cols)),
         ~ case_when(
           .x == "Sam Houston" ~ "Sam Houston State",
           .x == "UL Monroe" ~ "Louisiana Monroe",
