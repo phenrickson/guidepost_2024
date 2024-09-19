@@ -2,7 +2,7 @@
 title: "Predicting College Football Games"
 subtitle: "{{< meta params.season >}} Season Predictions"
 author: "Phil Henrickson"
-format: 
+format:
   html:
     echo: false
     message: false
@@ -46,7 +46,7 @@ sims <- tar_read("games_sims")
 game_info <-
   cfbfastR::cfbd_game_info(params$season) |>
   as_tibble() |>
-  adjust_team_names() 
+  adjust_team_names()
 
 # betting lines
 betting_lines <-
@@ -67,7 +67,7 @@ game_predictions <-
   )
 
 # add betting lines to game predictions
-game_predictions_and_betting_lines = 
+game_predictions_and_betting_lines =
   game_predictions |>
   join_betting_lines(betting = betting_lines)
 
@@ -77,7 +77,7 @@ game_predictions_and_betting_lines =
 
 ```{r}
 add_gt_formatting = function(tbl, ...) {
-  
+
   tbl |>
     gt::opt_row_striping(row_striping = F) |>
     gt::tab_options(table.font.size = 14,
@@ -85,7 +85,7 @@ add_gt_formatting = function(tbl, ...) {
 }
 
 prepare_spread_predictions = function(data) {
-  
+
   data |>
     mutate(
       my_prediction = case_when(
@@ -101,24 +101,24 @@ prepare_spread_predictions = function(data) {
         spread > 0 ~ paste(away_team, spread, sep = " by ")
       )
     ) |>
-    select(season, 
-           week, 
-           home_team, 
-           away_team, 
+    select(season,
+           week,
+           home_team,
+           away_team,
            actual,
-           home_margin, 
-           my_prediction, 
+           home_margin,
+           my_prediction,
            my_margin = pred_margin,
-           provider, 
+           provider,
            margin = spread_margin,
            prediction = spread_prediction
     ) |>
-    pivot_wider(names_from = c("provider"), 
+    pivot_wider(names_from = c("provider"),
                 values_from = c("margin", "prediction"))
 }
 
 gt_pred_color = function(tbl, columns, target_columns) {
-  
+
   tbl |>
     gt::data_color(
       columns = columns,
@@ -129,11 +129,11 @@ gt_pred_color = function(tbl, columns, target_columns) {
       direction = "column",
       na_color = "white"
     )
-  
+
 }
 
 spread_predictions_tbl = function(data) {
-  
+
   data |>
     gt_tbl() |>
     gt::cols_align(
@@ -189,7 +189,7 @@ spread_predictions_tbl = function(data) {
 }
 
 plot_vs_betting_lines = function(data) {
-  
+
   data |>
     ggplot(aes(x = -pred_margin, y = spread_open, label = paste(home_team, away_team, sep = " vs "))) +
     geom_point() +
@@ -201,11 +201,11 @@ plot_vs_betting_lines = function(data) {
     ggpubr::stat_cor(aes(label = ..r.label..)) +
     facet_wrap(paste(season, paste("Week", week)) ~ .)+
     coord_cartesian(xlim = c(-50, 50),
-                    ylim = c(-50, 50))
+                    ylim = c(-30, 30))
 }
 
 betting_lines_tbl = function(data) {
-  
+
   data |>
     gt_tbl() |>
     gt::cols_align(
@@ -234,13 +234,13 @@ betting_lines_tbl = function(data) {
 
 ```
 
-This page displays predictions for games in the {{< meta params.week >}} college football season season. These predictions come from a model built on historical college football play by play and game data in order to simulate upcoming games. All data is from collegefootballdata.com.
+This page displays predictions for upcoming games in the {{< meta params.season >}} college football season. These predictions come from a model built on historical college football play by play and game data in order to simulate upcoming games. All data is from collegefootballdata.com. Any mistakes are my own.
 
 ::: {.callout-note collapse="false"}
 
 ## About the Model
 
-These predictions come from a game prediction model trained on historical college football data. My game prediction model uses team-level estimates of offensive, defensive, and special teams efficiency from play by play data. I simulate each game thousands of times in order to estimate the home team's win probability and expected margin of victory (or defeat).
+These predictions come from a game prediction model I trained on historical college football games. The inputs into the game prediction model are team level measures of offensive/defensive/special teams efficiency, which I estimate from play by play data. I simulate each game thousands of times in order to estimate the home team's win probability and expected margin of victory (or defeat).
 
 Notably, I *do not use betting lines or the predictions of other models as features in my game prediction model*. This allows me to directly compare my performance against that of other models and betting lines.
 
@@ -311,32 +311,32 @@ The model predicts the probability that the home team will win and their expecte
 ```{r}
 
 assess_games = function(data, groups = c('season', 'season_type', 'week')) {
-  
+
   class_metrics = yardstick::metric_set(mn_log_loss, accuracy)
   reg_metrics = yardstick::metric_set(mae)
-  
+
   # add number of games
-  tmp = 
-    data |> 
+  tmp =
+    data |>
     group_by(across(any_of(groups))) |>
     mutate(games = n_distinct(game_id)) |>
     group_by(across(any_of(groups)), games)
-  
-  class = 
+
+  class =
     tmp |>
     class_metrics(
       truth = home_win,
       estimate = home_pred,
       home_prob
     )
-  
-  reg = 
+
+  reg =
     tmp |>
     reg_metrics(
       truth = home_margin,
       estimate = pred_margin
     )
-  
+
   bind_rows(class,
             reg) |>
     select(any_of(groups), games, .metric, .estimate) |>
@@ -351,7 +351,7 @@ pivot_estimates = function(data) {
     )
 }
 
-results_by_week = 
+results_by_week =
   game_predictions |>
   filter(completed == T) |>
   assess_games() |>
@@ -376,13 +376,13 @@ The following plot shows my model's predicted margin of victory vs the actual ma
 
 ```{r}
 plot_games_margins = function(data) {
-  
+
   data |>
     ggplot(
       aes(
-        x=pred_margin, 
-        y=home_margin, 
-        color = correct, 
+        x=pred_margin,
+        y=home_margin,
+        color = correct,
         label = paste(home_team, away_team, sep = " vs "))
     )+
     geom_point()+
@@ -398,10 +398,10 @@ plot_games_margins = function(data) {
     xlab("Predicted Home Margin")+
     ylab("Actual Home Margin")+
     guides(color = 'none')
-  
+
 }
 
-results_plot  = 
+results_plot  =
   game_predictions |>
   filter(completed == T) |>
   mutate(
@@ -439,7 +439,7 @@ The following table displays the model's predictions for previous weeks along wi
 
 ```{r}
 #| column: body-outset-right
-#| 
+#|
 game_predictions |>
   prepare_game_predictions() |>
   filter(start_date <= Sys.Date() & !is.na(actual)) |>
@@ -458,7 +458,7 @@ How has the model performed against the spread? I compare my model's predictions
 ```{r}
 
 add_spread_cover = function(data) {
-  
+
   data |>
     mutate(
       pred_cover = case_when(
@@ -472,14 +472,14 @@ add_spread_cover = function(data) {
         spread_margin <0 & home_margin < spread_margin ~ 'yes',
         spread_margin >0 & home_margin <= spread_margin ~ 'no',
         spread_margin <0 & home_margin >=spread_margin ~ 'no'
-      ) 
+      )
     ) |>
     mutate(
       across(c(pred_cover, actual_cover), ~ factor(.x, levels = c("yes", "no")))
     )
 }
 
-spread_predictions = 
+spread_predictions =
   game_predictions_and_betting_lines |>
   filter(completed == T) |>
   filter(!is.na(spread)) |>
@@ -526,7 +526,7 @@ The following table displays predictions for all upcoming games based on the res
 ```{r}
 #| column: body-outset-right
 game_predictions |>
-  prepare_game_predictions() |> 
+  prepare_game_predictions() |>
   filter(is.na(actual)) |>
   group_by(week) |>
   arrange(desc(week), desc(game_interest)) |>
@@ -535,4 +535,3 @@ game_predictions |>
   add_gt_formatting()
 
 ```
-
