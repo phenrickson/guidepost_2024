@@ -11,6 +11,8 @@ Disclaimer: Despite spending more years at Florida State (and being on campus fo
 
 [Game Predictions](predicting_games.html)
 
+[Team Rankings](season_report.html)
+
 # Methodology
 
 [Expected Points](expected_points.html)
