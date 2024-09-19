@@ -1,21 +1,24 @@
 project:
-  output-dir: docs
   type: website
-
-toc: true
-number-sections: true
+  render:
+  - "index.qmd"
+  - "expected_points.qmd"
+  - "predicting_games.qmd"
+  - "estimating_efficiency.qmd"
 
 format:
   html:
+    author: "Phil Henrickson"
+    date: today
+    toc: true
+    number-sections: true
     message: false
     warning: false
     code-fold: true
     code-overflow: scroll
     code-summary: 'Show the code'
-    embed-resources: true
-    self-contained: true
+    embed-resources: false
     html-math-method: mathjax
-    toc: true
     fig-align: center
     theme: cerulean
     html-table-processing: none
