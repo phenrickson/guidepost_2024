@@ -323,3 +323,11 @@ filter_to_team <- function(data, teams) {
     away_team_data
   )
 }
+
+pivot_estimates = function(data) {
+  data |>
+    pivot_wider(
+      names_from = c(".metric"),
+      values_from = c(".estimate")
+    )
+}

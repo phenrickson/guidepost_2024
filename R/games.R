@@ -693,34 +693,34 @@ prepare_team_estimates <- function(data) {
     ) |>
     ungroup()
 }
-
-join_team_estimates <- function(data, season_vars = c("season", "season_type", "season_week"), estimates) {
-  data |>
-    inner_join(
-      estimates |>
-        select(
-          any_of(season_vars),
-          home = team,
-          home_overall = pregame_overall,
-          home_offense = pregame_offense,
-          home_defense = pregame_defense,
-          home_special = pregame_special
-        ),
-      by = join_by(season, season_week, season_type, home)
-    ) |>
-    inner_join(
-      estimates |>
-        select(
-          any_of(season_vars),
-          away = team,
-          away_overall = pregame_overall,
-          away_offense = pregame_offense,
-          away_defense = pregame_defense,
-          away_special = pregame_special
-        ),
-      by = join_by(season, season_week, season_type, away)
-    )
-}
+# 
+# join_team_estimates <- function(data, season_vars = c("season", "season_type", "season_week"), estimates) {
+#   data |>
+#     inner_join(
+#       estimates |>
+#         select(
+#           any_of(season_vars),
+#           home = team,
+#           home_overall = pregame_overall,
+#           home_offense = pregame_offense,
+#           home_defense = pregame_defense,
+#           home_special = pregame_special
+#         ),
+#       by = join_by(season, season_week, season_type, home)
+#     ) |>
+#     inner_join(
+#       estimates |>
+#         select(
+#           any_of(season_vars),
+#           away = team,
+#           away_overall = pregame_overall,
+#           away_offense = pregame_offense,
+#           away_defense = pregame_defense,
+#           away_special = pregame_special
+#         ),
+#       by = join_by(season, season_week, season_type, away)
+#     )
+# }
 
 add_game_outcomes <- function(data) {
   data |>
@@ -771,7 +771,8 @@ add_game_weeks <- function(data) {
   out <-
     joined |>
     find_nearest_week() |>
-    select(season, season_type, season_week, week, week_date, week, start_date, game_id, everything())
+    select(season, season_type, season_week, week, week_date, week, start_date, game_id, everything()) |>
+    arrange(start_date)
   
   if (nrow(data) > nrow(out)) {
     dropped <- data$game_id[!(data$game_id %in% out$game_id)]
@@ -896,7 +897,7 @@ join_team_scores <- function(data, estimates) {
     )
 }
 
-simulate_games <- function(object, newdata, ndraws = 1000, ...) {
+simulate_games <- function(object, newdata, ndraws = 1000, seed = 1999, ...) {
   if (class(object) == "workflow") {
     model <- object |>
       hardhat::extract_fit_engine()
@@ -907,14 +908,16 @@ simulate_games <- function(object, newdata, ndraws = 1000, ...) {
   }
   
   model |>
-    tidybayes::predicted_draws(newdata = newdata, ndraws = ndraws, ...) |>
+    tidybayes::predicted_draws(newdata = newdata, ndraws = ndraws,  seed = seed, ...) |>
     mutate(.prediction = case_when(
       .prediction == 0 ~ sample(c(3, -3), size = 1, replace = T),
       TRUE ~ .prediction
     ))
 }
 
-summarize_simulations <- function(simulations) {
+summarize_simulations <- function(simulations, seed = 1999) {
+  
+  set.seed(1999)
   simulations |>
     mutate(
       home_win = case_when(
@@ -934,8 +937,10 @@ summarize_simulations <- function(simulations) {
     mutate(
       home_prob = home_wins / sims,
       home_pred = case_when(
-        home_prob >= .5 ~ "yes",
-        home_prob < .5 ~ "no"
+        pred_margin > 0 ~ 'yes',
+        pred_margin < 0 ~ 'no',
+        home_prob  > .5 ~ 'yes',
+        home_prob < .5 ~ 'no'
       ),
       home_pred = factor(home_pred, levels = c("yes", "no"))
     ) |>
@@ -1044,7 +1049,8 @@ calculate_team_scores <- function(model, data) {
 add_correct = function(data, pred = home_pred, actual = home_win) {
   
   data |>
-    mutate(correct = case_when({{pred}} == {{actual}} ~ "yes", TRUE ~ "no"))
+    mutate(correct = case_when({{pred}} == {{actual}} ~ "yes",
+                               {{pred}} != {{actual}} ~ "no"))
   
 }
 plot_game_predictions <- function(predictions) {
@@ -1128,11 +1134,11 @@ calculate_game_interest = function(data) {
 add_team_scores <- function(data, teams_data, current_week, current_season) {
   completed_games <-
     data |>
-    filter(season <= current_season, week < current_week)
+    filter(completed == T)
   
   upcoming_games <-
     data |>
-    filter(season <= current_season, week >= current_week)
+    filter(completed != T)
   
   active_teams_data <-
     teams_data |>
@@ -1252,4 +1258,198 @@ join_betting_lines = function(data, betting) {
                spread_margin = -spread
         )
     )
+}
+
+assess_games = function(data, groups = c('season', 'season_type', 'week')) {
+  
+  class_metrics = yardstick::metric_set(mn_log_loss, accuracy)
+  reg_metrics = yardstick::metric_set(mae)
+  
+  # add number of games
+  tmp =
+    data |>
+    group_by(across(any_of(groups))) |>
+    mutate(games = n_distinct(game_id)) |>
+    group_by(across(any_of(groups)), games)
+  
+  class =
+    tmp |>
+    class_metrics(
+      truth = home_win,
+      estimate = home_pred,
+      home_prob
+    )
+  
+  reg =
+    tmp |>
+    reg_metrics(
+      truth = home_margin,
+      estimate = pred_margin
+    )
+  
+  record = 
+    tmp |>
+    filter(!is.na(correct)) |>
+    group_by(across(any_of(groups)), games, correct) |>
+    count() |>
+    pivot_wider(
+      names_from = c(correct),
+      values_from = n
+    ) |>
+    ungroup() |>
+    mutate(record = paste(yes, no, sep = "-")) |>
+    select(any_of(groups), record)
+  
+  
+  metrics = 
+    bind_rows(class,
+              reg) |>
+    select(any_of(groups), games, .metric, .estimate) |>
+    mutate_if(is.numeric, round, 3) |>
+    pivot_estimates()
+  
+  metrics |>
+    left_join(record)
+}
+
+prepare_games_for_prediction = function(data, estimates) {
+  
+  prepare_games_internal = function(data) {
+    data |>
+      prepare_game_info() |>
+      add_game_weeks() |>
+      prepare_fcs_teams() |>
+      select(season, 
+             season_type, 
+             season_week, 
+             week, 
+             week_date, 
+             start_date, 
+             game_id, 
+             completed, 
+             neutral_site,
+             home_id,
+             away_id,
+             home_team,
+             away_team,
+             home, 
+             away)
+  }
+  
+  
+  games = 
+    data |>
+    prepare_games_internal()
+  
+  games |>
+    join_team_estimates(estimates = estimates)
+  
+}
+
+join_team_estimates <- function(data, estimates) {
+  
+  join_estimates_completed = function(data, estimates) {
+    
+    data |>
+      inner_join(
+        estimates |>
+          select(
+            season,
+            season_type,
+            season_week,
+            home = team,
+            home_overall = pregame_overall,
+            home_offense = pregame_offense,
+            home_defense = pregame_defense,
+            home_special = pregame_special
+          ),
+        by = join_by(season, season_week, season_type, home)
+      ) |>
+      inner_join(
+        estimates |>
+          select(
+            season,
+            season_type,
+            season_week,
+            away = team,
+            away_overall = pregame_overall,
+            away_offense = pregame_offense,
+            away_defense = pregame_defense,
+            away_special = pregame_special
+          ),
+        by = join_by(season, season_week, season_type, away)
+      )
+    
+  }
+  
+  join_estimates_upcoming = function(data, estimates) {
+    
+    data |>
+      inner_join(
+        active_team_estimates |>
+          select(
+            season,
+            home = team,
+            home_overall = overall,
+            home_offense = offense,
+            home_defense = defense,
+            home_special = special
+          )
+      ) |>
+      inner_join(
+        active_team_estimates |>
+          select(
+            season,
+            away = team,
+            away_overall = overall,
+            away_offense = offense,
+            away_defense = defense,
+            away_special = special
+          )
+      )
+  }
+  
+  # for games that have been completed
+  completed_with_estimates = 
+    data |>
+    join_estimates_completed(estimates = estimates)
+  
+  # filter to games missing estimates; add the most recently observed team estimates for these
+  upcoming = 
+    data |>
+    anti_join(completed_with_estimates |> select(game_id),
+              by = join_by(game_id))
+  
+  # what is the first game that is missing an estimate?
+  min_date = 
+    upcoming |>
+    summarize(min_date = min(start_date)) |>
+    pull(min_date)
+  
+  # join in team estimates
+  active_team_estimates = 
+    estimates |> 
+    filter(week_date <= min_date) |>
+    group_by(team) |>
+    slice_max(week_date, n =1) |>
+    ungroup() |>
+    select(
+      season, 
+      week_date, 
+      team,
+      overall = postgame_overall,
+      offense = postgame_offense,
+      defense = postgame_defense,
+      special = postgame_special
+    )
+  
+  upcoming_with_estimates = 
+    upcoming |>
+    join_estimates_upcoming(estimates = estimates)
+  
+  bind_rows(
+    completed_with_estimates,
+    upcoming_with_estimates
+  )
+  
 }
