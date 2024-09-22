@@ -238,34 +238,34 @@ betting_lines_tbl = function(data) {
 
 This page displays predictions for upcoming games in the {{< meta params.season >}} college football season. These predictions come from a model built on historical college football play by play and game data in order to simulate upcoming games. All data is from collegefootballdata.com. Any mistakes are my own.
 
-<!-- ::: {.callout-note collapse="false"} -->
+::: {.callout-note collapse="false"}
 
-<!-- ## About the Model -->
+## About the Model
 
-<!-- These predictions come from a game prediction model I trained on historical college football games. The inputs into the game prediction model are team level measures of offensive/defensive/special teams efficiency, which I estimate from play by play data. I simulate each game thousands of times in order to estimate the home team's win probability and expected margin of victory (or defeat). -->
+These predictions come from a game prediction model I trained on historical college football games. The inputs into the game prediction model are team level measures of offensive/defensive/special teams efficiency, which I estimate from play by play data. I simulate each game thousands of times in order to estimate the home team's win probability and expected margin of victory (or defeat).
 
-<!-- Notably, I *do not use betting lines or the predictions of other models as features in my game prediction model*. This allows me to directly compare my performance against that of other models and betting lines. -->
+Notably, I *do not use betting lines or the predictions of other models as features in my game prediction model*. This allows me to directly compare my performance against that of other models and betting lines.
 
-<!-- ::: -->
+:::
 
 # Week {{< meta params.week >}} Predictions
 
 The following table displays estimates and predictions for the upcoming week's college football games.
 
-<!-- ::: {.callout-note collapse="false"} -->
+::: {.callout-note collapse="false"}
 
-<!-- ## About the Table -->
+## About the Table
 
-<!-- **Quality** indicates the quality of the teams involved in the game. This is the (harmonic) mean of the two team’s power ratings and is scaled to range from 0 to 100, with 100 indicating a game between highly rated opponents. -->
+**Quality** indicates the quality of the teams involved in the game. This is the (harmonic) mean of the two team’s power ratings and is scaled to range from 0 to 100, with 100 indicating a game between highly rated opponents.
 
-<!-- **Interest** indicates how interesting a game is expected to be based on the quality of the teams and how competitive the game is expected to be. I assign every game a competitive rating using a quadratic formula applied to Pr(HomeWin), which I use along with Quality in a weighted average to produce the Interest score. This ranges from 0 to 100, where 100 indicates a very competitive game between two highly rated opponents. -->
+**Interest** indicates how interesting a game is expected to be based on the quality of the teams and how competitive the game is expected to be. I assign every game a competitive rating using a quadratic formula applied to Pr(HomeWin), which I use along with Quality in a weighted average to produce the Interest score. This ranges from 0 to 100, where 100 indicates a very competitive game between two highly rated opponents.
 
-<!-- **Pr(HomeWin)** is the percentage of times that the home team won the game across every simulation. -->
+**Pr(HomeWin)** is the percentage of times that the home team won the game across every simulation.
 
-<!-- **Prediction** is the average margin of victory for the winning team across all simulations. -->
+**Prediction** is the average margin of victory for the winning team across all simulations.
 
 
-<!-- ::: -->
+:::
 
 ```{r}
 #| column: body-outset-right
