@@ -1125,14 +1125,14 @@ calculate_game_interest = function(data) {
   
 }
 
-add_team_scores <- function(data, teams_data) {
+add_team_scores <- function(data, teams_data, current_week, current_season) {
   completed_games <-
     data |>
-    filter(completed == T)
+    filter(season <= current_season, week < current_week)
   
   upcoming_games <-
     data |>
-    filter(completed != T)
+    filter(season <= current_season, week >= current_week)
   
   active_teams_data <-
     teams_data |>

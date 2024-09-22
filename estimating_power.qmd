@@ -32,6 +32,13 @@ tar_load(team_scores)
 tar_load(adjusted_efficiency_overall_ppa)
 tar_load(adjusted_efficiency_category_ppa)
 
+game_info = 
+  tar_read("cfbd_game_info_tbl") |>
+  add_game_weeks()
+
+team_rankings =
+  tar_read("cfbd_game_rankings_tbl")
+
 ```
 
 ## Estimating Performance In-Season
@@ -70,12 +77,201 @@ The answer to this question is yes, but with some changes.
 
 ```{r}
 team_scores |>
-    filter(season <= 2023)
+  filter(season <= 2023)
+```
+
+TCU, for example, was a team that entered the 2022 season fresh off a 6-6 season where they were ranked #86 in overall offensive/defensive efficiency. They entered 2022 with a new head coach but not much in the way of expectations; despite this they ended up running the table in the regular season, eventually reaching the regular season and ending the season #9 in overall efficiency.
+
+```{r}
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == "offense/defense") |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = "TCU")
+
+```
+But, these results are based on looking at the entirety of the season's data; if we look at their estimates week over week, how quickly did it become apparent that TCU was playing at a high level? At what point was it clear that TCU had improved over the previous year and would be a top team? I'll look at their in-season estimates for each week of the 2022 season.
+
+The following plot shows TCU's estimated rating and efficiency by week from 2015-2023. The rating indicates the team's result after the week's games are concluded.
+
+```{r}
+
+team_scores |>
+  filter(season >= 2015, season < 2023) |>
+  plot_team_scores(team = 'TCU', rankings = c(25))
+
+```
+
+The following table shows TCU's estimated power and offense/defense efficiency after each week of the 2022 season. TCU had already been trending up in the early weeks, with both their offense and defense estimates moving up sharply from the previous year. After week 4, a victory at SMU, their estimated score already placed them as a top 25 team. Their week 5 victory over Oklahoma was enough to push them up into the top 10.
+
+```{r}
+#| warning: false
+#| message: false
+#| class: scroll
+
+prepare_team_scores = function(data) {
+  
+  data |>
+    pivot_longer(
+      cols = c(score, offense, defense, special),
+      names_to = c("type"),
+      values_to = c("estimate")
+    ) |>
+    add_team_ranks(groups = c("season", "season_week", "type")) |>
+    pivot_wider(
+      names_from = c("type"),
+      values_from = c("estimate", "rank")
+    ) |>
+    add_season_week() |>
+    select(season, season_week, week, team, everything()) 
+}
+
+team_scores_tbl = function(data, team, logo = T) {
+  
+  dat = 
+    data |>
+    prepare_team_scores() |>
+    inner_join(
+      tibble(team = team),
+      by = join_by(team)
+    )
+  
+  tbl = 
+    dat |>
+    gt_tbl() |>
+    gt::fmt_number(
+      columns = contains("estimate"),
+      decimals = 2
+    ) |>
+    gt::cols_merge(
+      ends_with("_score"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      ends_with("_offense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      ends_with("_defense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      ends_with("_special"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_label(
+      estimate_score = "team score",
+      estimate_offense = "offense",
+      estimate_defense = "defense",
+      estimate_special = "special"
+    ) |>
+    gt::cols_align(
+      align = "center"
+    ) |>
+    gt::cols_hide(
+      columns = c("season_week", "estimate_special", "season_type")
+    ) |>
+    gt_est_color(
+      columns = c("estimate_offense", "estimate_defense", "estimate_special"),
+      domain = c(-.55, .55)
+    ) |>
+    gt_est_color(
+      columns = c("estimate_score"),
+      domain = c(-35, 35)
+    )
+  
+  if (logo == T) {
+    
+    tbl = 
+      tbl |>
+      cfbplotR::gt_fmt_cfb_logo(columns = "team")
+  }
+  
+  tbl
+  
+}
+
+team_scores |>
+  filter(season == 2022) |>
+  team_scores_tbl(team = 'TCU', logo = F)
+
 ```
 
 
 ```{r}
 
+team_pregame_postgame_score = function(data, games = game_info) {
+  
+  data |>
+    prepare_team_scores() |>
+    select(season, season_type, season_week, week, team, estimate_score, rank_score) |>
+    group_by(team) |>
+    mutate(pregame_rank = dplyr::lag(rank_score),
+           pregame_score = dplyr::lag(estimate_score),
+           postgame_score = estimate_score,
+           postgame_rank = rank_score) |>
+    ungroup() |>
+    select(season, season_type, season_week, team, pregame_score, postgame_score, pregame_rank, postgame_rank) |>
+    mutate_if(is.numeric, round, 3)  |>
+    inner_join(
+      games |> 
+        prepare_game_info() |> 
+        pivot_games_to_teams(game_vars = c("season", "game_id", "season_type","season_week", "week", "start_date", "neutral_site"))
+    ) |>
+    mutate(result = case_when(team_points > opponent_points ~ paste(team, paste(team_points, opponent_points, sep="-")),
+                              team_points < opponent_points ~ paste(opponent, paste(opponent_points, team_points, sep = "-")))) |>
+    add_season_week() |>
+    select(season, season_type, season_week, week, team, opponent, result, pregame_score, postgame_score, pregame_rank, postgame_rank)
+  
+}
+
+team_season_score_tbl = function(data, team = 'Texas', season = 2022, games = game_info) {
+  
+  dat = 
+    data |>
+    team_pregame_postgame_score(games = games)
+  
+  dat |>
+    inner_join(
+      tibble(team = team,
+             season = season)
+    ) |>
+    gt_tbl() |>
+    gt::cols_hide(
+      columns = c("season_type", "season_week")
+    ) |>
+    gt::cols_merge(
+      starts_with("pregame_"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      starts_with("postgame_"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_align(
+      align = "center"
+    )
+  
+}
+
+team_scores |>
+  team_season_score_tbl(team = 'Kent State', season = 2022)
+
+```
+
+
+
+
+```{r}
+
+team_scores |>
+  team_pregame_postgame_score(games = game_info) |>
+  group_by(team) |>
+  mutate(diff_score = postgame_score - pregame_score,
+         diff_rank = postgame_rank - pregame_rank) |>
+  ungroup() |>
+  slice_max(abs(diff_score), n = 10)
 
 
 ```
+

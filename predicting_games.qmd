@@ -55,7 +55,14 @@ betting_lines <-
 
 # prepare predictions
 game_predictions <-
-  sims |>
+  draws |>
+    summarize_simulations() |>
+    left_join(
+      game_info |>
+      add_game_outcomes() |>
+      select(game_id, week, home_points, away_points, home_margin, home_win, total_points)
+    ) |>
+    select(season, season_type, week, everything()) |>
   join_team_divisions(games = game_info) |>
   prepare_fcs_teams() |>
   left_join(
@@ -63,7 +70,9 @@ game_predictions <-
       select(game_id, start_date, completed)
   ) |>
   add_team_scores(
-    teams_data = team_scores
+    teams_data = team_scores,
+    current_season = params$season,
+    current_week = params$week
   )
 
 # add betting lines to game predictions
