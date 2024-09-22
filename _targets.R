@@ -154,24 +154,23 @@ list(
   #   }
   # ),
   # # rankings
-  # tar_target(
-  #   cfbd_game_rankings_tbl,
-  #   {
-  #     tmp <- expand_grid(
-  #       season = seasons,
-  #       type = c("regular", "postseason")
-  #     )
-
-  #     map2_df(
-  #       .x = tmp$season,
-  #       .y = tmp$type,
-  #       ~ cfbd_rankings(
-  #         year = .x,
-  #         season_type = .y
-  #       )
-  #     )
-  #   }
-  # ),
+  tar_target(
+    cfbd_game_rankings_tbl,
+    {
+      tmp <- expand_grid(
+        season = seasons,
+        type = c("regular", "postseason")
+      )
+      map2_df(
+        .x = tmp$season,
+        .y = tmp$type,
+        ~ cfbd_rankings(
+          year = .x,
+          season_type = .y
+        )
+      )
+    }
+  ),
   # # draft picks
   # tar_target(
   #   cfbd_draft_picks,
