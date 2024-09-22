@@ -79,7 +79,6 @@ current_scores =
 The following table displays my current rankings for teams based on opponent adjusted estimates of team efficiency.
 
 ::: {.callout-note collapse="false"}
-
 ## About the Table
 
 **Team Score** refers to the team's expected margin of victory against an average FBS team, as estimated by my game prediction model and measures of team efficiency.
@@ -87,7 +86,6 @@ The following table displays my current rankings for teams based on opponent adj
 **∆ Score** indicates the change in a team's score from the previous week. Positive values indicate my model rated the team higher after the previous week's performance; negative values indicate my model rates the team lower.
 
 **Offensive/Defensive Efficiency** refers to the team's expected points added per play on offense and defense, adjusted for opponent strength.
-
 :::
 
 ```{r}
@@ -193,8 +191,8 @@ team_rankings_tile = function(data, season = params$season) {
                label = abbreviation))+
     geom_tile(color = 'white')+
     geom_text(color = 'white', size = 2)+
-    scale_color_cfb()+
-    scale_fill_cfb()+
+    cfbplotR::scale_color_cfb()+
+    cfbplotR::scale_fill_cfb()+
     coord_cartesian(xlim = c(1, 20))+
     theme_cfb()+
     scale_x_continuous(n.breaks = 20)+
@@ -215,6 +213,7 @@ team_scores |>
   team_rankings_tile()
 
 ```
+
 ## Team Scores
 
 ```{r}
@@ -238,8 +237,10 @@ plot_team_scores_by_conference = function(data, conference = 'Big Ten', lines = 
       xlab("Season Week")+
       ylab("Team Score")+
       geom_hline(yintercept = lines, linetype = 'dashed')+
-      coord_cartesian(ylim = c(-33, 33),
-                      xlim = c(-1, 20))
+      coord_cartesian(
+        #ylim = c(-33, 33),
+        xlim = c(-1, 20)
+      )
     
   }
   
@@ -276,7 +277,7 @@ plot_team_scores_by_conference = function(data, conference = 'Big Ten', lines = 
            end_label = case_when(week == max(week) ~ abbreviation)) |>
     plot_team_lines()+
     label_team(var = end_label, size = 3, nudge_x = 1.1)+
-    label_team(var = start_label, size = 3, nudge_x = -0.9)+
+    label_team(var = start_label, size = 2, nudge_x = -0.9)+
     facet_wrap(conference ~.)
 }
 
@@ -297,7 +298,6 @@ names(conference_plots) = conferences
 How have team scores changed during the season? The following plots display estimated team scores for each week of the season by conference. Click on a conference to view how team scores have changed during the season.
 
 ::: {.panel-tabset .nav-pills}
-
 ### SEC
 
 ```{r}
@@ -338,7 +338,6 @@ conference_plots$`Mountain West`
 
 ```
 
-
 ### American Athletic
 
 ```{r}
@@ -350,6 +349,8 @@ conference_plots$`American Athletic`
 ### Conference USA
 
 ```{r}
+#| warning: false
+#| message: false
 conference_plots$`Conference USA`
 
 ```
