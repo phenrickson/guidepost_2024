@@ -10,7 +10,7 @@ format:
     number-sections: false
 params:
     season: 2024
-    week: 4
+    week: 5
 ---
 
 ```{r}
@@ -142,6 +142,9 @@ spread_predictions_tbl = function(data) {
       #    columns = -c(home_team, away_team),
       align = "center"
     ) |>
+    gt::cols_hide(
+      columns = ends_with("_NA")
+    ) |>
     gt::cols_merge(
       columns = c("home_team", "away_team"),
       pattern = "{1} vs {2}",
@@ -202,8 +205,8 @@ plot_vs_betting_lines = function(data) {
     ylab("Vegas Spread") +
     ggpubr::stat_cor(aes(label = ..r.label..)) +
     facet_wrap(paste(season, paste("Week", week)) ~ .)+
-    coord_cartesian(xlim = c(-50, 30),
-                    ylim = c(-50, 30))
+    coord_cartesian(xlim = c(-50, 50),
+                    ylim = c(-50, 50))
 }
 
 betting_lines_tbl = function(data) {
@@ -264,7 +267,6 @@ The following table displays estimates and predictions for the upcoming week's c
 
 **Prediction** is the average margin of victory for the winning team across all simulations.
 
-
 :::
 
 ```{r}
@@ -312,52 +314,11 @@ The model predicts the probability that the home team will win and their expecte
 
 ```{r}
 
-assess_games = function(data, groups = c('season', 'season_type', 'week')) {
-  
-  class_metrics = yardstick::metric_set(mn_log_loss, accuracy)
-  reg_metrics = yardstick::metric_set(mae)
-  
-  # add number of games
-  tmp =
-    data |>
-    group_by(across(any_of(groups))) |>
-    mutate(games = n_distinct(game_id)) |>
-    group_by(across(any_of(groups)), games)
-  
-  class =
-    tmp |>
-    class_metrics(
-      truth = home_win,
-      estimate = home_pred,
-      home_prob
-    )
-  
-  reg =
-    tmp |>
-    reg_metrics(
-      truth = home_margin,
-      estimate = pred_margin
-    )
-  
-  bind_rows(class,
-            reg) |>
-    select(any_of(groups), games, .metric, .estimate) |>
-    mutate_if(is.numeric, round, 3)
-}
-
-pivot_estimates = function(data) {
-  data |>
-    pivot_wider(
-      names_from = c(".metric"),
-      values_from = c(".estimate")
-    )
-}
-
 results_by_week =
   game_predictions |>
   filter(completed == T) |>
   assess_games() |>
-  pivot_estimates() |>
+  # pivot_estimates() |>
   gt_tbl() |>
   gt::cols_align(align = c("center")) |>
   gt::tab_header(title = "Model Results by Week")
@@ -366,7 +327,6 @@ results_overall =
   game_predictions |>
   filter(completed == T) |>
   assess_games(groups = c("season", "season_type")) |>
-  pivot_estimates() |>
   gt_tbl() |>
   gt::cols_align(align = c("center")) |>
   gt::tab_header(title = "Season Model Results")
@@ -488,24 +448,94 @@ spread_predictions =
   select(game_id, season, week, home_team, away_team, home_margin, pred_margin, provider, spread, spread_open, spread_margin) |>
   add_spread_cover()
 
-spread_predictions |>
-  group_by(season, provider, week) |>
-  mutate(games = n_distinct(game_id)) |>
-  group_by(season, provider, week, games) |>
-  yardstick::accuracy(
-    actual_cover,
-    pred_cover
-  ) |>
-  select(season,provider, week, .metric, .estimate) |>
-  pivot_wider(
-    names_from = c("provider"),
-    values_from = c(".estimate")
-  ) |>
-  mutate_if(is.numeric, round, 3) |>
-  gt_tbl() |>
-  gt::cols_align(
-    align = "center"
+assess_spread = function(data, groups = c("season", "provider", "week")) {
+  
+  
+  accuracy =
+    data |>
+    group_by(across(any_of(groups))) |>
+    mutate(games = n_distinct(game_id)) |>
+    group_by(across(any_of(groups)), games) |>
+    yardstick::accuracy(
+      actual_cover,
+      pred_cover
+    )
+  
+  record = 
+    data |>
+    mutate(correct = case_when(pred_cover == actual_cover ~ 'yes',
+                               pred_cover != actual_cover ~ 'no')) |>
+    filter(!is.na(correct)) |>
+    group_by(across(any_of(groups)), correct) |>
+    count() |>
+    ungroup() |>
+    pivot_wider(
+      names_from = c("correct"),
+      values_from = c("n")
+    ) |>
+    mutate(record = paste(yes, no, sep = "-")) |>
+    select(any_of(groups), record)
+  
+  accuracy |>
+    inner_join(record)
+  
+}
+
+assess_spread_overall= function(data) {
+  
+  
+  week = 
+    data |>
+    assess_spread(groups = c("season", "provider", "week"))
+  
+  season = 
+    data |>
+    assess_spread(groups = c("season", "provider")) |>
+    mutate(week = 'overall')
+  
+  bind_rows(
+    week |>
+      mutate(week = as.character(week)),
+    season
   )
+}
+
+assess_spread_tbl = function(data) {
+  
+  data |>
+    select(season, provider, week, .estimate, record) |>
+    pivot_wider(
+      names_from = c("provider"),
+      values_from = c(".estimate", "record")
+    ) |>
+    mutate_if(is.numeric, round, 3) |>
+    gt_tbl() |>
+    gt::cols_align(
+      align = "center"
+    ) |>
+    cols_merge(
+      columns = ends_with("Bovada"),
+      pattern = "{2} ({1})"
+    ) |>
+    cols_merge(
+      columns = ends_with("DraftKings"),
+      pattern = "{2} ({1})"
+    ) |>
+    cols_merge(
+      columns = ends_with("ESPN Bet"),
+      pattern = "{2} ({1})"
+    ) |>
+    cols_label(
+      .estimate_Bovada = "Bovada",
+      .estimate_DraftKings = 'DraftKings',
+      `.estimate_ESPN Bet` = 'ESPN Bet'
+    ) 
+
+}
+
+spread_predictions |>
+  assess_spread_overall() |>
+  assess_spread_tbl()
 
 ```
 

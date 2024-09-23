@@ -1268,6 +1268,7 @@ assess_games = function(data, groups = c('season', 'season_type', 'week')) {
   # add number of games
   tmp =
     data |>
+    add_correct() |>
     group_by(across(any_of(groups))) |>
     mutate(games = n_distinct(game_id)) |>
     group_by(across(any_of(groups)), games)
