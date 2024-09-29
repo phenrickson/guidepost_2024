@@ -1380,7 +1380,7 @@ add_team_ranks = function(data, groups = c("season", "season_week", "type", "met
   
   data |>
     group_by(across(any_of(groups))) |>
-    mutate(rank = rank(-estimate))|>
+    mutate(rank = rank(-estimate, ties = "random"))|>
     ungroup()
   
 }
@@ -2027,7 +2027,7 @@ plot_team_efficiency_by_category_and_week = function(data, team, ranking = 25, .
     data |>
     add_season_week() |>
     plot_team_efficiency(x = 'week', teams = team, point = F, label = F, title = F)+
-    ggh4x::facet_nested(type + play_category ~ season, scales = "free") +
+    ggh4x::facet_nested(type + play_category ~ season, scales = "free_y") +
     scale_x_discrete(breaks = function(x){x[c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)]})
   
   plot = 
