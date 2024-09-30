@@ -1,7 +1,7 @@
 ---
 title: "CFB Team Efficiency and Rankings"
 subtitle: "{{< meta params.season >}} Season Report"
-editor: visual
+editor: source
 format:
   html:
     message: false
@@ -44,6 +44,7 @@ add_gt_formatting = function(tbl, ...) {
 team_info <- cfbfastR::cfbd_team_info(year = params$season)
 team_estimates <- tar_read("season_team_estimates")
 team_scores <- tar_read("team_scores")
+team_category_estimates = tar_read("season_team_category_estimates")
 
 join_team_info = function(data, teams = team_info) {
   
@@ -255,11 +256,11 @@ plot_team_scores_by_conference = function(data, conference = 'Big Ten', lines = 
       segment.alpha = .5,
       segment.linetype = "dotted",
       box.padding = .2,
-    segment.curvature = -0.1,
-    segment.ncp = 3,
-    segment.angle = 20,
-  segment.size = 0.5
-  
+      segment.curvature = -0.1,
+      segment.ncp = 3,
+      segment.angle = 20,
+      segment.size = 0.5
+      
     )
   }
   
@@ -370,91 +371,115 @@ conference_plots$`Mid-American`
 ```
 :::
 
-# Offensive and Defensive Efficiency
+# Efficiency
+
+My team measures are based around the concept of efficiency, how a team performs on average on a play by play basis. I measure this by estimating a team's expected points added per play on offense and defense, adjusted for opponent strength. 
+
+## Offense/Defense
 
 The following plot displays all FBS teams based on their estimated offensive/defensive efficiency for the current season to date.
 
 ```{r}
 
 current_scores =
-team_scores |>
-filter(season == params$season) |>
-filter(season_week == max(season_week)) |>
-add_season_week() |>
-arrange(desc(season_week), desc(score)) |>
-mutate(rank = rank(-score)) |>
-select(season, week, rank, team, everything()) |>
-inner_join(
-team_info |>
-adjust_team_names(cols = "school") |>
-select(team = school,
-conference,
-abbreviation),
-by = join_by(team)
-) 
+  team_scores |>
+  filter(season == params$season) |>
+  filter(season_week == max(season_week)) |>
+  add_season_week() |>
+  arrange(desc(season_week), desc(score)) |>
+  mutate(rank = rank(-score)) |>
+  select(season, week, rank, team, everything()) |>
+  inner_join(
+    team_info |>
+      adjust_team_names(cols = "school") |>
+      select(team = school,
+             conference,
+             abbreviation),
+    by = join_by(team)
+  ) 
 
 ```
 
 ```{r}
 
 plot_team_scores = function(data, season = params$season) {
-
-data |>
-ggplot(aes(x=offense,
-y=defense,
-color = team,
-label = abbreviation)
-)+
-geom_label(size = 2.5, alpha = 0.8)+
-cfbplotR::scale_color_cfb()+
-theme_cfb()+
-geom_vline(xintercept = 0, linetype = 'dotted')+
-geom_hline(yintercept = 0, linetype = 'dotted')+
-coord_cartesian(
-xlim = c(-0.4, 0.4),
-ylim = c(-0.4, 0.4)
-)+
-xlab("Offensive Points Added per Play")+
-ylab("Defensive Points Added per Play")+
-labs(title = paste(season, "Team Efficiency"),
-subtitle = stringr::str_wrap("Offensive and defensive efficiency estimates bbased on opponent adjusted predicted points per play.", 90)
-)+
-annotate(
-geom = "label",
-x = -.35,
-y = .35,
-size = 3,
-alpha = 0.8,
-label = "Bad Offense\nGood Defense"
-) +
-annotate(
-geom = "label",
-x = .35,
-y = .35,
-size = 3,
-alpha = 0.8,
-label = "Good Offense\nGood Defense"
-) +
-annotate(
-geom = "label",
-x = .35,
-y = -.35,
-size = 3,
-alpha = 0.8,
-label = "Good Offense\nBad Defense"
-)+
-annotate(
-geom = "label",
-x = -.35,
-y = -.35,
-size = 3,
-alpha = 0.8,
-label = "Bad Offense\nBad Defense"
-)
-
+  
+  data |>
+    ggplot(aes(x=offense,
+               y=defense,
+               color = team,
+               label = abbreviation)
+    )+
+    geom_label(size = 2.5, alpha = 0.8)+
+    cfbplotR::scale_color_cfb()+
+    theme_cfb()+
+    geom_vline(xintercept = 0, linetype = 'dotted')+
+    geom_hline(yintercept = 0, linetype = 'dotted')+
+    coord_cartesian(
+      xlim = c(-0.4, 0.4),
+      ylim = c(-0.4, 0.4)
+    )+
+    xlab("Offensive Points Added per Play")+
+    ylab("Defensive Points Added per Play")+
+    labs(title = paste(season, "Team Efficiency"),
+         subtitle = stringr::str_wrap("Offensive and defensive efficiency estimates bbased on opponent adjusted predicted points per play.", 90)
+    )+
+    annotate(
+      geom = "label",
+      x = -.35,
+      y = .35,
+      size = 3,
+      alpha = 0.8,
+      label = "Bad Offense\nGood Defense"
+    ) +
+    annotate(
+      geom = "label",
+      x = .35,
+      y = .35,
+      size = 3,
+      alpha = 0.8,
+      label = "Good Offense\nGood Defense"
+    ) +
+    annotate(
+      geom = "label",
+      x = .35,
+      y = -.35,
+      size = 3,
+      alpha = 0.8,
+      label = "Good Offense\nBad Defense"
+    )+
+    annotate(
+      geom = "label",
+      x = -.35,
+      y = -.35,
+      size = 3,
+      alpha = 0.8,
+      label = "Bad Offense\nBad Defense"
+    )
+  
 }
 
 current_scores |>
-plot_team_scores()
+  plot_team_scores()
 
 ```
+
+## Pass/Rush
+
+I also measure each team's efficiency based on the play type, estimating (opponent adjusted) offensive/defensive efficiency when running and passing.
+
+The following table displays all FBS teams based on their estimated efficiency for passing/rushing on both sides of the ball.
+
+```{r}
+#| column: body-outset-right
+team_category_estimates |>
+  prepare_team_category_estimates() |>
+  filter(season == params$season) |>
+  filter(season_week == max(season_week)) |>
+  team_category_estimates_tbl() |>
+  add_gt_formatting()
+
+```
+
+
+
