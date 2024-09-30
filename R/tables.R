@@ -194,7 +194,7 @@ team_category_estimates_tbl = function(data) {
     gt_est_color(columns = c(contains("estimate")),
                  domain = c(-0.75, 0.75)) |>
     gt::opt_interactive(
-      page_size_default = 25,
+      page_size_default = 15,
       use_filters = T
     ) |>
     cfbplotR::gt_fmt_cfb_logo(columns = "logo") |>
