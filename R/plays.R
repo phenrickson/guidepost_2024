@@ -1369,11 +1369,18 @@ prepare_weekly_efficiency = function(data) {
   
 }
 
+prepare_weekly_efficiency_category = function(data) {
+  
+  data |>
+    rename(week_date = start_date) |>
+    filter(type != 'overall')
+}
+
 add_team_ranks = function(data, groups = c("season", "season_week", "type", "metric")) {
   
   data |>
     group_by(across(any_of(groups))) |>
-    mutate(rank = rank(-estimate))|>
+    mutate(rank = rank(-estimate, ties = "random"))|>
     ungroup()
   
 }
@@ -1421,9 +1428,9 @@ plot_efficiency_all_teams = function(data, x = 'season', all_teams_line = F, see
   
 }
 
-plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = T, line = T) {
+plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = T, line = T, all_teams_line = F, ...) {
   
-  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, all_teams_line = F)
+  all_teams_plot <- plot_efficiency_all_teams(data, x =x, seed = seed, all_teams_line = all_teams_line)
   all_teams_data = all_teams_plot$data
   
   selected_teams <- tibble(team = teams)
@@ -1829,6 +1836,27 @@ estimate_efficiency_by_week = function(data, metric, date, base = .995) {
   
 }
 
+# estimate by category
+estimate_efficiency_category_by_week = function(data, metric, date, base = .995, category = c('pass', 'rush')) {
+  
+  est =
+    data |>
+    filter(start_date <= date) |>
+    # filter to pass/rush
+    filter(play_category %in% category) |> 
+    # by play category)
+    nest(.by = play_category) |>
+    mutate(estimates = map(data,  ~ estimate_efficiency_weighted(data = .x,
+                                                                 dates = date,
+                                                                 base = base,
+                                                                 metric = metric))
+    )
+  
+  # extract results
+  est |>
+    select(play_category, estimates) |>
+    unnest(estimates)
+}
 
 plot_team_efficiency_by_week = function(data, team, rankings = c(25, 50), label =F, line = T, title = T, point = F) {
   
@@ -1903,11 +1931,11 @@ get_season_weeks = function(games) {
     unnest(calendar)
 }
 
-plot_ranking = function(plot, ranking) {
+plot_ranking = function(plot, alpha = 0.6, ranking, groups = c("season", "season_week", "type", "metric")) {
   
   rank_data =
     plot$data |>
-    add_team_ranks() |>
+    add_team_ranks(groups = groups) |>
     filter(rank %in% c(ranking)) |>
     mutate(team = case_when(rank <= 75 ~ paste('top', rank),
                             rank > 75 ~ paste('bottom', 135 - rank)))
@@ -1918,13 +1946,12 @@ plot_ranking = function(plot, ranking) {
         rank_data,
       aes(group = team),
       linetype = 'dashed',
-      alpha = 0.7
+      alpha = alpha
     ) +
     geom_text(
       data =
         rank_data |>
-        filter(season == min(season),
-               week == min(week)),
+        filter(week_date == min(week_date)),
       aes(y = estimate,
           label = team
       ),
@@ -1992,4 +2019,30 @@ plot_team_scores <- function(data, team, rankings = c(25, 50), point = F, patchw
       plot_team_efficiency_by_week(team = team, rankings = rankings, label = F, point = F, line = T, title = T) +
       ylab("")
   }
+}
+
+plot_team_efficiency_by_category_and_week = function(data, team, ranking = 25, ...) {
+  
+  plot = 
+    data |>
+    add_season_week() |>
+    plot_team_efficiency(x = 'week', teams = team, point = F, label = F, title = F)+
+    ggh4x::facet_nested(type + play_category ~ season, scales = "free_y") +
+    scale_x_discrete(breaks = function(x){x[c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)]})
+  
+  plot = 
+    plot |>
+    plot_ranking(ranking = ranking,
+                 groups = c("play_category", "type", "season", "season_type", "season_week"))
+  
+  # clean up facet for y strips
+  plot +
+    theme(strip.background.y = element_blank(),
+          strip.text.y = element_text(colour = 'grey20', size = 12)) +
+    labs(
+      x = 'Season Week',
+      title = paste("Team Efficiency by Play Type", paste(team, sep = ","), sep = " - "),
+      subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(team, "'s"), "rating by season along with their ranking among all FBS teams."), 120)
+    )
+  
 }

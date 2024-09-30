@@ -1,0 +1,209 @@
+---
+title: "Untitled"
+format: html
+params: 
+    team: Wisconsin
+    season: 2024
+---
+
+
+```{r}
+
+# packages
+library(targets)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(quarto)
+library(gt)
+library(gtExtras)
+
+# src code
+tar_source("R")
+
+# team info
+team_info <- cfbfastR::cfbd_team_info(year = params$season)
+
+join_team_info = function(data, teams = team_info) {
+  
+  data |>
+    inner_join(
+      teams |>
+        adjust_team_names(cols = "school") |>
+        select(team = school,
+               conference,
+               abbreviation),
+      by = join_by(team)
+    )
+}
+
+
+# estimates
+tar_load(team_scores)
+tar_load(adjusted_efficiency_overall_ppa)
+tar_load(adjusted_efficiency_category_ppa)
+
+  
+label_team = function(data, var, size = 3, nudge_x = 1.2) {
+  
+  ggrepel::geom_text_repel(
+    aes(label = {{var}}),
+    fontface = "bold",
+    size = size,
+    direction = "y",
+    nudge_x = nudge_x,
+    segment.alpha = .5,
+    segment.linetype = "dotted",
+    box.padding = .2,
+  segment.curvature = -0.1,
+  segment.ncp = 3,
+  segment.angle = 20,
+  segment.size = 0.5
+  )
+}
+
+plot_team_scores_by_conference = function(data, season = 2024, conference = 'Big Ten', span = 0.15, lines = c(0)) {
+  
+  plot_team_lines = function(data, ylim = c(-30, 30)) {
+    
+    data |>
+      add_season_week() |>
+      ggplot(aes(x=week,
+                 y=score,
+                 color = team,
+                 label = abbreviation))+
+      geom_line(stat = 'smooth', span = span, method = 'loess', formula = 'y ~ x')+
+      cfbplotR::scale_color_cfb()+
+      theme_cfb()+
+      # coord_cartesian(ylim = ylim)+
+      xlab("Season Week")+
+      ylab("Team Score")+
+      geom_hline(yintercept = lines, linetype = 'dashed')+
+      coord_cartesian(
+        #ylim = c(-33, 33),
+        xlim = c(-1, 20)
+      )
+    
+  }
+  
+  label_team = function(data, var, size = 3, nudge_x = 1.2) {
+    
+    ggrepel::geom_text_repel(
+      aes(label = {{var}}),
+      fontface = "bold",
+      size = size,
+      direction = "y",
+      nudge_x = nudge_x,
+      segment.alpha = .5,
+      segment.linetype = "dotted",
+      box.padding = .2,
+    segment.curvature = -0.1,
+    segment.ncp = 3,
+    segment.angle = 20,
+    segment.size = 0.5
+    )
+  }
+  
+  data |>
+    inner_join(
+        tibble(season = season)
+    ) |>
+    join_team_info() |>
+    inner_join(
+      tibble(
+        conference = conference
+      ), by = join_by(conference)
+    ) |>
+    add_season_week() |>
+    group_by(season, team) |>
+    mutate(start_label = case_when(week == min(week) ~ abbreviation),
+           end_label = case_when(week == max(week) ~ abbreviation)) |>
+    plot_team_lines()+
+    label_team(var = end_label, size = 3, nudge_x = 1.1)+
+    label_team(var = start_label, size = 2, nudge_x = -0.9)+
+    facet_wrap(season ~ conference)
+}
+
+```
+
+```{r}
+
+adjusted_efficiency_overall_ppa |>
+  filter(play_situation == "offense/defense") |>
+  add_overall_efficiency() |>
+  add_team_ranks() |>
+  plot_team_efficiency(teams = params$team)
+
+```
+
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  add_overall_efficiency() |>
+  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
+  filter(
+    type %in% c("offense", "defense"),
+    play_category %in% c("pass", "rush")
+  ) |>
+  plot_team_efficiency(teams = params$team) +
+  facet_grid(play_category ~ type)+
+  scale_x_discrete(breaks = scales::pretty_breaks(n=8))
+
+
+```
+
+
+```{r}
+
+team_scores |>
+  plot_team_scores(team = params$team, rankings = c(10, 25, 115))
+
+```
+
+
+```{r}
+
+team_scores |>
+    plot_team_scores_by_conference(
+        conference = c('Big Ten'),
+        season = c(2023),
+        span = 0.4
+    )
+
+```
+
+
+```{r}
+
+plot_top_team_scores = function(data, top_n = 25, span = 0.4, teams = team_info) {
+
+  data |>
+    pivot_longer(
+        cols = c("score", "offense", "defense", "special"),
+        names_to = c("type"),
+        values_to = c("estimate")
+    ) |>
+    add_team_ranks(groups = c("season", "season_type", "season_week", "type")) |>
+    filter(type %in% c("score")) |>
+    mutate(show_estimate = case_when(rank <= top_n ~ estimate)) |>
+    add_season_week() |>
+    filter(week > 0) |>
+    join_team_info(teams = team_info) |>
+    mutate(start_label = case_when(week == min(week) ~ abbreviation), end_label = case_when(week == max(week) ~ abbreviation)) |>
+    ggplot(aes(x=week, y=show_estimate, group = team, color = team))+
+    geom_line(stat = 'smooth', span = span, method = 'loess', formula = 'y ~ x')+
+    cfbplotR::scale_color_cfb()+
+    theme_cfb()+
+    coord_cartesian(ylim = c(0, NA))+
+    label_team(var = start_label, size = 1.5, nudge_x = -1.5)+
+    label_team(var = end_label, size = 2.5, nudge_x = 1.5)+
+    facet_wrap(season ~.)
+}
+
+team_scores |>
+  filter(season == 2023) |>
+  plot_top_team_scores(top_n = 25)
+
+
+```

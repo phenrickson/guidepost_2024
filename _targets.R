@@ -563,10 +563,21 @@ list(
       unique()
   ),
   # branch over weeks and estimate efficiency in season
+  # estimate offense/defense/sepcial
   tar_target(
     efficiency_ppa_by_week,
     pbp_efficiency |>
       estimate_efficiency_by_week(
+        metric = "predicted_points_added",
+        date = efficiency_weeks
+      ),
+    pattern = map(efficiency_weeks)
+  ),
+  # estimate pass/rush offense/defense
+  tar_target(
+    efficiency_category_ppa_by_week,
+    pbp_efficiency |>
+      estimate_efficiency_category_by_week(
         metric = "predicted_points_added",
         date = efficiency_weeks
       ),
@@ -577,6 +588,14 @@ list(
     efficiency_by_week,
     efficiency_ppa_by_week |>
       prepare_weekly_efficiency() |>
+      inner_join(
+        cfb_season_weeks
+      )
+  ),
+  tar_target(
+    efficiency_category_by_week,
+    efficiency_category_ppa_by_week |>
+      prepare_weekly_efficiency_category() |>
       inner_join(
         cfb_season_weeks
       )
@@ -700,6 +719,32 @@ list(
         date = season_completed_weeks
       ),
     pattern = map(season_completed_weeks)
+  ),
+  tar_target(
+    season_efficiency_category_by_week,
+    command =
+      bind_rows(
+        pbp_efficiency,
+        season_pbp_efficiency
+      ) |>
+      estimate_efficiency_category_by_week(
+        metric = "predicted_points_added",
+        date = season_completed_weeks
+      ),
+    pattern = map(season_completed_weeks)
+  ),
+  tar_target(
+    season_team_category_estimates,
+    command =
+      season_efficiency_category_by_week |>
+      prepare_weekly_efficiency_category() |>
+      inner_join(
+        season_game_info |>
+          find_season_weeks()
+      ) |>
+      bind_rows(
+        efficiency_category_by_week
+      )
   ),
   tar_target(
     season_team_estimates,

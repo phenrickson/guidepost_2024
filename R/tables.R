@@ -132,3 +132,80 @@ game_predictions_tbl <- function(data) {
     ) |>
     gt_correct_color()
 }
+
+prepare_team_category_estimates = function(data) {
+  
+  data |>
+    add_team_ranks(groups = c("season", "season_week", "play_category", "type")) |>
+    pivot_wider(names_from = c("play_category", "type"),
+                values_from = c("estimate", "rank")) |>
+    select(team, season, season_week, contains("pass_offense"), contains("rush_offense"), contains("pass_defense"), contains("rush_defense")) |>
+    arrange(desc(estimate_pass_offense)) |>
+    add_season_week() |>
+    mutate(logo = team) |>
+    select(season, season_week, week, logo, team, everything()) |>
+    arrange(desc(estimate_rush_offense))
+}
+
+team_category_estimates_tbl = function(data) {
+  
+  data |>
+    gt_tbl() |>
+    gt::fmt_number(
+      contains("estimate"),
+      decimals = 3
+    ) |>
+    gt::cols_merge(
+      columns = contains("pass_offense"),
+      pattern = "{1}<< ({2})>>"
+    ) |>
+    gt::cols_merge(
+      columns = contains("rush_offense"),
+      pattern = "{1}<< ({2})>>"
+    ) |>
+    gt::cols_merge(
+      columns = contains("pass_defense"),
+      pattern = "{1}<< ({2})>>"
+    ) |>
+    gt::cols_merge(
+      columns = contains("rush_defense"),
+      pattern = "{1}<< ({2})>>"
+    ) |>
+    gt::cols_label(
+      season = "Season",
+      week = "Week",
+      team = "Team",
+      estimate_pass_offense = "Pass Offense",
+      estimate_rush_offense = "Run Offense",
+      estimate_pass_defense = "Pass Defense",
+      estimate_rush_defense = "Run Defense"
+    )  |>
+    gt::cols_hide(
+      c(season_week, week)
+    ) |>
+    gt::cols_width(
+      season ~ px(75),
+      week ~ px(75)
+    ) |>
+    gt::cols_align(
+      c(contains("offense"), contains("defense"), "season", "week"),
+      align = "center"
+    ) |>
+    gt_est_color(columns = c(contains("estimate")),
+                 domain = c(-0.75, 0.75)) |>
+    gt::opt_interactive(
+      page_size_default = 25,
+      use_filters = T
+    ) |>
+    cfbplotR::gt_fmt_cfb_logo(columns = "logo") |>
+    gt::cols_label(
+      logo = "Logo"
+    ) |>
+    gt::cols_width(
+      logo ~ px(75)
+    ) |>
+    gt::cols_align(
+      align = "center",
+      columns = "logo"
+    )
+}
