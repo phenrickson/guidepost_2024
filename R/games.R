@@ -1251,8 +1251,8 @@ join_betting_lines = function(data, betting) {
         select(game_id, provider, spread, spread_open) |>
         mutate(spread = 
                  case_when(
-                   is.na(spread_open) ~ as.numeric(spread),
-                   TRUE ~ as.numeric(spread_open)
+                   is.na(spread) ~ as.numeric(spread_open),
+                   TRUE ~ as.numeric(spread)
                  ),
                spread_open = as.numeric(spread_open),
                spread_margin = -spread
