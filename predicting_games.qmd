@@ -92,7 +92,9 @@ prepare_spread_predictions = function(data) {
     mutate(
       my_prediction = case_when(
         pred_margin > 0 ~ paste(home_team, pred_margin, sep = " by "),
-        pred_margin < 0 ~ paste(away_team, -1 * pred_margin, sep = " by ")
+        pred_margin < 0 ~ paste(away_team, -1 * pred_margin, sep = " by "),
+        pred_margin == 0 & home_prob > 0.500 ~ paste(home_team, 0.5, sep = " by "),
+        pred_margin == 0 & home_prob < 0.500 ~ paste(away_team, 0.5, sep = " by ")
       ),
       actual = case_when(
         home_margin > 0 ~ paste(home_team, home_margin, sep = " by "),
@@ -196,7 +198,7 @@ spread_predictions_tbl = function(data) {
 plot_vs_betting_lines = function(data) {
   
   data |>
-    ggplot(aes(x = -pred_margin, y = spread_open, label = paste(home_team, away_team, sep = " vs "))) +
+    ggplot(aes(x = -pred_margin, y = spread, label = paste(home_team, away_team, sep = " vs "))) +
     geom_point() +
     geom_text(vjust = -1, size = 1.5, check_overlap = T) +
     geom_abline() +
@@ -281,7 +283,7 @@ game_predictions |>
 
 ## Betting Lines
 
-How do these predictions compare to betting lines? I compare my predicted spread against the opening spread from ESPN Bet.
+How do these predictions compare to betting lines? I compare my predicted spread against the spread from ESPN Bet.
 
 ```{r}
 #| fig-width: 7.5
@@ -293,7 +295,7 @@ game_predictions_and_betting_lines |>
 
 ```
 
-The following table displays my prediction for each game compared to opening betting lines from various providers.
+The following table displays my prediction for each game compared to betting lines from various providers.
 
 ```{r}
 #| column: body-outset-right
@@ -417,6 +419,14 @@ game_predictions |>
 
 How has the model performed against the spread? I compare my model's predictions against betting lines from various providers.
 
+::: {.callout-note collapse="true"}
+
+## A Note on Assessment
+
+Early versions of this report used the *opening* betting line from providers; I have changed this to base the assessment around the *final* betting line.
+
+:::
+
 ```{r}
 
 add_spread_cover = function(data) {
@@ -445,7 +455,7 @@ spread_predictions =
   game_predictions_and_betting_lines |>
   filter(completed == T) |>
   filter(!is.na(spread)) |>
-  select(game_id, season, week, home_team, away_team, home_margin, pred_margin, provider, spread, spread_open, spread_margin) |>
+  select(game_id, season, week, home_team, away_team, home_prob, home_margin, pred_margin, provider, spread, spread_open, spread_margin) |>
   add_spread_cover()
 
 assess_spread = function(data, groups = c("season", "provider", "week")) {
