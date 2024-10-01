@@ -1951,7 +1951,7 @@ plot_ranking = function(plot, alpha = 0.6, ranking, groups = c("season", "season
     geom_text(
       data =
         rank_data |>
-        filter(week_date == min(week_date)),
+        filter(season_week == min(season_week)),
       aes(y = estimate,
           label = team
       ),
@@ -2017,7 +2017,12 @@ plot_team_scores <- function(data, team, rankings = c(25, 50), point = F, patchw
   } else {
     tmp |>
       plot_team_efficiency_by_week(team = team, rankings = rankings, label = F, point = F, line = T, title = T) +
-      ylab("")
+      ylab("")+
+      theme(
+        strip.background.y = element_blank(),
+        strip.text.y = element_text(colour = 'grey20', size = 12)
+      )
+    
   }
 }
 

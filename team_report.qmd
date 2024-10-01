@@ -4,6 +4,9 @@ format: html
 params: 
     team: Wisconsin
     season: 2024
+    echo: false
+    warning: false
+    message: false
 ---
 
 
@@ -39,7 +42,8 @@ join_team_info = function(data, teams = team_info) {
 
 
 # estimates
-tar_load(team_scores)
+team_scores = tar_read("team_scores")
+team_category_estimates = tar_read("season_team_category_estimates")
 tar_load(adjusted_efficiency_overall_ppa)
 tar_load(adjusted_efficiency_category_ppa)
 
@@ -126,6 +130,10 @@ plot_team_scores_by_conference = function(data, season = 2024, conference = 'Big
 
 ```
 
+# Season
+
+## Overall
+
 ```{r}
 
 adjusted_efficiency_overall_ppa |>
@@ -136,6 +144,7 @@ adjusted_efficiency_overall_ppa |>
 
 ```
 
+## Pass/Run
 
 ```{r}
 
@@ -150,17 +159,50 @@ adjusted_efficiency_category_ppa |>
   facet_grid(play_category ~ type)+
   scale_x_discrete(breaks = scales::pretty_breaks(n=8))
 
-
 ```
 
 
 ```{r}
 
-team_scores |>
-  plot_team_scores(team = params$team, rankings = c(10, 25, 115))
+adjusted_efficiency_category_ppa |>
+  filter(play_category != 'special') |>
+  team_efficiency_category_tbl(team = params$team) |>
+  gt::opt_interactive(page_size_default = 15)
 
 ```
 
+# Weekly
+
+## Overall
+
+```{r}
+
+team_scores |>
+  plot_team_scores(team = params$team, rankings = c(25, 110))
+```
+
+
+## Pass/Run
+
+```{r}
+
+team_category_estimates |>
+  plot_team_efficiency_by_category_and_week(team = params$team)
+
+```
+
+
+
+```{r}
+
+adjusted_efficiency_category_ppa |>
+  filter(play_category != 'special') |>
+  team_efficiency_category_tbl(team = params$team) |>
+  gt::opt_interactive(
+    page_size_default = 25
+  )
+
+```
 
 ```{r}
 
