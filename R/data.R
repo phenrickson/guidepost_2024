@@ -3,9 +3,9 @@ add_season <- function(data, year) {
   tbl <-
     data |>
     as_tibble()
-
+  
   tbl$season <- year
-
+  
   tbl |>
     select(season, everything())
 }
@@ -14,7 +14,7 @@ get_cfbd_plays <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-
+  
   cfbd_plays(
     year = season,
     week = week,
@@ -26,7 +26,7 @@ get_cfbd_pbp_data <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-
+  
   cfbd_pbp_data(
     year = as.numeric(season),
     week = week,
@@ -38,7 +38,7 @@ get_game_player_stats <- function(data) {
   season <- data$season
   week <- data$week
   season_type <- data$season_type
-
+  
   cfbd_game_player_stats(
     year = season,
     week = week,
@@ -47,7 +47,7 @@ get_game_player_stats <- function(data) {
 }
 
 theme_cfb = function(base_size = 11) {
-
+  
   theme_light() %+replace%
     theme(
       plot.subtitle = element_text(size = 10, hjust = 0, vjust = 1, margin = margin(b = base_size/2)),
@@ -76,17 +76,17 @@ find_team_divisions <- function(data) {
         ~ replace_na(.x, "fcs")
       )
     )
-
+  
   home <-
     tmp |>
     select(season, starts_with("home")) |>
     rename_home_away("home")
-
+  
   away <-
     tmp |>
     select(season, starts_with("away")) |>
     rename_home_away("away")
-
+  
   bind_rows(
     home, away
   ) |>
@@ -123,11 +123,11 @@ factor_team_names <- function(data, ref = "fcs") {
 }
 
 pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season_type", "week", "start_date", "neutral_site")) {
-
+  
   tmp =
     data |>
     select(game_id, home_team, away_team)
-
+  
   longer =
     data |>
     select(-contains("_elo"), -contains("_prob")) |>
@@ -136,7 +136,7 @@ pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season
       .cols = c("id", "division", "points"),
       .fn = ~  paste("team", .x, sep = "_")
     )
-
+  
   joined =
     longer |>
     left_join(tmp,
@@ -148,11 +148,11 @@ pivot_games_to_teams = function(data, game_vars = c("season", "game_id", "season
       team_is_home = case_when(home_team == team & neutral_site == F ~ T,
                                TRUE ~ F)
     )
-
+  
   joined |>
     arrange(season, start_date) |>
     select(any_of(game_vars), team_is_home, starts_with("team"), starts_with("opponent"))
-
+  
 }
 
 scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthetics = "colour",
@@ -163,7 +163,7 @@ scale_color_cfb_muted = function (alt_colors = NULL, values = NULL, ..., aesthet
     values <- cfbplotR::logo_ref %>%
       dplyr::mutate(value = ifelse(.data$school %in% alt_colors, .data$alt_color, .data$color),
                     value = scales::muted(value))
-
+    
     values <- values %>%
       dplyr::pull("value")
     names(values) <- cfbplotR::logo_ref$school
@@ -207,11 +207,11 @@ add_game_weeks <- function(data) {
       ungroup() |>
       select(-diff)
   }
-
+  
   season_weeks <-
     data |>
     find_season_weeks()
-
+  
   joined <-
     data |>
     mutate(start_date = as.Date(start_date)) |>
@@ -220,20 +220,20 @@ add_game_weeks <- function(data) {
       by = c("season", "season_type", "week"),
       relationship = "many-to-many"
     )
-
+  
   out <-
     joined |>
     find_nearest_week() |>
     select(season, season_type, season_week, week, week_date, week, start_date, game_id, everything())
-
+  
   if (nrow(data) > nrow(out)) {
     dropped <- data$game_id[!(data$game_id %in% out$game_id)]
-
+    
     warning(paste(paste(dropped, collapse = ","), "game ids dropped from data"))
   } else if (nrow(data) < nrow(out)) {
     warning("too many games returned; check")
   }
-
+  
   out |>
     select(
       -ends_with("_elo"),
@@ -299,7 +299,7 @@ filter_to_team <- function(data, teams) {
     ) |>
     mutate(is_home = "yes") |>
     mutate(win = case_when(.prediction > 0 ~ 1, .prediction < 0 ~ 0))
-
+  
   away_team_data <-
     data |>
     inner_join(
@@ -317,7 +317,7 @@ filter_to_team <- function(data, teams) {
     ) |>
     mutate(is_home = "no") |>
     mutate(win = case_when(.prediction > 0 ~ 0, .prediction < 0 ~ 1))
-
+  
   bind_rows(
     home_team_data,
     away_team_data
@@ -330,4 +330,24 @@ pivot_estimates = function(data) {
       names_from = c(".metric"),
       values_from = c(".estimate")
     )
+}
+
+join_team_info = function(data, teams = team_info) {
+  
+  data |>
+    inner_join(
+      teams |>
+        adjust_team_names(cols = "school") |>
+        select(team = school,
+               conference,
+               abbreviation),
+      by = join_by(team)
+    )
+}
+
+my_facet_theme = function(size = 12, ...) {
+  
+  theme(strip.background.y = element_blank(),
+        strip.text.y = element_text(colour = 'grey20', size =size),
+        ...)
 }

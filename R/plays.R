@@ -2026,12 +2026,12 @@ plot_team_scores <- function(data, team, rankings = c(25, 50), point = F, patchw
   }
 }
 
-plot_team_efficiency_by_category_and_week = function(data, team, ranking = 25, ...) {
+plot_team_efficiency_by_category_and_week = function(data, x = 'week', team, ranking = 25, ...) {
   
   plot = 
     data |>
     add_season_week() |>
-    plot_team_efficiency(x = 'week', teams = team, point = F, label = F, title = F)+
+    plot_team_efficiency(x = x, teams = team, point = F, label = F, title = F)+
     ggh4x::facet_nested(type + play_category ~ season, scales = "free_y") +
     scale_x_discrete(breaks = function(x){x[c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)]})
   
@@ -2042,12 +2042,11 @@ plot_team_efficiency_by_category_and_week = function(data, team, ranking = 25, .
   
   # clean up facet for y strips
   plot +
-    theme(strip.background.y = element_blank(),
-          strip.text.y = element_text(colour = 'grey20', size = 12)) +
     labs(
       x = 'Season Week',
       title = paste("Team Efficiency by Play Type", paste(team, sep = ","), sep = " - "),
       subtitle = stringr::str_wrap(paste("Opponent adjusted team efficiency ratings based on net expected points per play. Distribution in grey shows all FBS teams by season. Highlighted line shows", paste0(team, "'s"), "rating by season along with their ranking among all FBS teams."), 120)
-    )
+    ) +
+    my_facet_theme()
   
 }
