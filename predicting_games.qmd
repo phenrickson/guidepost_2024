@@ -10,7 +10,7 @@ format:
     number-sections: false
 params:
     season: 2024
-    week: 6
+    week: 7
 ---
 
 ```{r}
@@ -443,7 +443,7 @@ add_spread_cover = function(data) {
         spread_margin >0 & home_margin >= spread_margin ~ 'yes',
         spread_margin <0 & home_margin < spread_margin ~ 'yes',
         spread_margin >0 & home_margin <= spread_margin ~ 'no',
-        spread_margin <0 & home_margin >=spread_margin ~ 'no'
+        spread_margin <0 & home_margin >= spread_margin ~ 'no'
       )
     ) |>
     mutate(
@@ -483,6 +483,7 @@ assess_spread = function(data, groups = c("season", "provider", "week")) {
       names_from = c("correct"),
       values_from = c("n")
     ) |>
+    mutate(across(c("yes", "no"), ~ replace_na(.x, 0))) |>
     mutate(record = paste(yes, no, sep = "-")) |>
     select(any_of(groups), record)
   

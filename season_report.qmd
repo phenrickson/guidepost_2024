@@ -10,6 +10,7 @@ format:
     number-sections: false
 params:
     season: 2024
+    week: 7
 ---
 
 ```{r}
@@ -77,7 +78,7 @@ current_scores =
 
 # Rankings
 
-The following table displays my current rankings for teams based on opponent adjusted estimates of team efficiency.
+The following table displays my current rankings going into week **{{< meta params.week >}}** based on opponent adjusted estimates of team efficiency to date.
 
 ::: {.callout-note collapse="false"}
 ## About the Table
