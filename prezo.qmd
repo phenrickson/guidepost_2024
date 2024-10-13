@@ -1,0 +1,66 @@
+---
+title: "test"
+format: 
+  revealjs
+editor: visual
+---
+
+# Test
+
+##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
+
+<!-- <div style="display: flex; align-items: center; justify-content: center; height: 100vh;"> -->
+
+<!--   <h2 style="color: white; font-size: 3em; text-align: center;font-weight: bold;">EXPECTED POINTS ADDED: 5.2</h2> -->
+
+<!-- </div> -->
+
+## 
+
+![](gifs/eMsJcuIooJg_00-01-35_00-01-48.gif){fig-align="center"}
+
+::: {style="font-size: 50%;text-align: center;"}
+Expected Points Pre Snap: 1.80\
+Expected Points Post Snap: 7.00\
+**Expected Points Added: 5.20**
+:::
+
+##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
+
+## 
+
+![](gifs/eMsJcuIooJg_00-01-28_00-01-35.gif){fig-align="center"}
+
+::: {style="font-size: 50%;text-align: center;"}
+Expected Points Pre Snap: 0.67\
+Expected Points Post Snap: 1.80\
+**Expected Points Added: 1.13**
+:::
+
+## 
+
+![](gifs/G9w9Lu43UhU_00-01-23_00-01-32.gif){fig-align="center"}
+
+::: {style="font-size: 50%;text-align: center;"}
+Expected Points Pre Snap: 0.20\
+Expected Points Post Snap: -3.25\
+**Expected Points Added: -3.45**
+:::
+
+##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
+
+G9w9Lu43UhU_00-00-34_00-00-45.gif
+
+## 
+
+![](gifs/G9w9Lu43UhU_00-00-34_00-00-45.gif){fig-align="center"}
+
+::: {style="font-size: 50%;text-align: center;"}
+Expected Points Pre Snap: 4.72\
+Expected Points Post Snap: 7.00\
+**Expected Points Added: 2.28**
+:::
+
+![](gifs/G9w9Lu43UhU_00-00-00_00-00-14.gif){fig-align="center"} ::: {style="font-size: 50%;text-align: center;"} Expected Points Pre Snap: -1.03\
+Expected Points Post Snap: 4.72\
+**Expected Points Added: 5.75** :::
