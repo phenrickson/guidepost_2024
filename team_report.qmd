@@ -1,5 +1,6 @@
 ---
-title: "Untitled"
+title: "{{< meta params.season >}} Team Report"
+subtitle: "{{< meta params.team >}}"
 format: html
 params: 
     team: Wisconsin
@@ -20,6 +21,7 @@ library(ggplot2)
 library(quarto)
 library(gt)
 library(gtExtras)
+library(patchwork)
 
 # src code
 tar_source("R")
@@ -39,84 +41,51 @@ tar_load(adjusted_efficiency_category_ppa)
 
 ```{r}
 
-find_team_season_score = function(data) {
-  
-  data |>
-    group_by(season, team) |>
-    add_season_week() |>
-    slice_max(week, n =1) |>
-    ungroup()
-  
-}
-
-plot_team_score_by_season = function(data, team) {
-  
-  p = 
-    data |>
-    find_team_season_score() |>
-    select(season, season_type, season_week, team, overall = score) |>
-    pivot_longer(cols = c(overall),
-                 names_to = c("type"),
-                 values_to = c("estimate")) |>
-    add_team_ranks() |>
-    plot_team_efficiency(teams = team, title = F)+
-    ylab("")+
-    xlab("Season")+
-    my_facet_theme()+
-    ylab("")+
-    labs(title = paste("Team Rating by Season", team, sep = " - "),
-         subtitle = stringr::str_wrap(
-           paste("Team rating refers to the expected margin of victory (or defeat) when playing an average FBS opponent. Estimates based on opponent adjusted team efficiency ratings. Distribution in grey shows all FBS teams. Highlighted line shows", paste0(team, "'s"), "rating with their ranking among all FBS teams."), 120)
-    )
-  
-  p |>
-    plot_ranking(ranking = 25)
-}
-
-create_quantile_bucket <- function(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99)) {
-  # Define the specific percentiles
-  percentiles <- quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99), na.rm = TRUE)
-  
-  # Create quantile buckets using cut()
-  quantile_bucket <- cut(x,
-                         breaks = c(-Inf, percentiles, Inf),
-                         right = T)  # right = FALSE for "less than" intervals
-  return(quantile_bucket)
-}
-
-
-foo = 
-  team_scores |>
+team_scores |>
   plot_team_score_by_season(team = params$team)
+```
 
-foo$data |>
-  select(estimate) |>
-  mutate(quantile = create_quantile_bucket(estimate)) |>
-  ggplot(aes(x=estimate, fill = quantile))+
-  geom_histogram(bins = 50, position ='identity')+
-  scale_fill_viridis_d()
+```{r}
+
+team_scores |>
+  plot_team_estimates_by_season(team = params$team)
+
+```
+
+```{r}
+
+team_category_estimates |>
+  plot_team_category_by_season(team = params$team)
 
 ```
 
 
+
 ```{r}
 
-plot_team_score_by_season = function(data) {
-  
-  data |>
-    find_team_season_score() |>
-    select(season, season_type, season_week, team, overall = score) |>
-    pivot_longer(cols = c(overall),
-                 names_to = c("type"),
-                 values_to = c("estimate")) |>
-    add_team_ranks() |>
-    plot_team_efficiency(teams = params$team)+
-    ylab("")+
-    xlab("Season")+
-    my_facet_theme()
-  
-  
-}
+team_scores |>
+  plot_team_by_season(team = params$team)
+```
+
+
+```{r}
+# 
+# plot_team_score_by_season = function(data) {
+#   
+#   data |>
+#     find_team_season_score() |>
+#     select(season, season_type, season_week, team, overall = score) |>
+#     pivot_longer(cols = c(overall),
+#                  names_to = c("type"),
+#                  values_to = c("estimate")) |>
+#     add_team_ranks() |>
+#     plot_team_efficiency(teams = params$team)+
+#     ylab("")+
+#     xlab("Season")+
+#     my_facet_theme()
+#   
+#   
+# }
 
 team_scores |>
   group_by(season, team) |>
@@ -138,37 +107,7 @@ team_scores |>
 
 ```
 
-```{r}
-
-team_scores |>
-  group_by(season, team) |>
-  slice_max(season_week, n =1) |>
-  rename(overall = score) |>
-  pivot_longer(cols = c(overall, offense, defense, special),
-               names_to = c("type"),
-               values_to = c("estimate")) |>
-  add_team_ranks() |>
-  mutate(type = factor(type, levels = c("overall", "offense", "defense", "special"))) |>
-  # filter(type != 'special') |>
-  plot_team_efficiency()+
-  ylab("")+
-  xlab("Season")+
-  my_facet_theme()
-
-```
-
-
 ## Overall
-
-```{r}
-
-adjusted_efficiency_overall_ppa |>
-  filter(play_situation == "offense/defense") |>
-  add_overall_efficiency() |>
-  add_team_ranks() |>
-  plot_team_efficiency(teams = params$team)
-
-```
 
 ## Pass/Run
 
@@ -190,17 +129,9 @@ adjusted_efficiency_category_ppa |>
 
 ```{r}
 
+
 team_category_estimates |>
-  filter(play_category != 'special') |>
-  select(season, season_week, week_date, week, play_category, metric, type, team, estimate) |>
-  group_by(season, team, play_category, type) |>
-  slice_max(season_week, n = 1) |>
-  ungroup() |>
-  add_season_week() |>
-  add_team_ranks(groups = c("season", "season_week", "play_category", "metric", "type")) |>
-  plot_team_efficiency(x = 'season', teams = params$team, point = T, label = T, title = T)+
-  ggh4x::facet_nested(type + play_category ~.) +
-  my_facet_theme()
+  plot_team_category_by_season(team = params$team)
 
 ```
 
@@ -221,25 +152,16 @@ adjusted_efficiency_category_ppa |>
 ```{r}
 
 team_scores |>
-  plot_team_scores(team = params$team, rankings = c(25, 110))
+  plot_team_scores(team = params$team, rankings = c(25))
 ```
 
 ```{r}
 
 team_scores |>
-  filter(season >= 2017) |>
+  filter(season >= 2018) |>
   plot_team_scores(team = params$team, rankings = c(25))
 
 ```
-
-
-```{r}
-
-team_scores |>
-  plot_team_scores(team = 'Michigan', rankings = c(25))
-
-```
-
 
 ## Pass/Run
 
@@ -253,31 +175,19 @@ team_category_estimates |>
 ```{r}
 
 team_category_estimates |>
-  filter(season >= 2017) |>
+  filter(season >= 2018) |>
   plot_team_efficiency_by_category_and_week(team = params$team)
-
-
 ```
 
 
 ```{r}
 
-team_category_estimates |>
-  filter(season >= 2017) |>
-  plot_team_efficiency_by_category_and_week(team = 'Michigan')
-
-```
-
-
-
-
-```{r}
-
-adjusted_efficiency_category_ppa |>
+team_category_estimates |> 
+  find_team_season_score() |>
   filter(play_category != 'special') |>
-  team_efficiency_category_tbl(team = params$team) |>
-  gt::opt_interactive(
-    page_size_default = 25
-  )
-
+  team_efficiency_category_tbl(team = params$team) 
+# |>
+#   gt::opt_interactive(page_size_default = 25) |>
+#   add_gt_formatting()
+                               
 ```

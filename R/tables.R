@@ -11,6 +11,14 @@ gt_tbl = function(data,
     )
 }
 
+add_gt_formatting = function(tbl, ...) {
+  
+  tbl |>
+    gt::opt_row_striping(row_striping = F) |>
+    gt::tab_options(table.font.size = 14,
+                    ...)
+}
+
 round_any <- function(x, accuracy, f = round) {
   f(x / accuracy) * accuracy
 }

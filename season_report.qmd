@@ -78,7 +78,7 @@ current_scores =
 
 # Rankings
 
-The following table displays my current rankings going into week **{{< meta params.week >}}** based on opponent adjusted estimates of team efficiency to date.
+The following table displays my current rankings going into Week **{{< meta params.week >}}** based on opponent adjusted estimates of team efficiency to date.
 
 ::: {.callout-note collapse="false"}
 ## About the Table

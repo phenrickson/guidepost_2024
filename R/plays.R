@@ -1470,7 +1470,7 @@ plot_efficiency_by_team = function(data, x = 'season', teams, seed = 1, point = 
     ylab("Team Net Points per Play")
 }
 
-plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1, label = T,  title = T, ...) {
+plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed = 1, label = T,  title = T, vjust = -0.75, ...) {
   
   team_plot =
     plot_efficiency_by_team(data = data, x=x, teams = teams, seed = seed, ...)
@@ -1494,7 +1494,7 @@ plot_team_efficiency <- function(data, x = 'season', teams = "Texas A&M", seed =
         ),
         alpha = 0.8,
         size = 2,
-        vjust = -0.75
+        vjust = vjust
       )
   }
   
@@ -1616,7 +1616,7 @@ efficiency_overall_tbl = function(data) {
   
 }
 
-efficiency_category_tbl = function(data) {
+efficiency_category_tbl = function(data, domain = c(-.75, .75)) {
   
   data |>
     select(season,
@@ -1627,7 +1627,9 @@ efficiency_category_tbl = function(data) {
            estimate_rush_defense,
            contains("rank")) |>
     gt_tbl() |>
-    gt_est_color() |>
+    gt_est_color(
+      domain = domain
+    ) |>
     # gt::tab_spanner(
     #   label = "efficiency",
     #   columns = contains("estimate")
@@ -1676,23 +1678,17 @@ efficiency_category_tbl = function(data) {
     )
 }
 
-team_efficiency_category_tbl = function(data, teams) {
+team_efficiency_category_tbl = function(data, teams, domain = c(-.75, .75)) {
   
   data |>
     filter(play_category != 'special') |>
     add_team_ranks(groups = c("season", "play_category", "metric", "type")) |>
     unite(type, c(play_category, type)) |>
-    select(-intercept) |>
+    select(-any_of("intercept")) |>
     pivot_wider(names_from = c("type"),
                 values_from = c("estimate", "rank")) |>
     filter(team == teams) |>
-    efficiency_category_tbl()
-}
-
-team_efficiency_overall_tbl = function(data, teams) {
-  
-  
-  
+    efficiency_category_tbl(domain = domain)
 }
 
 efficiency_top_categories_tbl = function(data) {
@@ -1931,7 +1927,7 @@ get_season_weeks = function(games) {
     unnest(calendar)
 }
 
-plot_ranking = function(plot, alpha = 0.6, ranking, groups = c("season", "season_week", "type", "metric")) {
+plot_ranking = function(plot, alpha = 0.5, hjust = 1.4, ranking, groups = c("season", "season_week", "type", "metric")) {
   
   rank_data =
     plot$data |>
@@ -1955,7 +1951,7 @@ plot_ranking = function(plot, alpha = 0.6, ranking, groups = c("season", "season
       aes(y = estimate,
           label = team
       ),
-      hjust = 1.4,
+      hjust = hjust,
       size = 2
     )+
     coord_cartesian(clip = "off")
@@ -2049,4 +2045,128 @@ plot_team_efficiency_by_category_and_week = function(data, x = 'week', team, ran
     ) +
     my_facet_theme()
   
+}
+
+find_team_season_score = function(data) {
+  
+  data |>
+    group_by(season, team) |>
+    add_season_week() |>
+    slice_max(week, n =1) |>
+    ungroup()
+  
+}
+
+normalize_estimate = function(var, scale = 100) {
+  
+  scaled = (var - min(var)) / (max(var) - min(var))
+  
+  scaled * scale
+  
+}
+
+plot_team_score_by_season = function(data, team, ranking = c(25), hjust = 1.4) {
+  
+  p = 
+    data |>
+    find_team_season_score() |>
+    select(season, season_type, season_week, team, overall = score) |>
+    pivot_longer(cols = c(overall),
+                 names_to = c("type"),
+                 values_to = c("estimate")) |>
+    add_team_ranks() |>
+    plot_team_efficiency(teams = team, title = F)+
+    ylab("")+
+    xlab("Season")+
+    my_facet_theme()+
+    ylab("")+
+    labs(title = paste("Team Rating by Season", team, sep = " - "),
+         subtitle = stringr::str_wrap(
+           paste("Team rating indicates expected margin when playing an average FBS opponent. Estimates based on opponent adjusted team efficiency and predicted points per play. Distribution in grey shows all FBS teams. Highlighted line shows", paste0(team, "'s"), "rating among all FBS teams."), 120),
+         x = "Season",
+         y= "Rating")
+  
+  p |>
+    plot_ranking(ranking = ranking, hjust = hjust)
+}
+
+
+plot_team_estimates_by_season = function(data, team, ranking = 25, vjust = -0.25, hjust = 2.4) {
+  
+  p = 
+    data |>
+    group_by(season, team) |>
+    slice_max(season_week, n =1) |>
+    rename(overall = score) |>
+    pivot_longer(cols = c(offense, defense, special),
+                 names_to = c("type"),
+                 values_to = c("estimate")) |>
+    add_team_ranks() |>
+    mutate(type = factor(type, levels = c("offense", "defense", "special"))) |>
+    # filter(type != 'special') |>
+    plot_team_efficiency(team = team, vjust = vjust)+
+    ylab("Net Points per Play")+
+    xlab("Season")+
+    my_facet_theme()
+  
+  p |>
+    plot_ranking(ranking = ranking, hjust = hjust)
+}
+
+plot_team_category_by_season = function(data, team, vjust = -0.25) {
+  
+  p = 
+    data |>
+    filter(play_category != 'special') |>
+    select(season, season_week, week_date, week, play_category, metric, type, team, estimate) |>
+    group_by(season, team, play_category, type) |>
+    slice_max(season_week, n = 1) |>
+    ungroup() |>
+    add_season_week() |>
+    add_team_ranks(groups = c("season", "season_week", "play_category", "metric", "type")) |>
+    plot_team_efficiency(x = 'season', teams = team, point = T, label = T, title = T, vjust = vjust)+
+    ggh4x::facet_nested(type + play_category ~.) +
+    my_facet_theme()+
+    labs(title = paste("Team Efficiency by Play Type", team, sep = " - "),
+         subtitle = stringr::str_wrap(
+           paste("Team rating indicates expected margin when playing an average FBS opponent. Estimates based on opponent adjusted team efficiency and predicted points per play. Distribution in grey shows all FBS teams. Highlighted line shows", paste0(team, "'s"), "rating among all FBS teams."), 120),
+         x = 'Season',
+         y = 'Net Points per Play'
+    )
+  
+  p |>
+    plot_ranking(groups = c("season", "season_week", "play_category", "metric", "type"),
+                 ranking = 25,
+                 hjust = 2.4)
+  
+} 
+
+create_quantile_bucket <- function(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99)) {
+  # Define the specific percentiles
+  percentiles <- quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99), na.rm = TRUE)
+  
+  # Create quantile buckets using cut()
+  quantile_bucket <- cut(x,
+                         breaks = c(-Inf, percentiles, Inf),
+                         right = T)  # right = FALSE for "less than" intervals
+  return(quantile_bucket)
+}
+
+plot_team_by_season = function(data, team, hjust = 2.5, heights = c(1, 2.5), ...) {
+  
+  a = 
+    team_scores |>
+    plot_team_score_by_season(team = team, hjust = hjust)+
+    labs(x = NULL,
+         title = paste("Team Efficiency by Season", team, sep = " - ")
+    )
+  
+  b = 
+    team_scores |>
+    plot_team_estimates_by_season(team = team, hjust = hjust, ...)+
+    labs(title = NULL,
+         subtitle = NULL)
+  
+  a / b +
+    plot_layout(heights = heights)
 }
