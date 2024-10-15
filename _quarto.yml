@@ -6,6 +6,7 @@ project:
   - "predicting_games.qmd"
   - "estimating_efficiency.qmd"
   - "season_report.qmd"
+  - "team_report.qmd"
   
 format:
   html:

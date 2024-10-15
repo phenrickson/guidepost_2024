@@ -1,11 +1,256 @@
 ---
 title: "test"
 format: 
-  revealjs
-editor: visual
+  revealjs:
+    message: false
+    echo: false
+    warning: false
+    number-sections: false
+editor: 
+  visual
+execute:
+  cache: true
 ---
 
-# Test
+```{r}
+#| include: false
+# packages
+library(targets)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(quarto)
+library(gt)
+library(gtExtras)
+library(yardstick)
+library(patchwork)
+
+# src code
+tar_source("R")
+
+```
+
+```{r}
+# data from targets
+team_info <- tar_read("cfbd_team_info_tbl")
+team_estimates <- tar_read("season_team_estimates")
+team_scores <- tar_read("team_scores")
+draws <- tar_read("games_draws")
+sims <- tar_read("games_sims")
+
+# team info
+team_info <- cfbfastR::cfbd_team_info(year = params$season)
+
+# estimates
+team_scores = tar_read("team_scores")
+team_category_estimates = tar_read("season_team_category_estimates")
+
+draws = tar_read("games_draws")
+sims = tar_read("games_sims")
+games = tar_read("season_game_info")
+
+# team info
+team_info = cfbfastR::cfbd_team_info(only_fbs = T) |> as_tibble()
+
+# espn fpi
+espn_fpi = 
+  map(c(2011:2023),
+      ~ cfbfastR::espn_ratings_fpi(year = .x)
+  ) |>
+  list_rbind()
+
+# get betting lines
+betting_lines <-
+  cfbfastR::cfbd_betting_lines(year = 2024) |>
+  as_tibble()
+
+# join sims with betting lines
+sims_and_betting_lines = 
+  sims |>
+  join_betting_lines(betting = betting_lines)
+```
+
+```{r}
+
+# set.seed(4)
+# example_betting_lines = 
+#   sims_and_betting_lines |>
+#   add_season_week() |>
+#   filter(week <= 7, week>1) |>
+#   nest(data=-game_id) |>
+#   sample_n(15) |>
+#   unnest(data) |>
+#   arrange(week) |>
+#   mutate(my_prediction = case_when(pred_margin > 0 ~ paste(home_team, pred_margin, sep = " by "),
+#                                    pred_margin < 0 ~ paste(away_team, -1 * pred_margin, sep = " by "),
+#                                    home_prob > 0 ~ paste(home_team, 0.5, by = " by "),
+#                                    TRUE ~ "tossup"),
+#          spread_margin = case_when(is.na(spread_open) ~ -1 * spread,
+#                                    is.na(spread) ~ -1* spread_open,
+#                                    TRUE ~ -1 * spread),
+#          provider_prediction = case_when(spread_margin > 0 ~ paste(home_team, spread_margin, sep = " by "),
+#                                          spread_margin < 0 ~ paste(away_team, -1 * spread_margin, sep = " by "))
+#   ) |>
+#   select(game_id, season, week, home_team, away_team, my_prediction, provider, provider_prediction) |>
+#   pivot_wider(
+#     names_from = c(provider),
+#     values_from = c(provider_prediction)
+#   ) |>
+#   select(game_id, season, week, home_team, away_team, my_prediction, `ESPN Bet`, `DraftKings`, `Bovada`)
+# 
+# example_betting_lines |>
+#   gt_tbl() |>
+#   gt::cols_hide(
+#     columns = ends_with("_NA")
+#   ) |>
+#   gt::cols_merge(
+#     columns = c("home_team", "away_team"),
+#     pattern = "{1} vs {2}",
+#   ) |>
+#   gt::cols_width(
+#     season ~ px(75),
+#     week ~ px(75),
+#     home_team ~ px(150),
+#     my_prediction ~ px(100),
+#     `ESPN Bet` ~ px(150),
+#     
+#   ) |>
+#   gt::cols_label(
+#     home_team = "Game",
+#     season = "Season",
+#     week = "Week",
+#     my_prediction = "Prediction",
+#     DraftKings = "DraftKings",
+#     Bovada = "Bovada",
+#     `ESPN Bet` = "ESPN Bet"
+#   )
+```
+
+```{r}
+#| warning: false
+#| message: false
+
+sims_and_betting_lines |>
+  filter(provider == 'ESPN Bet') |>
+  ggplot(aes(x=pred_margin, y= -1*spread_open))+
+  geom_point(alpha = 0.5)+
+  theme_cfb()+
+  tune::coord_obs_pred()+
+  geom_abline(slope = 1, linetype = 'dashed')+
+  ggpubr::stat_cor(aes(label = ..r.label..)) +
+  facet_wrap(paste(season) ~.)+
+  xlab("Phil's Estimated Spread")+
+  ylab("ESPN Bet Spread")
+
+```
+
+```{r}
+
+plot_vs_fpi = function(data) {
+  
+  b = 
+    data |>
+    ggplot(aes(x=score, y=fpi))+
+    facet_wrap(season ~., ncol = 4)+
+    theme_cfb()+
+    geom_abline(slope = 1, 
+                linetype = 'dashed')+
+    tune::coord_obs_pred()+
+    xlab("Phil's Team Rating")+
+    ylab("ESPN Team Rating")
+  
+  b
+}
+
+```
+
+```{r}
+
+vs_fpi = 
+  team_scores |>
+  find_team_season_score()  |>
+  select(season, team, score) |>
+  inner_join(
+    team_info |>
+      adjust_team_names(cols = "school") |>
+      select(team = school, team_id)
+  ) |>
+  inner_join(
+    espn_fpi |>
+      select(season = year, team_id, team_abbreviation, fpi) |>
+      mutate(fpi = as.numeric(fpi))
+  ) 
+
+vs_fpi |>
+  plot_vs_fpi()
+
+```
+
+```{r}
+
+vs_fpi |>
+  plot_vs_fpi()+
+  geom_point(alpha = 0.25)+
+  ggpubr::stat_cor(method = 'spearman', aes(label = ..r.label..))
+
+```
+
+```{r}
+
+team_scores |>
+  plot_team_score_by_season(team = 'Wisconsin')
+
+```
+
+
+```{r}
+
+team_scores |>
+  plot_team_estimates_by_season(team = 'Wisconsin')
+
+```
+
+```{r}
+
+team_scores |>
+  plot_team_estimates_by_season(team = 'Nebraska')
+
+```
+
+
+```{r}
+
+team_scores |>
+  plot_team_by_season(team = 'Wisconsin')
+
+```
+
+```{r}
+
+team_scores |>
+  plot_team_scores(team = 'Wisconsin', rankings = c(25))
+
+```
+
+```{r}
+
+draws |>
+  ungroup() |>
+  filter(home_team == 'Wisconsin' | away_team == 'Wisconsin') |>
+  inner_join(
+    games |>
+      add_game_outcomes() |>
+      select(game_id, home_margin)
+  ) |>
+  plot_game_sims()+
+  facet_wrap(paste(start_date, game_label, sep = "\n") ~ .)+
+  geom_vline(aes(xintercept = home_margin), linetype = 'dashed')+
+  theme_cfb()
+
+
+```
+
+
 
 ##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
 

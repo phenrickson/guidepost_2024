@@ -217,3 +217,100 @@ team_category_estimates_tbl = function(data) {
       columns = "logo"
     )
 }
+
+efficiency_overall_tbl = function(data, hide_special = F) {
+  
+  tab = 
+    data |>
+    gt_tbl() |>
+    # estimates
+    gt_est_color(
+      columns = contains("estimate")
+    ) |>
+    # overall
+    gt_est_color(
+      columns = c("estimate_overall"),
+      domain = c(-40, 40)
+    ) |>
+    gt::fmt_number(
+      columns = contains("estimate"),
+      decimals = 3
+    ) |>
+    gt::cols_merge(
+      contains("overall"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("offense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("defense"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_merge(
+      contains("special"),
+      pattern = "<<{1} ({2})>>"
+    ) |>
+    gt::cols_label(
+      estimate_overall = "overall",
+      estimate_offense = "offense",
+      estimate_defense = "defense",
+      estimate_special = "special"
+    ) |>
+    gt::cols_align(
+      columns = c(contains("estimate"), contains("rank")),
+      align = "center"
+    ) |>
+    gt::tab_spanner(
+      label = "net points per play",,
+      columns = c("estimate_offense", "estimate_defense", "estimate_special")
+    ) |>
+    gt::tab_spanner(
+      label = "estimated score",
+      columns = c("estimate_overall")
+    )
+  
+  if (hide_special == T) {
+    
+    tab |>
+      gt::cols_hide("estimate_special")
+  } else {
+    tab
+  }
+}
+
+
+prepare_efficiency_overall_tbl = function(data) {
+  
+  data |>
+    find_team_season_score() |>
+    rename(overall = score) |>
+    pivot_longer(
+      cols = c(overall, offense, defense, special),
+      names_to = c("type"),
+      values_to = c("estimate")
+    ) |>
+    add_team_ranks(groups = c("season", "season_week", "week", "type")) |>
+    select(season, team, type, estimate, rank) |>
+    pivot_wider(
+      names_from = c("type"),
+      values_from = c("estimate", "rank")
+    ) |>
+    select(season,
+           team,
+           starts_with("estimate_"),
+           starts_with("rank_")
+    )
+}
+
+team_efficiency_overall_tbl = function(data, teams, ...) {
+  
+  data |>
+    prepare_efficiency_overall_tbl() |>
+    inner_join(
+      tibble(team = teams),
+      by = join_by(team)
+    ) |>
+    efficiency_overall_tbl(...)
+}

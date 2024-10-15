@@ -1089,7 +1089,7 @@ join_game_outcomes = function(data, games) {
   
 }
 
-plot_game_predictions <- function(data) {
+plot_game_sims <- function(data) {
   data |>
     group_by(game_id) |>
     mutate(
@@ -1115,7 +1115,7 @@ plot_game_predictions <- function(data) {
     cfbplotR::scale_color_cfb() +
     geom_vline(aes(xintercept = pred),
                linetype = "dashed",
-               color = "white"
+               color = "grey80"
     ) +
     coord_cartesian(xlim = c(-75, 75))
 }

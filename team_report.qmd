@@ -1,18 +1,19 @@
 ---
 title: "{{< meta params.season >}} Team Report"
 subtitle: "{{< meta params.team >}}"
-format: html
-params: 
-    team: Wisconsin
-    season: 2024
+format: 
+  html:
     echo: false
     warning: false
     message: false
+params: 
+  season: 2024
+    team: Wisconsin
 ---
 
 
 ```{r}
-
+#| include: false
 # packages
 library(targets)
 library(dplyr)
@@ -32,8 +33,6 @@ team_info <- cfbfastR::cfbd_team_info(year = params$season)
 # estimates
 team_scores = tar_read("team_scores")
 team_category_estimates = tar_read("season_team_category_estimates")
-tar_load(adjusted_efficiency_overall_ppa)
-tar_load(adjusted_efficiency_category_ppa)
 
 ```
 
@@ -62,92 +61,22 @@ team_category_estimates |>
 
 
 ```{r}
-
+#| fig-height: 8
 team_scores |>
   plot_team_by_season(team = params$team)
 ```
 
 
 ```{r}
-# 
-# plot_team_score_by_season = function(data) {
-#   
-#   data |>
-#     find_team_season_score() |>
-#     select(season, season_type, season_week, team, overall = score) |>
-#     pivot_longer(cols = c(overall),
-#                  names_to = c("type"),
-#                  values_to = c("estimate")) |>
-#     add_team_ranks() |>
-#     plot_team_efficiency(teams = params$team)+
-#     ylab("")+
-#     xlab("Season")+
-#     my_facet_theme()
-#   
-#   
-# }
-
-team_scores |>
-  group_by(season, team) |>
-  add_season_week() |>
-  slice_max(week, n =1) |>
-  rename(overall = score)  |> 
-  ungroup() |> 
-  select(season, season_type, season_week, team, overall) |>
-  pivot_longer(cols = c(overall),
-               names_to = c("type"),
-               values_to = c("estimate")) |>
-  add_team_ranks() |>
-  plot_team_efficiency(teams = params$team)+
-  ylab("")+
-  xlab("Season")+
-  my_facet_theme()+
-  labs(title = paste("Team Overall Rating", params$team))
-
-
-```
-
-## Overall
-
-## Pass/Run
-
-```{r}
-
-adjusted_efficiency_category_ppa |>
-  add_overall_efficiency() |>
-  add_team_ranks(groups = c("season", "type", "metric", "play_category")) |>
-  filter(
-    type %in% c("offense", "defense"),
-    play_category %in% c("pass", "rush")
-  ) |>
-  plot_team_efficiency(teams = params$team) +
-  facet_grid(play_category ~ type)+
-  scale_x_discrete(breaks = scales::pretty_breaks(n=8))
-
-```
-
-
-```{r}
-
 
 team_category_estimates |>
   plot_team_category_by_season(team = params$team)
 
 ```
 
-
-```{r}
-
-adjusted_efficiency_category_ppa |>
-  filter(play_category != 'special') |>
-  team_efficiency_category_tbl(team = params$team) |>
-  gt::opt_interactive(page_size_default = 15)
-
-```
-
 # Weekly
 
-## Overall
+Estimated efficiency by week.
 
 ```{r}
 
@@ -155,10 +84,12 @@ team_scores |>
   plot_team_scores(team = params$team, rankings = c(25))
 ```
 
+Last five full seasons including the current season.
+
 ```{r}
 
 team_scores |>
-  filter(season >= 2018) |>
+  filter(season >= params$season -6) |>
   plot_team_scores(team = params$team, rankings = c(25))
 
 ```
@@ -172,11 +103,24 @@ team_category_estimates |>
 
 ```
 
+by play type
+
 ```{r}
 
 team_category_estimates |>
   filter(season >= 2018) |>
   plot_team_efficiency_by_category_and_week(team = params$team)
+```
+
+# Tables
+
+```{r}
+
+team_scores |>
+  team_efficiency_overall_tbl(team = params$team) |>
+  gt::opt_interactive(page_size_default = 25) |>
+  add_gt_formatting()
+
 ```
 
 
@@ -185,9 +129,8 @@ team_category_estimates |>
 team_category_estimates |> 
   find_team_season_score() |>
   filter(play_category != 'special') |>
-  team_efficiency_category_tbl(team = params$team) 
-# |>
-#   gt::opt_interactive(page_size_default = 25) |>
-#   add_gt_formatting()
-                               
+  team_efficiency_category_tbl(team = params$team) |>
+  gt::opt_interactive(page_size_default = 25) |>
+  add_gt_formatting()
+
 ```
