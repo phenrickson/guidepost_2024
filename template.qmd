@@ -1,0 +1,423 @@
+---
+# title: "Measurement, Causality, and <br> The Data You Don't Have </br>"
+title: "The Data You Don't Have"
+subtitle: "Where is the value in data science?"
+author: "Phil Henrickson, PhD <br> Data Scientist <br> AE Business Solutions"
+format: 
+    clean-revealjs
+editor: source
+---
+
+# Background
+
+## 
+
+"For a decade now, Data Scientist has been in the spotlight. AI experts had salaries that rivaled those of sports superstars.
+
+. . .
+
+In the search for fame and fortune, hundreds of young professionals entered into what seemed [a frenetic golden rush]{.fg style="--col: #C6B90B"}... Whole new industries sprang around the hype.
+
+. . .
+
+Consulting specialists promised millions if your company could [unlock the potential of data]{.fg style="--col: #C6B90B"}.  AI, or Machine Learning, has been called the [new electricity]{.fg style="--col: #C6B90B"} and data, the [new oil]{.fg style="--col: #C6B90B"}."[^1]
+
+[^1]: Source: [Matheus Facure, *Causal Inference for the Brave and True*](Alveshttps://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html)
+
+##
+
+<!-- This trend has only accelerated in recent years with innovations in the form of large language models and generative artificial intelligence. -->
+
+<!-- . . . -->
+
+But there's a problem.
+
+. . .
+
+Is all of this investment in data science actually worth anything? 
+
+##  {background-image="images/cio_ai_roi.png" background-position="center" background-color="white" background-size="contain"}
+
+##  {background-image="images/gs_gen_ai.png" background-position="center" background-color="white" background-size="contain"}
+
+##  {background-image="images/ai_bubble.png" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+During all of this time...
+
+. . .
+
+-   economists were trying to answer what is the true impact of education on one’s earnings
+
+. . .
+
+-   biostatisticians were trying to understand if saturated fat led to a higher chance of heart attack
+
+. . .
+
+-   psychologists were trying to understand if words of affirmation led indeed to a happier marriage.
+
+. . .
+
+We forgot about those who have been doing “old-fashioned” science with data all along.[^2]
+
+[^2]: Source: [Matheus Facure, *Causal Inference for the Brave and True*](Alveshttps://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html)
+
+##
+
+Most organizations want to advance their capabilities in DS/ML/AI. 
+
+. . .
+
+At the same, most organizations struggle to find value from them. 
+
+. . .
+
+In my humble estimation, I think this is because they are looking for value in the wrong places.
+
+##
+
+What I hear organizations say:
+
+. . .
+
+'We want to start being more predictive.'
+
+'We want to start using AI and machine learning.'
+
+'What AI tools should we buy?'
+
+##
+
+There's something really important that we seem to have overlooked.
+
+##
+
+During all of this time...
+
+-   economists were [trying to answer]{.fg style="--col: #75BAFF"} what is the true impact of education on one’s earnings
+
+-   biostatisticians were [trying to understand]{.fg style="--col: #75BAFF"} if saturated fat led to a higher chance of heart attack
+
+-   psychologists were [trying to understand]{.fg style="--col: #75BAFF"} if words of affirmation led indeed to a happier marriage.
+
+We forgot about those who have been doing “old-fashioned” science with data all along."[^2]
+
+[^2]: Source: [Matheus Facure, *Causal Inference for the Brave and True*](Alveshttps://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html)
+
+
+##
+
+What, really, is the value of data science?
+
+. . .
+
+The value of (data) science is simply that of science - it is the process by which we [try to understand]{.fg style="--col: #75BAFF"} the world around us.
+
+. . .
+
+It allows us to discover [cause and effect]{.fg style="--col: #75BAFF"}; it allows us to [measure things we care about]{.fg style="--col: #75BAFF"}. It helps us understand the data we have and the data that we don’t.
+
+##
+
+To illustrate, I want to tell you two stories of "old fashioned" science in action.
+
+. . .
+
+The second story is about an mportant topic that affects us all, something that weighs on us everyday and affects the physical well-being of ourselves and our loved ones:  <span class="fragment">**college football**</span>
+
+. . .
+
+The first story is about **heart disease**.
+
+<!-- "I tend to think of statistics as the **science of patterns in data**. We use statistics to make sense of the world by looking at data and trying to find patterns in it, often by summarizing the data in some way. -->
+
+<!-- . . . -->
+
+<!-- And yet, data science is not just statistics. It isn't something you know **so much as something you do**. -->
+
+<!-- . . . -->
+
+<!-- [Data science] is a **way of thinking about the world**, a **way of making sense of data**, a way of **asking questions and answering them**." -->
+
+
+<!-- It's a computational thing, a philosophical thing, a sociological thing — even a linguistic thing, if you dig into the details.  -->
+
+<!-- ## -->
+
+<!-- To this end, I believe the easiest way to understand data science is to see examples  -->
+
+<!-- ##  -->
+
+<!-- The data you choose to collect is part of the scientific process. -->
+
+<!-- . . . -->
+
+<!-- Understanding the data you don't have is just as important as the data that you do. -->
+
+<!-- . . . -->
+
+<!-- Prediction comes from *understanding* - understanding the process producing the data you observe. -->
+
+
+# 1) What causes cardiovascular failure?
+
+##
+
+Have you ever gone to the doctor and received your ten year cardiovascular risk score?
+
+. . .
+
+Have you ever wondered where that score comes from?
+
+. . .
+
+Would you have guessed that it had something to do with Franklin Delano Roosevelt?
+
+##  {background-image="images/fdr_before.jpg" background-position="center" background-color="white" background-size="contain"}
+
+
+## 
+
+President Roosevelt died on April 12, 1945, at the age of 63, from cerebral hemorrhage with a blood pressure of **300/190 mmHg**.
+
+. . .
+
+![](images/blood_pressure.png){fig-align="center"}
+
+## 
+
+By the 1940s, cardiovascular disease had become the number one cause of mortality among Americans, accounting for 1 in 2 deaths.
+
+At this time, **almost nothing was known about the causes of heart failure**.
+
+. . .
+
+Prevention and treatment were so poorly understood that most Americans accepted **early death from heart disease as unavoidable**.
+
+## 
+
+To illustrate:
+
+. . .
+
+In 1932, candidate Roosevelt's campaign office released medical records showing his blood pressure to be **140/100 mmHg**, which did not prompt any medical intervention.
+
+. . .
+
+By 1941, the President experienced a gradual rise in blood pressure to **188/105 mmHg**.
+
+. . .
+
+In March 1944, Dr. Bruenn noted that the patient appeared “slightly cyanotic” with blood pressure of **186/108 mmHg**.
+
+. . .
+
+A month after coming under Dr. Bruenn's care, Roosevelt's blood pressure had risen to **240/130 mmHg**.
+
+## 
+
+In February, 1945, Lord Charles Moran, Churchill's personal physician wrote: "the Americans here cannot bring themselves to believe that he is finished. His daughter thinks he is not really ill, and his doctor backs her up. **I give him only a few months to live**."
+
+. . .
+
+FDR died two months later.
+
+##
+
+FDR's death prompted a national call for the study of cardiovascular disease.
+
+## {background-image="images/heart_act.png" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+On June 16, 1948, President Harry Truman signed into law the National Heart Act.
+
+This law approved a **twenty-year epidemiological heart study** and established the National Heart Institute (now known as the National Heart, Lung and Blood Institute).
+
+. . .
+
+This study was the brainchild of **Joseph Mountin**, a physician from Hartford, Wisconsin.
+
+## {background-image="images/mountin.jpg" background-position="center" background-color="white" background-size="contain"}
+
+## 
+
+How do you determine the causes of long term heart risk?
+
+. . .
+
+
+Joseph Mountin recognized that the problem demanded **collecting the right data**.
+
+. . .
+
+"Observations of population characteristics must be made **well before disease becomes overt** if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty."
+
+##
+
+Mountin's recommendation:
+
+. . .
+
+- Study a large group of people over a long period of time who had not yet developed overt symptoms of cardiovascular disease. 
+
+. . .
+
+- Collect data on every individual at the start of the study and during regularly scheduled follow-ups.
+
+. . .
+
+- Observe them. Eventually, some of the individuals would experience cardiovascular disease.
+
+. . .
+
+- Examine the relationship between data collected at the beginning of the study and the onset of the disease.
+
+
+##
+
+The town of **Framingham, Massachusetts** was chosen as the location for the study. 
+
+. . .
+
+::: {layout-ncol=2}
+
+![](images/framingham_aerial.jpg){width=90%}
+
+![](images/framingham_town.jpg){width=60%}
+:::
+
+. . .
+
+The one-time farming community was now a factory town of 28,000 middle-class residents of predominantly European origin... and was **"therefore considered to be representative of the United States in the 1940s"**.
+
+##
+
+The original cohort was recruited between 1948 and 1952 and consisted of 5209 residents aged 28 to 62 years.
+
+. . .
+
+Women comprised more than half of all participants. The study's inclusion of women contrasted with contemporaneous epidemiological studies, which had very small numbers of women or excluded them altogether.
+
+##
+
+A committee of specialists had to **speculate about the potential causes** and develop a variety of hypotheses to guide their data collection.
+
+. . .
+
+They cast a pretty wide net in collecting data on individuals.
+
+## {background-image="images/data_collection.png" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+What did they find?
+
+. . .
+
+The first major study findings were published in 1957, almost a decade after the initial participant was examined. 
+
+. . .
+
+They found a nearly 4 fold increase in coronary heart disease incidence per 1000 persons among hypertensive participants (≥160/95 mmHg).
+
+##
+
+Much of what we know about the causes of heart disease (physical activity, diet, smoking) was found in the years to come in the more than 3000 papers published using data from the Framingham Heart Study.
+
+. . .
+
+These findings form the basis of the Framingham Risk Score, a simple model for estimating long term risk of cardiovascular disease that is used to this day.
+
+. . .
+
+The study continues; it is now on its **third generation of residents**, now examining the effects of genetics.
+
+##
+
+Why am I telling you about this?
+
+. . .
+
+The data you choose to collect, and not collect, is part of the scientific process.
+
+. . .
+
+All of the tools and technology in the world will not help if you have not collected the data you need.
+
+. . .
+
+Understanding the data you don't have requires
+
+:::
+<!-- . . . -->
+
+<!-- President Harry Truman signed into law the ‘National Heart Act.’ In it the US Congress declared “Whereas the Congress hereby finds and declares that the Nation's health is seriously threatened by diseases of the heart and circulation, including high blood pressure… These diseases are the main cause of death in the United States and more than one in every three of our people die from them…” -->
+
+## 
+
+## {background-image="images/heart_act.png" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+The question was clear:
+
+What would you need to do in order to understand cardiovascular disease?
+
+
+## {background-image="images/mountin_1948.png" background-position="center" background-color="white" background-size="contain"}
+
+---
+
+Joseph Mountin, a physician, was born in Hartford, Wisconsin in 1891 and received his medical degree
+
+What would you need to do in order to understand cardiovascular disease?
+
+. . .
+
+Joseph Mountin
+
+"The characteristics of persons who already have the disease are not necessarily the same as those that predispose to the disease. 
+
+Observations of population characteristics must be made well before disease becomes overt if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty."
+
+
+
+The one-time farming community was now a factory town of 28,000 middle-class residents of predominantly European origin... and was therefore considered to be representative of the United States in the 1940s.
+
+“to study the expression of coronary artery disease in a ‘normal’ or unselected population and to determine the factors predisposing to the development of the disease through clinical and laboratory exam\ and long term follow-up…”
+
+ order to start recruiting 6,000 of
+the town's 10,000 adult residents.
+
+What explains?
+
+What can we use to predict
+
+##  {background-image="images/framingham.png" background-position="center" background-color="white"}
+
+## What causes cardiovascular failure?
+
+## Who are the best college football teams?
+
+### What happened to Wisconsin football?
+
+## Wrapping up
+
+## 
+
+The value of (data) science is simply that of science - it is the process by which we understand the world around us.
+
+. . .
+
+It allows us to discover cause and effect; it allows us to measure things we care about. It helps us understand the data we have and the data that we don’t.
+
+. . .
+
+There is no easy button; there is no technology that you can buy in and start solving all of your problems.
+
+. . .
+
+(Data) science is like farming. It’s slow and hard and difficult. But if you plant the seeds, if you work at it and make an effort everyday, you will produce something in the end.
