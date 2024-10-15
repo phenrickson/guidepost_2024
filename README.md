@@ -1,3 +1,3 @@
-# cfb_models
+# guidepost_2024
 
-reworking college football models to date via `cfbfastR` package
+slides for 'The Data You Don't Have'
