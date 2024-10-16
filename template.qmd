@@ -5,7 +5,10 @@ subtitle: "Where is the value in data science?"
 author: "Phil Henrickson, PhD <br> Data Scientist <br> AE Business Solutions"
 format: 
     clean-revealjs
+css: styles.css
 editor: source
+execute: 
+  cache: true
 ---
 
 # Background
@@ -44,7 +47,19 @@ Is all of this investment in data science actually worth anything?
 
 ##
 
-During all of this time...
+Most organizations want to advance their capabilities in DS/ML/AI. 
+
+. . .
+
+At the same, most organizations struggle to find value from them. 
+
+. . .
+
+In my humble estimation, I think this is because they are looking for value in the wrong places.
+
+##
+
+"During all of this time...
 
 . . .
 
@@ -60,21 +75,9 @@ During all of this time...
 
 . . .
 
-We forgot about those who have been doing “old-fashioned” science with data all along.[^2]
+We forgot about those who have been doing “old-fashioned” science with data all along."[^2]
 
 [^2]: Source: [Matheus Facure, *Causal Inference for the Brave and True*](Alveshttps://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html)
-
-##
-
-Most organizations want to advance their capabilities in DS/ML/AI. 
-
-. . .
-
-At the same, most organizations struggle to find value from them. 
-
-. . .
-
-In my humble estimation, I think this is because they are looking for value in the wrong places.
 
 ##
 
@@ -90,11 +93,7 @@ What I hear organizations say:
 
 ##
 
-There's something really important that we seem to have overlooked.
-
-##
-
-During all of this time...
+"During all of this time...
 
 -   economists were [trying to answer]{.fg style="--col: #75BAFF"} what is the true impact of education on one’s earnings
 
@@ -125,7 +124,7 @@ To illustrate, I want to tell you two stories of "old fashioned" science in acti
 
 . . .
 
-The second story is about an mportant topic that affects us all, something that weighs on us everyday and affects the physical well-being of ourselves and our loved ones:  <span class="fragment">**college football**</span>
+The second story is about an important topic that affects us all, something that weighs on us everyday and affects the physical well-being of ourselves and our loved ones:  <span class="fragment">**college football**</span>.
 
 . . .
 
@@ -165,7 +164,7 @@ The first story is about **heart disease**.
 
 ##
 
-Have you ever gone to the doctor and received your ten year cardiovascular risk score?
+Have you ever gone to the doctor and received your ten-year cardiovascular risk score?
 
 . . .
 
@@ -234,13 +233,15 @@ FDR's death prompted a national call for the study of cardiovascular disease.
 
 On June 16, 1948, President Harry Truman signed into law the National Heart Act.
 
-This law approved a **twenty-year epidemiological heart study** and established the National Heart Institute (now known as the National Heart, Lung and Blood Institute).
+This law approved a **twenty-year epidemiological heart study** and established the National Heart Institute.
 
 . . .
 
 This study was the brainchild of **Joseph Mountin**, a physician from Hartford, Wisconsin.
 
-## {background-image="images/mountin.jpg" background-position="center" background-color="white" background-size="contain"}
+##
+
+![](images/mountin.jpg){fig-align="center"}
 
 ## 
 
@@ -249,7 +250,7 @@ How do you determine the causes of long term heart risk?
 . . .
 
 
-Joseph Mountin recognized that the problem demanded **collecting the right data**.
+Joseph Mountin recognized that the problem demanded a long term study; **collecting the right data**.
 
 . . .
 
@@ -280,28 +281,37 @@ Mountin's recommendation:
 
 The town of **Framingham, Massachusetts** was chosen as the location for the study. 
 
-. . .
+##
 
-::: {layout-ncol=2}
+![](images/framingham_town.jpg){fig-align="center"}
 
-![](images/framingham_aerial.jpg){width=90%}
+<!-- ## -->
+<!-- ::: {layout-ncol=2} -->
 
-![](images/framingham_town.jpg){width=60%}
-:::
+<!-- ![](images/framingham_aerial.jpg){width=90%} -->
 
-. . .
+<!-- ![](images/framingham_town.jpg){width=60%} -->
+<!-- ::: -->
+
+<!-- . . . -->
+
+##
+
+The town of **Framingham, Massachusetts** was chosen as the location for the study. 
 
 The one-time farming community was now a factory town of 28,000 middle-class residents of predominantly European origin... and was **"therefore considered to be representative of the United States in the 1940s"**.
 
+::: aside
+
+* The original cohort was recruited between 1948 and 1952 and consisted of 5209 residents aged 28 to 62 years. Women comprised more than half of the participants in the study. The study's inclusion of women contrasted with contemporaneous epidemiological studies, which had very small numbers of women or excluded them altogether.
+
+:::
+
 ##
 
-The original cohort was recruited between 1948 and 1952 and consisted of 5209 residents aged 28 to 62 years.
+What data did they choose to collect?
 
 . . .
-
-Women comprised more than half of all participants. The study's inclusion of women contrasted with contemporaneous epidemiological studies, which had very small numbers of women or excluded them altogether.
-
-##
 
 A committee of specialists had to **speculate about the potential causes** and develop a variety of hypotheses to guide their data collection.
 
@@ -312,6 +322,10 @@ They cast a pretty wide net in collecting data on individuals.
 ## {background-image="images/data_collection.png" background-position="center" background-color="white" background-size="contain"}
 
 ##
+
+![](images/framingham_carbon_paper.png){fig-align="center"}
+
+## 
 
 What did they find?
 
@@ -325,15 +339,15 @@ They found a nearly 4 fold increase in coronary heart disease incidence per 1000
 
 ##
 
-Much of what we know about the causes of heart disease (physical activity, diet, smoking) was found in the years to come in the more than 3000 papers published using data from the Framingham Heart Study.
+Much of what we know about the causes of heart disease (exercise, diet, smoking) was found in the years to come in the more than 3000 papers published using data from the Framingham Heart Study.
 
 . . .
 
-These findings form the basis of the Framingham Risk Score, a simple model for estimating long term risk of cardiovascular disease that is used to this day.
+These findings form the basis of the **Framingham Risk Score**, a simple model for estimating long term risk of cardiovascular disease that is used to this day.
 
 . . .
 
-The study continues; it is now on its **third generation of residents**, now examining the effects of genetics.
+The Framingham study continues; it is now on its **third generation of residents**, examining the effects of family history and genetics.
 
 ##
 
@@ -345,64 +359,82 @@ The data you choose to collect, and not collect, is part of the scientific proce
 
 . . .
 
-All of the tools and technology in the world will not help if you have not collected the data you need.
+All of the tools and technology in the world will not help if you do not try to **understand your problem** and the **data that would help you solve it**.
 
 . . .
 
-Understanding the data you don't have requires
+If this is the case for something **as simple as heart disease**, it can also be true for something much more serious: **college football**.
 
-:::
-<!-- . . . -->
+# 2) How do you measure a college football team?
 
-<!-- President Harry Truman signed into law the ‘National Heart Act.’ In it the US Congress declared “Whereas the Congress hereby finds and declares that the Nation's health is seriously threatened by diseases of the heart and circulation, including high blood pressure… These diseases are the main cause of death in the United States and more than one in every three of our people die from them…” -->
-
-## 
-
-## {background-image="images/heart_act.png" background-position="center" background-color="white" background-size="contain"}
 
 ##
 
-The question was clear:
+![Pre-game betting line and win probability for Wisconsin @ Northwestern, 10/19/2024 ](images/uw_nw_preview.png){fig-align="center"}
 
-What would you need to do in order to understand cardiovascular disease?
+##
 
-
-## {background-image="images/mountin_1948.png" background-position="center" background-color="white" background-size="contain"}
-
----
-
-Joseph Mountin, a physician, was born in Hartford, Wisconsin in 1891 and received his medical degree
-
-What would you need to do in order to understand cardiovascular disease?
+Have you ever looked at pre-game betting lines and win probabilities for football games?
 
 . . .
 
-Joseph Mountin
+Have you ever wondered how they make these predictions? It might not be quite what you think.
 
-"The characteristics of persons who already have the disease are not necessarily the same as those that predispose to the disease. 
+. . .
 
-Observations of population characteristics must be made well before disease becomes overt if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty."
+Would you have guessed that it had something to do with a quarterback who played in the 1970s?
+
+##  {background-image="images/virgil_carter.jpg" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+**Virgil Carter** was an NFL quarterback who played for the Bears and the Bengals in the 1970s.
+
+. . .
+
+***While also being a quarterback in the NFL***, Virgil Carter earned a Master's degree from Northwestern and taught statistics and mathematics at Xavier University.
+
+. . .
+
+The focus of his research, naturally, was football.
+
+##  {background-image="images/operations_research_football.png" background-position="center" background-color="white" background-size="contain"}
+
+##  {background-image="images/operations_research_football.png" background-position="center" background-color="white" background-size="contain"}
+
+## 
+
+How do you evaluate a football team? Virgil Carter's idea was to measure the value of **individual plays** in terms of points.
+
+
+##
 
 
 
-The one-time farming community was now a factory town of 28,000 middle-class residents of predominantly European origin... and was therefore considered to be representative of the United States in the 1940s.
 
-“to study the expression of coronary artery disease in a ‘normal’ or unselected population and to determine the factors predisposing to the development of the disease through clinical and laboratory exam\ and long term follow-up…”
+He 
 
- order to start recruiting 6,000 of
-the town's 10,000 adult residents.
+. . .
 
-What explains?
+He manually collected plays from the 1969 season to try to measure 
 
-What can we use to predict
 
-##  {background-image="images/framingham.png" background-position="center" background-color="white"}
 
-## What causes cardiovascular failure?
 
-## Who are the best college football teams?
 
-### What happened to Wisconsin football?
+##
+
+How do you evaluate a football team?
+
+. . .
+
+How 
+
+##  {background-image="images/virgil_carter.jpg" background-position="center" background-color="white" background-size="contain"}
+
+##
+
+This idea, forms the 
 
 ## Wrapping up
 
@@ -414,10 +446,30 @@ The value of (data) science is simply that of science - it is the process by whi
 
 It allows us to discover cause and effect; it allows us to measure things we care about. It helps us understand the data we have and the data that we don’t.
 
+##
+
+There is no easy button; there is no tool that you can buy and start solving all of your problems.
+
 . . .
 
-There is no easy button; there is no technology that you can buy in and start solving all of your problems.
+The value of data science usually doesn't come from technology
 
 . . .
 
-(Data) science is like farming. It’s slow and hard and difficult. But if you plant the seeds, if you work at it and make an effort everyday, you will produce something in the end.
+It's in the creatvitiy/dedication/passion/expertise of asking questions 
+
+. . .
+
+I don't think data science is electricity and data the new oil. I think it's something much simpler.
+
+. . .
+
+(Data) science is like farming. 
+
+. . .
+
+It’s slow and difficult. <span class="fragment">You can't take shortcuts.</span> But if you plant the seeds, if you work at it and make an effort everyday, you will produce something in the end.
+
+## 
+
+thanks for listening

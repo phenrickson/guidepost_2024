@@ -6,8 +6,7 @@ format:
     echo: false
     warning: false
     number-sections: false
-editor: 
-  visual
+editor: source
 execute:
   cache: true
 ---
@@ -202,7 +201,6 @@ team_scores |>
 
 ```
 
-
 ```{r}
 
 team_scores |>
@@ -216,7 +214,6 @@ team_scores |>
   plot_team_estimates_by_season(team = 'Nebraska')
 
 ```
-
 
 ```{r}
 
@@ -249,8 +246,6 @@ draws |>
 
 
 ```
-
-
 
 ##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
 
