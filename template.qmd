@@ -9,6 +9,7 @@ css: styles.css
 editor: source
 execute: 
   cache: true
+  freeze: true
 ---
 
 
@@ -661,10 +662,12 @@ draws |>
   geom_vline(aes(xintercept = home_margin), linetype = 'dashed')+
   theme_cfb()+
   xlab("Home Team Margin of Victory")+
-  ylab("Simulations")
+  ylab("Simulations")+
+  labs(
+    "upcoming games simulated as of 10/16/24"
+  )
 
 ```
-
 
 <!-- ## -->
 
@@ -813,6 +816,22 @@ It allows us to discover [cause and effect]{.fg style="--col: #75BAFF"}; it allo
 
 ##
 
+To recap:
+
+1) The data **you choose to collect, and not collect**, is part of the scientific process.
+
+2) All of the technology in the world does not matter if you do not **understand your problem** and the **data and methodology that would help you solve it**.
+
+1) Models are about more than just prediction; they enable us to **make sense of patterns in data** and **measure things we care about**.
+
+2) The best work and the best predictions tend to come not from supercomputers, but from **really trying to understand the thing you are predicting**.
+
+#
+
+one final thought
+
+##
+
 There is no easy button; there is no tool that you can buy and start solving all of your problems.
 
 . . .
@@ -821,7 +840,7 @@ The value in (data) science usually doesn't come from algorithms, tools, platfor
 
 . . .
 
-The value in (data) science is usually from the creativity/dedication/passion of asking questions and caring about the answer.
+The value in (data) science is usually from the [creativity/dedication/passion]{.fg style="--col: #75BAFF"} of asking questions and caring about finding the answer.
 
 
 ##

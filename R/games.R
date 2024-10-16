@@ -1102,7 +1102,7 @@ plot_game_sims <- function(data) {
     ) |>
     mutate(game_label = paste(
       paste(home_team, away_team, sep = " vs "), "\n",
-      paste(unique(pred_team), abs(unique(pred)), sep = " by ")
+      paste(unique(pred_team), unique(abs(pred)), sep = " by ")
     )) |>
     mutate(win_color = case_when(
       .prediction > 0 ~ home_team,
@@ -1110,7 +1110,6 @@ plot_game_sims <- function(data) {
     )) |>
     ggplot(aes(x = .prediction)) +
     geom_histogram(aes(fill = win_color), bins = 80) +
-    facet_wrap(game_label ~ ., ncol = 3) +
     cfbplotR::scale_fill_cfb(alt_colors = "USC") +
     cfbplotR::scale_color_cfb(alt_colors = "USC") +
     geom_vline(aes(xintercept = pred),
@@ -1119,7 +1118,8 @@ plot_game_sims <- function(data) {
     ) +
     coord_cartesian(xlim = c(-75, 75))+
     xlab("Home Team Margin of Victory")+
-    ylab("Simulations")
+    ylab("Simulations")+
+    geom_vline(aes(xintercept = home_margin), linetype = 'dashed')
 }
 
 calculate_game_interest = function(data) {
