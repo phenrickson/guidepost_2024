@@ -86,7 +86,9 @@ In the search for fame and fortune, hundreds of young professionals entered into
 
 . . .
 
-Consulting specialists promised millions if your company could [unlock the potential of data]{.fg style="--col: #C6B90B"}.  AI, or Machine Learning, has been called the [new electricity]{.fg style="--col: #C6B90B"} and data, the [new oil]{.fg style="--col: #C6B90B"}."[^1]
+Consulting specialists promised millions if your company could [unlock the potential of data]{.fg style="--col: #C6B90B"}. 
+
+AI, or Machine Learning, has been called the [new electricity]{.fg style="--col: #C6B90B"} and data, the [new oil]{.fg style="--col: #C6B90B"}."[^1]
 
 [^1]: Source: [Matheus Facure, *Causal Inference for the Brave and True*](Alveshttps://matheusfacure.github.io/python-causality-handbook/01-Introduction-To-Causality.html)
 
@@ -800,7 +802,7 @@ Why am I telling you about this?
 
 . . .
 
-2) The best work and the best predictions tend to come not from supercomputers, but from **really trying to understand the thing you are predicting**.
+2) The best work and the best predictions tend to come from **really trying to understand the thing you are predicting**.
 
 # 
 
@@ -822,9 +824,9 @@ To recap:
 
 2) All of the technology in the world does not matter if you do not **understand your problem** and the **data and methodology that would help you solve it**.
 
-1) Models are about more than just prediction; they enable us to **make sense of patterns in data** and **measure things we care about**.
+3) Models are about more than just prediction; they enable us to **make sense of patterns in data** and **measure things we care about**.
 
-2) The best work and the best predictions tend to come not from supercomputers, but from **really trying to understand the thing you are predicting**.
+4) The best work and the best predictions tend to come from **really trying to understand the thing you are predicting**.
 
 #
 
@@ -862,3 +864,20 @@ But if you work at it and make an effort everyday, you will produce something va
 #
 
 thanks for listening
+
+#
+
+references
+
+##
+
+1) Mahmood, Syed S., et al. ["The Framingham Heart Study and the epidemiology of cardiovascular disease: a historical perspective."](https://pmc.ncbi.nlm.nih.gov/articles/PMC4159698/) The lancet 383.9921 (2014): 999-1008.
+
+2) Dawber, Thomas R., Gilcin F. Meadors, and Felix E. Moore Jr. ["Epidemiological approaches to heart disease: the Framingham Study."](https://ajph.aphapublications.org/doi/pdf/10.2105/AJPH.41.3.279) American Journal of Public Health and the Nations Health 41.3 (1951): 279-286.
+
+3) [Epidemiological Background and Design:
+The Framingham Heart Study](https://www.framinghamheartstudy.org/fhs-about/history/epidemiological-background/)
+
+4) Carter, Virgil, and Robert E. Machol. ["Operations research on football."](https://pubsonline.informs.org/doi/epdf/10.1287/opre.19.2.541) Operations Research 19.2 (1971): 541-544.
+
+
