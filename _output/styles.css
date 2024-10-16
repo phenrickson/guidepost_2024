@@ -1,0 +1,22 @@
+.scroll {
+max-height: 600px;
+overflow-y: scroll;
+}
+
+/* styles.css */
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.center img {
+  text-align: center; /* Centers image within the div */
+}
+
+.center figcaption {
+  text-align: center; /* Centers caption within the div */
+  margin-top: 8px; /* Optional spacing */
+  font-style: italic; /* Optional styling */
+}
+
