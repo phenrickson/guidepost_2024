@@ -23,6 +23,7 @@ library(gt)
 library(gtExtras)
 library(yardstick)
 library(patchwork)
+library(purrr)
 
 # src code
 tar_source("R")
@@ -38,7 +39,7 @@ draws <- tar_read("games_draws")
 sims <- tar_read("games_sims")
 
 # team info
-team_info <- cfbfastR::cfbd_team_info(year = params$season)
+team_info <- cfbfastR::cfbd_team_info(year = 2024)
 
 # estimates
 team_scores = tar_read("team_scores")
@@ -126,24 +127,6 @@ sims_and_betting_lines =
 ```
 
 ```{r}
-#| warning: false
-#| message: false
-
-sims_and_betting_lines |>
-  filter(provider == 'ESPN Bet') |>
-  ggplot(aes(x=pred_margin, y= -1*spread_open))+
-  geom_point(alpha = 0.5)+
-  theme_cfb()+
-  tune::coord_obs_pred()+
-  geom_abline(slope = 1, linetype = 'dashed')+
-  ggpubr::stat_cor(aes(label = ..r.label..)) +
-  facet_wrap(paste(season) ~.)+
-  xlab("Phil's Estimated Spread")+
-  ylab("ESPN Bet Spread")
-
-```
-
-```{r}
 
 plot_vs_fpi = function(data) {
   
@@ -161,6 +144,25 @@ plot_vs_fpi = function(data) {
   b
 }
 
+vs_fpi = 
+  team_scores |>
+  find_team_season_score()  |>
+  select(season, team, score) |>
+  inner_join(
+    team_info |>
+      adjust_team_names(cols = "school") |>
+      select(team = school, team_id)
+  ) |>
+  inner_join(
+    espn_fpi |>
+      select(season = year, team_id, team_abbreviation, fpi) |>
+      mutate(fpi = as.numeric(fpi))
+  ) 
+
+vs_fpi |>
+  plot_vs_fpi()+
+  geom_point(alpha = 0.25)+
+  ggpubr::stat_cor(method = 'spearman', aes(label = ..r.label..))
 ```
 
 ```{r}
@@ -191,6 +193,24 @@ vs_fpi |>
   plot_vs_fpi()+
   geom_point(alpha = 0.25)+
   ggpubr::stat_cor(method = 'spearman', aes(label = ..r.label..))
+
+```
+
+```{r}
+#| warning: false
+#| message: false
+
+sims_and_betting_lines |>
+  filter(provider == 'ESPN Bet') |>
+  ggplot(aes(x=pred_margin, y= -1*spread_open))+
+  geom_point(alpha = 0.5)+
+  theme_cfb()+
+  tune::coord_obs_pred()+
+  geom_abline(slope = 1, linetype = 'dashed')+
+  ggpubr::stat_cor(aes(label = ..r.label..)) +
+  facet_wrap(paste(season) ~.)+
+  xlab("Phil's Estimated Spread")+
+  ylab("ESPN Bet Spread")
 
 ```
 
@@ -265,7 +285,7 @@ Expected Points Post Snap: 7.00\
 **Expected Points Added: 5.20**
 :::
 
-##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
+##  {background-image="gifs/eMsJcuIooJg_00-01-28_00-01-35.gif" background-position="center" background-color="white" background-size="contain"}
 
 ## 
 
