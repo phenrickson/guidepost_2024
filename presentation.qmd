@@ -430,11 +430,17 @@ Virgil Carter's idea was to **measure the value of individual plays** in terms o
 
 To illustrate: how many points is each of the following plays worth?
 
-##  {background-image="gifs/eMsJcuIooJg_00-01-35_00-01-48.gif" background-position="center" background-color="white" background-size="contain"}
+##
 
-##  {background-image="gifs/eMsJcuIooJg_00-01-28_00-01-35.gif" background-position="center" background-color="white" background-size="contain"}
+![](gifs/eMsJcuIooJg_00-01-35_00-01-48.gif){fig-align="center"}
 
-##  {background-image="gifs/G9w9Lu43UhU_00-01-23_00-01-32.gif" background-position="center" background-color="white" background-size="contain"}
+##
+
+![](gifs/eMsJcuIooJg_00-01-28_00-01-35.gif){fig-align="center"}
+
+##
+
+![](gifs/G9w9Lu43UhU_00-01-23_00-01-32.gif){fig-align="center"}
 
 ##
 
@@ -582,9 +588,7 @@ My end of year team ratings compared to the ESPN college football power index.
 
 ::: {style="font-size: 75%;"}
 
-My spread vs Vegas opening spread throughout the 2024 season to date.
-
-Betting lines for individual games are a little bit harder to crack; they are surely accounting for things that I (currently) am not, such as rest/injuries/travel.
+My spread vs opening spreads from providers throughout the 2024 season to date.
 
 :::
 
@@ -607,6 +611,12 @@ sims_and_betting_lines |>
   facet_wrap(provider ~., ncol = 2)
 
 ```
+
+::: {style="font-size: 75%;"}
+
+Betting lines for individual games are a little bit harder to crack; they are surely accounting for things that I (currently) am not, such as rest/injuries/travel.
+
+:::
 
 ##
 
