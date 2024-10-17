@@ -243,9 +243,9 @@ FDR's death in April of 1945 prompted a national call for the study of cardiovas
 
 ##
 
-On June 16, 1948, President Harry Truman signed into law the National Heart Act.
+FDR's death in April of 1945 prompted a national call for the study of cardiovascular disease.
 
-This law approved a **twenty-year epidemiological heart study** and established the National Heart Institute.
+On June 16, 1948, President Harry Truman signed into law the National Heart Act. This law approved a **twenty-year epidemiological heart study** and established the National Heart Institute.
 
 . . .
 
@@ -266,15 +266,15 @@ Joseph Mountin recognized that the problem demanded a long term study; **collect
 
 . . .
 
-"Observations of population characteristics must be made **well before disease becomes overt** if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty."
+> "Observations of population characteristics must be made **well before disease becomes overt** if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty."
 
 ##
 
-Mountin's recommendation:
+How do you determine the causes of long term heart risk?
 
 . . .
 
-- Study a large group of people over a long period of time who had not yet developed overt symptoms of cardiovascular disease. 
+- Study a large group of people over a long period of time who have not yet developed overt symptoms of cardiovascular disease. 
 
 . . .
 
@@ -282,7 +282,7 @@ Mountin's recommendation:
 
 . . .
 
-- Observe them. Eventually, some of the individuals would experience cardiovascular disease.
+- Observe them. Eventually, some of the individuals will experience cardiovascular disease.
 
 . . .
 
@@ -312,6 +312,8 @@ The town of **Framingham, Massachusetts** was chosen as the location for the stu
 <!-- . . . -->
 
 ##
+
+So that is what they decided to do.
 
 The town of **Framingham, Massachusetts** was chosen as the location for the study. 
 
@@ -486,7 +488,9 @@ Expected Points After Play: -3.25\
 
 ##
 
-Note: these estimates come not from Virgil Carter's 1969 NFL Season, but my own expected points model trained on all college football plays from 2007-2019.
+Note: 
+
+These estimates come not from Virgil Carter's 1969 NFL Season, but my own expected points model trained on all college football plays from 2007-2019.
 
 ##
 
