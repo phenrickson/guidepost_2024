@@ -7,7 +7,7 @@ format:
     clean-revealjs
 css: styles.css
 editor: source
-execute: 
+execute:
   cache: true
   freeze: true
 ---

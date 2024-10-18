@@ -1,0 +1,310 @@
+[
+  {
+    "objectID": "presentation.html#section",
+    "href": "presentation.html#section",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "“For a decade now, [the role of] Data Scientist has been in the spotlight. AI experts had salaries that rivaled those of sports superstars.\n\nIn the search for fame and fortune, hundreds of young professionals entered into what seemed a frenetic golden rush… Whole new industries sprang around the hype.\n\n\nConsulting specialists promised millions if your company could unlock the potential of data.\nAI, or Machine Learning, has been called the new electricity and data, the new oil.”1\n\nSource: Matheus Facure, Causal Inference for the Brave and True"
+  },
+  {
+    "objectID": "presentation.html#section-1",
+    "href": "presentation.html#section-1",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "But there’s a problem.\n\nIs all of this investment in data science actually worth anything?"
+  },
+  {
+    "objectID": "presentation.html#section-5",
+    "href": "presentation.html#section-5",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Most organizations want to advance their capabilities in DS/ML/AI.\n\nAt the same, most organizations struggle to find value from them.\n\n\nIn my humble estimation, I think this is because they are looking for value in the wrong places."
+  },
+  {
+    "objectID": "presentation.html#section-6",
+    "href": "presentation.html#section-6",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "“During all of this time…\n\n\neconomists were trying to answer what is the true impact of education on one’s earnings\n\n\n\n\nbiostatisticians were trying to understand if saturated fat led to a higher chance of a heart attack\n\n\n\n\npsychologists were trying to understand if words of affirmation led indeed to a happier marriage.\n\n\n\nWe forgot about those who have been doing “old-fashioned” science with data all along.”1\n\nSource: Matheus Facure, Causal Inference for the Brave and True"
+  },
+  {
+    "objectID": "presentation.html#section-7",
+    "href": "presentation.html#section-7",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "What, really, is the value of data science?\n\nThe value of data science is simply that of science - it is the process by which we try to understand the world around us.\n\n\nIt allows us to discover cause and effect; it allows us to measure things we care about. It helps us understand the data we have and the data that we don’t."
+  },
+  {
+    "objectID": "presentation.html#section-8",
+    "href": "presentation.html#section-8",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "To illustrate, I want to tell you two stories of “old fashioned” data science in action.\n\nThese stories involve two very different, yet related topics.\n\n\nThe second story is about an important topic that affects us all, something that weighs on us everyday and affects the physical well-being of ourselves and our loved ones: college football.\n\n\nThe first story is about heart disease."
+  },
+  {
+    "objectID": "presentation.html#section-9",
+    "href": "presentation.html#section-9",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Have you ever gone to the doctor and received your ten-year cardiovascular risk score?\n\nHave you ever wondered where that score comes from?\n\n\nWould you have guessed that it had something to do with Franklin Delano Roosevelt?"
+  },
+  {
+    "objectID": "presentation.html#section-11",
+    "href": "presentation.html#section-11",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "President Roosevelt died on April 12, 1945, at the age of 63, from cerebral hemorrhage with a blood pressure of 300/190 mmHg."
+  },
+  {
+    "objectID": "presentation.html#section-12",
+    "href": "presentation.html#section-12",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "By the 1940s, cardiovascular disease had become the number one cause of mortality among Americans, accounting for 1 in 2 deaths.\nAt this time, almost nothing was known about the causes of heart failure.\n\nPrevention and treatment were so poorly understood that most Americans accepted early death from heart disease as unavoidable."
+  },
+  {
+    "objectID": "presentation.html#section-13",
+    "href": "presentation.html#section-13",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "To illustrate:\n\nIn 1932, candidate Roosevelt’s campaign office released medical records showing his blood pressure to be 140/100 mmHg, which did not prompt any medical intervention.\n\n\nBy 1941, the President experienced a gradual rise in blood pressure to 188/105 mmHg.\n\n\nIn March 1944, Dr. Bruenn noted that the patient appeared “slightly cyanotic” with blood pressure of 186/108 mmHg.\n\n\nA month after coming under Dr. Bruenn’s care, Roosevelt’s blood pressure had risen to 240/130 mmHg."
+  },
+  {
+    "objectID": "presentation.html#section-14",
+    "href": "presentation.html#section-14",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "FDR’s death in April of 1945 prompted a national call for the study of cardiovascular disease."
+  },
+  {
+    "objectID": "presentation.html#section-16",
+    "href": "presentation.html#section-16",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "FDR’s death in April of 1945 prompted a national call for the study of cardiovascular disease.\nOn June 16, 1948, President Harry Truman signed into law the National Heart Act. This law approved a twenty-year epidemiological heart study and established the National Heart Institute.\n\nThis study was the brainchild of Joseph Mountin, a physician from Hartford, Wisconsin."
+  },
+  {
+    "objectID": "presentation.html#section-18",
+    "href": "presentation.html#section-18",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "How do you determine the causes of long term heart risk?\n\nJoseph Mountin recognized that the problem demanded a long term study; collecting the necessary data.\n\n\n\n“Observations of population characteristics must be made well before disease becomes overt if the relationship of these characteristics to the development of the disease is to be established with reasonable certainty.”"
+  },
+  {
+    "objectID": "presentation.html#section-19",
+    "href": "presentation.html#section-19",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "How do you determine the causes of long term heart risk?\n\n\nStudy a large group of people over a long period of time who have not yet developed overt symptoms of cardiovascular disease.\n\n\n\n\nCollect data on every individual at the start of the study and during regularly scheduled follow-ups.\n\n\n\n\nObserve them. Eventually, some of the individuals will experience cardiovascular disease.\n\n\n\n\nExamine the relationship between data collected at the beginning of the study and the onset of the disease."
+  },
+  {
+    "objectID": "presentation.html#section-20",
+    "href": "presentation.html#section-20",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "So that is what they decided to do.\n\nThe town of Framingham, Massachusetts was chosen as the location for the study."
+  },
+  {
+    "objectID": "presentation.html#section-22",
+    "href": "presentation.html#section-22",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "So that is what they decided to do.\nThe town of Framingham, Massachusetts was chosen as the location for the study.\nThe one-time farming community was now a factory town of 28,000 middle-class residents of predominantly European origin… and was “therefore considered to be representative of the United States in the 1940s”.\n\n\nThe original cohort was recruited between 1948 and 1952 and consisted of 5209 residents aged 28 to 62 years. Women comprised more than half of the participants in the study. The study’s inclusion of women contrasted with contemporaneous epidemiological studies, which had very small numbers of women or excluded them altogether."
+  },
+  {
+    "objectID": "presentation.html#section-23",
+    "href": "presentation.html#section-23",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "What data did they choose to collect?\n\nA committee of specialists had to speculate about the potential causes and develop a variety of hypotheses to guide their data collection.\n\n\nThey cast a pretty wide net in collecting data on individuals."
+  },
+  {
+    "objectID": "presentation.html#section-26",
+    "href": "presentation.html#section-26",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "What did they find?\n\nThe first major findings were published in 1957, almost a decade after the initial participant was examined.\n\n\nThey found a nearly 4 fold increase in coronary heart disease incidence per 1000 persons among hypertensive participants (≥160/95 mmHg)."
+  },
+  {
+    "objectID": "presentation.html#section-27",
+    "href": "presentation.html#section-27",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Much of what we know about the causes of heart disease (exercise, diet, smoking) was found in the years to come in the more than 3000 papers published using data from the Framingham Heart Study.\n\nThese findings form the basis of the Framingham Risk Score, a simple model for estimating long term risk of cardiovascular disease that is used to this day.\n\n\nThe Framingham study continues; it is now on its third generation of residents, examining the effects of family history and genetics."
+  },
+  {
+    "objectID": "presentation.html#section-28",
+    "href": "presentation.html#section-28",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Why am I telling you about this?\n\n\nThe data you choose to collect, and not collect, is part of the scientific process.\n\n\n\n\nAll of the technology in the world does not matter if you do not understand your problem and the data and methodology that would help you solve it."
+  },
+  {
+    "objectID": "presentation.html#section-29",
+    "href": "presentation.html#section-29",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "The methods we use to understand something as simple as heart disease are the same ones we use to understand something far more serious: college football."
+  },
+  {
+    "objectID": "presentation.html#section-31",
+    "href": "presentation.html#section-31",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Have you ever looked at pre-game betting lines and win probabilities for football games?\n\nHave you ever wondered how they make these predictions? It might not be quite what you think.\n\n\nWould you have guessed that it had something to do with a quarterback who played in the 1970s?"
+  },
+  {
+    "objectID": "presentation.html#section-33",
+    "href": "presentation.html#section-33",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Virgil Carter was an NFL quarterback who played for the Bears and the Bengals in the 1970s.\n\nWhile also being a quarterback in the NFL, Virgil Carter earned a Master’s degree from Northwestern and taught statistics and mathematics at Xavier University.\n\n\nThe focus of his research, naturally, was football."
+  },
+  {
+    "objectID": "presentation.html#section-36",
+    "href": "presentation.html#section-36",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "How do you evaluate a football team?\n\nVirgil Carter’s idea was to measure the value of individual plays in terms of expected points.\n\n\nTo illustrate: how many points is each of the following plays worth?"
+  },
+  {
+    "objectID": "presentation.html#section-40",
+    "href": "presentation.html#section-40",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "To answer questions like these, Virgial Carter manually collected play-by-play data from the entire 1969 NFL season.\n\nHe wanted to calculate the expected value of field position in terms of points."
+  },
+  {
+    "objectID": "presentation.html#section-41",
+    "href": "presentation.html#section-41",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Expected Points Before Play: 1.80\nExpected Points After Play: 7.00\nExpected Points Added: 5.20"
+  },
+  {
+    "objectID": "presentation.html#section-42",
+    "href": "presentation.html#section-42",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Expected Points Before Play: 0.67\nExpected Points After Play: 1.80\nExpected Points Added: 1.13"
+  },
+  {
+    "objectID": "presentation.html#section-43",
+    "href": "presentation.html#section-43",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Expected Points Before Play: 0.20\nExpected Points After Play: -3.25\nExpected Points Added: -3.45"
+  },
+  {
+    "objectID": "presentation.html#section-44",
+    "href": "presentation.html#section-44",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Note:\nThese estimates come not from Virgil Carter’s 1969 NFL Season, but my own expected points model trained on all college football plays from 2007-2019."
+  },
+  {
+    "objectID": "presentation.html#section-47",
+    "href": "presentation.html#section-47",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Virgil Carter’s idea forms the basis of modern football analytics and how we evaluate teams and players:\nGood offenses generate points in expectation.\nGood defenses prevent points in expectation."
+  },
+  {
+    "objectID": "presentation.html#section-48",
+    "href": "presentation.html#section-48",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "How do you predict college football games?\n\nYou measure the efficiency of every team’s offense and defense based on every play that has occurred over the course of a season.1\nYou then use your team measurements to simulate the outcome of games.\n\nTechnically, this is fairly involved and this measurement also includes plays from previous seasons with increasingly less weight assigned to them. A full discussion of this is done would take some time; I would be happy to talk about in exhausting detail with you later."
+  },
+  {
+    "objectID": "presentation.html#section-49",
+    "href": "presentation.html#section-49",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Is that really how they do it?\n\nI was working on my own series of models for evaluating teams and eventually decided to compare my work to that of ESPN and Vegas."
+  },
+  {
+    "objectID": "presentation.html#section-51",
+    "href": "presentation.html#section-51",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "My end of year team ratings compared to the ESPN college football power index."
+  },
+  {
+    "objectID": "presentation.html#section-52",
+    "href": "presentation.html#section-52",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "My spread vs opening spreads from providers throughout the 2024 season to date.\n\n\n\nBetting lines for individual games are a little bit harder to crack; they are surely accounting for things that I (currently) am not, such as rest/injuries/travel."
+  },
+  {
+    "objectID": "presentation.html#section-53",
+    "href": "presentation.html#section-53",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Pre-game simulations of Wisconsin @ USC. I felt slightly bad about nailing this one after that first half."
+  },
+  {
+    "objectID": "presentation.html#section-54",
+    "href": "presentation.html#section-54",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "But, as with all predictive models, I don’t nail every prediction. Happily, Vegas and I were both quite wrong about Wisconsin @ Rutgers last week."
+  },
+  {
+    "objectID": "presentation.html#section-55",
+    "href": "presentation.html#section-55",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Beyond prediction, we can monitor team performance not by outcomes but on their underlying play.\nAnd Wisconsin’s recent performances have provided some positive news (at least on defense)."
+  },
+  {
+    "objectID": "presentation.html#section-57",
+    "href": "presentation.html#section-57",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "My model still thinks Wisconsin’s pass/run offense is rather mediocre, but it likes the recent performances on defense."
+  },
+  {
+    "objectID": "presentation.html#section-59",
+    "href": "presentation.html#section-59",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Why am I telling you about this?\n\n\nModels are about more than just prediction; they enable us to make sense of patterns in data and measure things we care about.\n\n\n\n\nThe best work and the best predictions tend to come from really trying to understand the thing you are predicting."
+  },
+  {
+    "objectID": "presentation.html#section-61",
+    "href": "presentation.html#section-61",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "The value of data science is simply that of science - it is the process by which we understand the world around us.\n\nIt allows us to discover cause and effect; it allows us to measure things we care about. It helps us understand the data we have and the data that we don’t."
+  },
+  {
+    "objectID": "presentation.html#section-62",
+    "href": "presentation.html#section-62",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "To recap:\n\nThe data you choose to collect, and not collect, is part of the scientific process.\nAll of the technology in the world does not matter if you do not understand your problem and the data and methodology that would help you solve it.\nModels are about more than just prediction; they enable us to make sense of patterns in data and measure things we care about.\nThe best work and the best predictions tend to come from really trying to understand the thing you are predicting."
+  },
+  {
+    "objectID": "presentation.html#section-64",
+    "href": "presentation.html#section-64",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "There is no easy button; there is no tool that you can buy and start solving all of your problems.\n\nThe value in (data) science usually doesn’t come from algorithms, tools, platforms.\n\n\nThe value in (data) science is usually from the creativity/dedication/passion of asking questions and caring about finding the answer."
+  },
+  {
+    "objectID": "presentation.html#section-65",
+    "href": "presentation.html#section-65",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "I don’t think data science is electricity or data the new oil. I think it’s something much simpler.\n\n(Data) science is like farming.\n\n\nIt’s slow and difficult and takes a lot of patience.\n\n\nBut if you work at it and make an effort everyday, you will produce something valuable in the end."
+  },
+  {
+    "objectID": "presentation.html#section-68",
+    "href": "presentation.html#section-68",
+    "title": "The Data You Don’t Have",
+    "section": "",
+    "text": "Mahmood, Syed S., et al. “The Framingham Heart Study and the epidemiology of cardiovascular disease: a historical perspective.” The lancet 383.9921 (2014): 999-1008.\nDawber, Thomas R., Gilcin F. Meadors, and Felix E. Moore Jr. “Epidemiological approaches to heart disease: the Framingham Study.” American Journal of Public Health and the Nations Health 41.3 (1951): 279-286.\nEpidemiological Background and Design: The Framingham Heart Study\nCarter, Virgil, and Robert E. Machol. “Operations research on football.” Operations Research 19.2 (1971): 541-544."
+  }
+]
